@@ -1,11 +1,987 @@
 ---
-title: "subcomp.github.io"
+title: "Relatório Analítico Subgerência de Compras 2025"
+subtitle: "Fundação Hospitalar Alfredo da Matta (FUHAM)"
+author: "Subcomp"
+# date: "`r format(Sys.Date(), '%d de %B de 2025')`"
+# Tags para ajudar no filtro da página principal
+# description: "Análise Exploratória e Modelagem Preditiva de Dados de Compras"
+# categories: ["Análise Exploratória de Dados"]
+date: last-modified
+# Configuração de Idioma e tradução
+# lang: pt
+# format: 
+#   html: 
+#     theme: flatly # IMPORTANTE: Remove o tema padrão para usar 100% o nosso CSS
+#     # Configurações de Layout
+#     toc: true # Table of Contents (Menu da Direita)
+#     toc-title: "Nesta página"
+#     fontsize: 0.9em
+#     margin-left: 0em
+#     margin-right: 0em
+#     margin-bottom: 0em
+#     margin-top: -1em
+#     number-sections: true
+#     code-fold: true
+page-layout: full
+title-block-banner: true
 ---
 
-This is a Quarto website.
+<br>
 
-To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
+::: {style="border-top: 2px solid #003366;"}
+:::
+
+<br>
+
+```{r setup, include=FALSE}
+# Define opções padrão para todos os chunks de código no R Markdown
+knitr::opts_chunk$set(
+  # echo = FALSE: Oculta o código R no documento final, mas mostra os resultados (gráficos/tabelas).
+  # Se fosse TRUE, o código apareceria escrito no PDF.
+  echo = FALSE,        
+
+  # warning = FALSE: Evita que avisos do R (aquelas mensagens em laranja/vermelho) apareçam no relatório.
+  warning = FALSE,     
+
+  # message = FALSE: Evita que mensagens informativas de carregamento de pacotes apareçam no relatório.
+  message = FALSE,     
+
+  # fig.width = 10: Define que todos os gráficos gerados terão 10 polegadas de largura por padrão.
+  fig.width = 10,      
+
+  # fig.height = 6: Define que todos os gráficos gerados terão 6 polegadas de altura por padrão.
+  fig.height = 6,      
+
+  # fig.align = 'center': Garante que todos os gráficos fiquem centralizados horizontalmente na página.
+  fig.align = 'center',
+
+  # include = TRUE: Garante que o conteúdo (resultados) seja incluído no documento. 
+  # Se fosse FALSE, o código rodaria "escondido" e nada apareceria (nem código, nem resultado).
+  include = TRUE       
+)
+
+```
+
+
+::: {style="text-align: justify"}
 
 ```{r}
-1 + 1
+#| label: setup-plots
+#| code-summary: "Algoritimos auxiliares"
+
+# ------------------------------------------------------------------------------
+# A. Importação de Dados
+# ------------------------------------------------------------------------------
+
+if(!require("gsheet")) install.packages("gsheet", quiet = TRUE) ; library("gsheet")     
+if(!require("readxl")) install.packages("readxl", quiet = TRUE) ; library("readxl")
+if(!require("readr")) install.packages("readr", quiet = TRUE) ; library("readr")
+
+# ------------------------------------------------------------------------------
+# B. Manipulação e Visualização de Dados
+# ------------------------------------------------------------------------------
+
+if(!require("tidyverse")) install.packages("tidyverse", quiet = TRUE) ; library("tidyverse")  
+if(!require("janitor")) install.packages("janitor", quiet = TRUE) ; library("janitor")
+if(!require("lubridate")) install.packages("lubridate", quiet = TRUE) ; library("lubridate")
+if(!require("stringr")) install.packages("stringr", quiet = TRUE) ; library("stringr")
+if(!require("stringi")) install.packages("stringi", quiet = TRUE) ; library("stringi")
+if(!require("magrittr")) install.packages("magrittr", quiet = TRUE) ; library("magrittr")
+if(!require("reshape2")) install.packages("reshape2", quiet = TRUE) ; library("reshape2")
+if(!require("ggrepel")) install.packages("ggrepel", quiet = TRUE) ; library("ggrepel")   
+if(!require("geomtextpath")) install.packages("geomtextpath", quiet = TRUE) ; library("geomtextpath") 
+if(!require("ggtext")) install.packages("ggtext", quiet = TRUE) ; library("ggtext")
+if(!require("patchwork")) install.packages("patchwork", quiet = TRUE) ; library("patchwork")
+if(!require("corrplot")) install.packages("corrplot", quiet = TRUE) ; library("corrplot")   
+if(!require("viridis")) install.packages("viridis", quiet = TRUE) ; library("viridis")   
+if(!require("showtext")) install.packages("showtext", quiet = TRUE) ; library("showtext")
+
+# ------------------------------------------------------------------------------
+# C. Modelagem Estatística e Cálculos Específicos
+# ------------------------------------------------------------------------------
+
+if(!require("stats")) install.packages("stats", quiet = TRUE) ; library("stats")   
+if(!require("nlme")) install.packages("nlme", quiet = TRUE) ; library("nlme")        
+if(!require("broom")) install.packages("broom", quiet = TRUE) ; library("broom")
+if(!require("bizdays")) install.packages("bizdays", quiet = TRUE) ; library("bizdays")
+if(!require("survival")) install.packages("survival", quiet = TRUE) ; library("survival")
+if(!require("survminer")) install.packages("survminer", quiet = TRUE) ; library("survminer")
+if(!require("forecast")) install.packages("forecast", quiet = TRUE) ; library("forecast")
+if(!require("psych")) install.packages("psych", quiet = TRUE) ; library("psych")
+if(!require("skimr")) install.packages("skimr", quiet = TRUE) ; library("skimr")
+if(!require("Hmisc")) install.packages("Hmisc", quiet = TRUE) ; library("Hmisc")
+
+# ------------------------------------------------------------------------------
+# D. Apresentação de Resultados, Relatórios e Interatividade
+# ------------------------------------------------------------------------------
+
+if(!require("DT")) install.packages("DT", quiet = TRUE) ; library("DT")         
+if(!require("reactable")) install.packages("reactable", quiet = TRUE) ; library("reactable")
+if(!require("kableExtra")) install.packages("kableExtra", quiet = TRUE) ; library("kableExtra")
+if(!require("flextable")) install.packages("flextable", quiet = TRUE) ; library("flextable")
+if(!require("officer")) install.packages("officer", quiet = TRUE) ; library("officer")
+if(!require("htmltools")) install.packages("htmltools", quiet = TRUE) ; library("htmltools")
+if(!require("sjPlot")) install.packages("sjPlot", quiet = TRUE) ; library("sjPlot")
+if(!require("fdth")) install.packages("fdth", quiet = TRUE) ; library("fdth")
+if(!require("cli")) install.packages("cli", quiet = TRUE) ; library("cli")
+
+# --- ADICIONADOS PARA O SEU GRÁFICO DINÂMICO ---
+if(!require("plotly")) install.packages("plotly", quiet = TRUE) ; library("plotly")   # Motor interativo
+if(!require("tidyr")) install.packages("tidyr", quiet = TRUE) ; library("tidyr")     # Reorganização de dados (pivot)
+if(!require("dplyr")) install.packages("dplyr", quiet = TRUE) ; library("dplyr")     # Manipulação de dados
+
+# ==============================================================================
+# E. FUNÇÕES DE APRESENTAÇÃO
+# ==============================================================================
+
+
+tabela_interativa <- function(dados, 
+                              titulo_tabela, 
+                              tam_fonte_corpo = "13px",   
+                              tam_fonte_titulo = "20px",  
+                              tam_fonte_header = "14px",  
+                              cor_titulo = "#03045e",        # NOVA: Cor exclusiva do Título
+                              cor_primaria = "#03045e",      # Cor do Cabeçalho e Hover
+                              cor_texto_corpo = "#333333",   
+                              mostrar_filtro = TRUE,      
+                              pesquisa_geral = FALSE,     
+                              largura_cols_vetor = NULL,  
+                              colunas_selecionadas = NULL) {
+
+  # --- SEGURANÇA DO CONTADOR ---
+  if (!base::exists("contador_tabelas_alex")) {
+    base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
+  }
+
+  # --- 1. SELEÇÃO E RENOMEAÇÃO ---
+  dados_processados <- dados
+  if (!base::is.null(colunas_selecionadas)) {
+    dados_processados <- dados %>% 
+      dplyr::select(tidyselect::all_of(colunas_selecionadas))
+  }
+
+  # --- 2. CÁLCULO DE LARGURAS ---
+  n_colunas_dados <- base::ncol(dados_processados)
+  lista_columnDefs <- base::list(
+    base::list(width = '30px', targets = 0) 
+  )
+  
+  if (!base::is.null(largura_cols_vetor)) {
+    for (i in base::seq_along(largura_cols_vetor)) {
+      if (i <= (n_colunas_dados + 1)) {
+         lista_columnDefs[[base::length(lista_columnDefs) + 1]] <- base::list(
+           width = largura_cols_vetor[i], 
+           targets = i - 1
+         )
+      }
+    }
+  }
+
+  # --- 3. CONTADOR E TÍTULO ---
+  base::assign("contador_tabelas_alex", contador_tabelas_alex + 1, envir = .GlobalEnv)
+  titulo_final <- base::paste0("Tabela ", contador_tabelas_alex, ": ", titulo_tabela)
+
+  # --- 4. CRIAÇÃO DO TÍTULO (HTML INDEPENDENTE COM COR PRÓPRIA) ---
+  # Aqui usamos a 'cor_titulo', separada do resto da tabela
+  html_titulo <- htmltools::tags$h2(
+    style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
+                         "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
+    titulo_final
+  )
+
+  # --- 5. RENDERIZAÇÃO DA TABELA (DT) ---
+  tabela <- DT::datatable(
+    base::data.frame(dados_processados, check.names = FALSE),
+    rownames = TRUE, 
+    filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
+    width = "100%", 
+    class = "hover row-border", 
+    options = base::list(
+      dom = 'ft p', 
+      pageLength = 10,
+      searching = TRUE, 
+      lengthChange = FALSE,
+      info = FALSE,
+      ordering = FALSE,     
+      autoWidth = FALSE,    
+      scrollX = TRUE,       
+      columnDefs = lista_columnDefs,
+      
+      initComplete = DT::JS(
+        base::paste0("function(settings, json) {",
+                     # Estilo do corpo
+                     "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
+                     
+                     # Cabeçalho: Usa a 'cor_primaria'
+                     "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap', 'background-image': 'none !important'});",
+                     
+                     # MOLDURA PRETA (Topo e Baixo do Header)
+                     "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
+                     
+                     # Linha Preta de fechamento final
+                     "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
+                     
+                     # ESTILO DA PESQUISA GERAL
+                     "var searchDiv = $('.dataTables_filter');",
+                     "searchDiv.css({'text-align': 'left', 'margin-bottom': '15px', 'float': 'none'});",
+                     "searchDiv.find('label').css({'font-weight': 'bold', 'color': '#000000'});",
+                     
+                     if(pesquisa_geral) "" else "$('.dataTables_filter').hide();",
+                     
+                     # HOVER: Usa a 'cor_primaria'
+                     "var tableContainer = $(this.api().table().container());",
+                     "tableContainer.find('tbody').on('mouseenter', 'tr', function() { $(this).css({'color': '", cor_primaria, "', 'font-weight': '600', 'transition': '0.2s'}); }).on('mouseleave', 'tr', function() { $(this).css({'color': '", cor_texto_corpo, "', 'font-weight': 'normal'}); });",
+                     
+                     "$(this.api().table().header()).removeClass('sorting sorting_asc sorting_desc');",
+                     "}")
+      ),
+      language = base::list(
+        paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
+        emptyTable = "Sem dados",
+        zeroRecords = "Nenhum registro encontrado",
+        search = "Pesquisa Geral:"
+      )
+    )
+  )
+
+  # Retorno consolidado
+  htmltools::tagList(html_titulo, tabela)
+}
+
+# ==============================================================================
+# F. FUNÇÕES DE TRATAMENTO E AUDITORIA
+# ==============================================================================
+
+# 3.1. Padroniza Datas
+padronizar.data <- function(x) { 
+  data_convertida <- base::suppressWarnings(lubridate::parse_date_time(x, orders = base::c("mdy", "dmy", "ymd")))
+  data_final <- base::as.Date(data_convertida)
+  return(dplyr::if_else(base::is.na(data_final), base::Sys.Date(), data_final))
+}
+
+# 3.2. Padroniza Categorias Nominais
+padronizar.categorias.nominais <- function(x, caixa_alta = FALSE) {
+  res <- base::as.character(stringr::str_trim(x))
+  if (caixa_alta) {
+    res <- stringr::str_to_upper(res) 
+  } else {
+    res <- stringr::str_to_title(res) 
+  }
+  return(base::as.factor(res))
+}
+
+# 3.3. Padroniza Valores Financeiros
+padronizar.valores <- function(x) {
+  res <- stringr::str_remove_all(x, "R\\$|\\.")  
+  res <- stringr::str_replace_all(res, ",", ".") 
+  return(base::as.numeric(stringr::str_trim(res)))
+}
+
+# 3.4. Auditoria de Integridade (Duplicados)
+verificar.duplicados <- function(dados, coluna) {
+  duplicados <- dados %>%
+    dplyr::group_by(.data[[coluna]]) %>%
+    dplyr::filter(dplyr::n() > 1) %>%
+    dplyr::arrange(.data[[coluna]])
+  
+  total_dups <- base::nrow(duplicados)
+  
+  if (total_dups > 0) {
+    cli::cli_h1(" Auditoria de Integridade ")
+    cli::cli_alert_danger("ALERTA: Identificadas {total_dups} linhas duplicadas na coluna {.field {coluna}}.")
+    
+    cli::cli_alert_info("Gerando relatório PDF de auditoria...")
+    duplicados %>%
+      kableExtra::kbl(caption = base::paste("Relatório de Itens Duplicados - Coluna:", coluna)) %>%
+      kableExtra::kable_styling(latex_options = base::c("striped", "hold_position")) %>%
+      kableExtra::save_kable(base::paste0("Relatorio_Duplicados_", coluna, ".pdf"))
+    
+    cli::cli_alert_success("Relatório salvo: {.file Relatorio_Duplicados_{coluna}.pdf}")
+    cli::cli_rule()
+    utils::View(duplicados, title = base::paste0("Auditoria_", coluna))
+  } else {
+    cli::cli_h1(" Auditoria de Integridade ")
+    cli::cli_alert_success("INTEGRIDADE VALIDADA: Nenhuma duplicata encontrada na coluna {.field {coluna}}.")
+    cli::cli_rule()
+  }
+}
+
+# 3.5. Cálculo de dias úteis
+calcular_dias_uteis_alex <- function(inicio, fim) {
+  if (base::is.na(inicio) || base::is.na(fim) || fim < inicio) {
+    return(0) 
+  }
+  dias <- base::seq(inicio, fim, by = "day")
+  return(base::sum(!lubridate::wday(dias) %in% base::c(1, 7)))
+}
+
+# 3.6. Verificar Inconsistência Cronológica
+verificar.cronologia <- function(dados, col_entrada = "data_de_entrada", col_saida = "data_de_saida") {
+  erros_data <- dados %>%
+    dplyr::filter(.data[[col_saida]] < .data[[col_entrada]])
+  
+  total_erros <- base::nrow(erros_data)
+  
+  if (total_erros > 0) {
+    cli::cli_h1(" Auditoria de Cronologia ")
+    cli::cli_alert_danger("ALERTA: Encontrados {total_erros} registros com data de saída anterior à entrada.")
+    
+    cli::cli_alert_info("Gerando relatório de erros de data...")
+    erros_data %>%
+      kableExtra::kbl(caption = "Erros de Cronologia (Saída < Entrada)") %>%
+      kableExtra::kable_styling(latex_options = base::c("striped", "hold_position")) %>%
+      kableExtra::save_kable("Relatorio_Erro_Cronologia.pdf")
+    
+    cli::cli_alert_success("Relatório salvo: {.file Relatorio_Erro_Cronologia.pdf}")
+    cli::cli_rule()
+    utils::View(erros_data, title = "Erros_Cronologia")
+  } else {
+    cli::cli_h1(" Auditoria de Cronologia ")
+    cli::cli_alert_success("INTEGRIDADE CRONOLÓGICA VALIDADA: Todas as saídas são posteriores às entradas.")
+    cli::cli_rule()
+  }
+}
+
+cli::cli_alert_success("Ambiente e Funções de Tratamento carregados com sucesso!")
 ```
+
+:::
+
+## Estrutura Organizacional
+
+
+
+### Equipe Técnica
+
+::: {style="font-size: 0.9em; text-align: justify; margin-top: 15px; margin-bottom: 20px; "}
+
+| Função | Responsável |
+|:--- |:--- |
+| **Subgerente** | Rodrigo Ferreira Andrade |
+| **Assistente Administrativo** | Daniel Andrade |
+| **Assistente Administrativo** | José Victor |
+| **Estagiário I** | Fernanda Viana |
+
+:::
+
+### Escopo de Atuação
+
+::: {style="text-align: justify; margin-top: 15px; margin-bottom: 20px; "}
+
+O setor atua de forma estratégica na coordenação e execução de compras e contratações, com foco em:
+
+:::
+
+::: {style="text-align: justify; border-left: 4px solid #000000; padding-left: 20px; margin-top: 15px; margin-bottom: 20px; "}
+
+* **Planejamento:** Colaboração na elaboração do Plano de Contratações Anual (PCA).
+* **Conformidade:** Análise técnica de Projetos Básicos e Termos de Referência.
+* **Monitoramento:** Acompanhamento em tempo real do status processual junto aos órgãos externos.
+* **Modernização:** Contribuição ativa em políticas de gestão administrativa.
+:::
+
+## Gestão de Fluxos e Indicadores 
+
+::: {style="text-align: justify"}
+
+
+
+```{r}
+#| label: Importação das bases de dados
+#| code-summary: "Importação das bases de dados"
+
+# --- 2. IMPORTAÇÃO E FILTRAGEM INICIAL ---
+
+# 2.1. Base de Processos: Cabeçalho da Operação (Datas, Setores, Agentes)
+bd_processos <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826") |> 
+  janitor::clean_names() |> 
+  dplyr::filter(!base::is.na(processo), processo != "-", stringr::str_detect(processo, "\\d"))
+
+# 2.2. Base de Itens: Detalhamento Financeiro vinculado aos processos
+bd_itens <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695#gid=1088782695") |> 
+  janitor::clean_names() |> 
+  dplyr::filter(!base::is.na(processo), processo != "-", stringr::str_detect(processo, "\\d"))
+
+# 2.3. Natureza da Despesa: Dicionário para tradução de códigos contábeis
+bd_natureza <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687") |> 
+  janitor::clean_names() |> 
+  dplyr::filter(!base::is.na(cod), stringr::str_detect(cod, "\\d"))
+
+# 2.4. Fonte de Recurso: Identificação da origem do capital
+bd_fonte <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696") |> 
+  janitor::clean_names() |> 
+  dplyr::filter(!base::is.na(fonte), fonte != "-")
+
+# 2.5. Elemento de Despesa: Classificação detalhada do objeto de gasto
+bd_elemento <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856") |> 
+  janitor::clean_names() |> 
+  dplyr::filter(!base::is.na(codigo), stringr::str_detect(codigo, "\\d"))
+
+# 2.6. Catálogo e-Compras: Tabela mestra de padronização de itens do Estado
+bd_catalogo <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131") |> 
+  janitor::clean_names() |> 
+  dplyr::filter(!base::is.na(id), id != "-")
+```
+
+```{r}
+#| label: Reestruturação e tratamento dos dados
+#| code-summary: "Reestruturação e tratamento dos dados"
+
+# --- 4. EXECUÇÃO DO TRATAMENTO ---
+
+# 4.1. Tratamento da Base de Processos (Integridade de Chaves e Datas)
+bd_processos <- bd_processos %>% 
+  dplyr::mutate(
+    agente              = padronizar.categorias.nominais(agente),                  # Agente (Title Case)
+    processo            = stringr::str_pad(base::as.character(stringr::str_trim(processo)), 
+                                           width = 14, side = "left", pad = "0"),  # Chave: 14 digitos
+    modalidade_processo = padronizar.categorias.nominais(modalidade_processo, caixa_alta = TRUE), # Modalidade (UPPER)
+    data_de_entrada     = padronizar.data(data_de_entrada),                        # Data Entrada
+    data_de_saida       = padronizar.data(data_de_saida),                          # Data Saida
+    natureza_despesa    = stringr::str_pad(padronizar.categorias.nominais(natureza_despesa, caixa_alta = TRUE), 
+                                           width = 10, side = "left", pad = "0"),  # Natureza: 10 digitos
+    setor               = padronizar.categorias.nominais(setor)                    # Setor (Title Case)
+  )
+
+# 4.2. Tratamento da Base de Itens (Conversão Financeira e IDs)
+bd_itens <- bd_itens %>% 
+  dplyr::mutate(
+    processo        = stringr::str_pad(base::as.character(stringr::str_trim(processo)), 
+                                       width = 14, side = "left", pad = "0"),      # Chave p/ Join
+    id              = base::as.numeric(id),                                        # ID p/ Catálogo
+    fornecedor      = padronizar.categorias.nominais(fornecedor),                  # Fornecedor (Title Case)
+    qtde            = base::as.numeric(qtde),                                      # Qtd Numérica
+    valor_unitario  = padronizar.valores(valor_unitario),                          # Valor Limpo
+    nota_de_empenho = base::as.character(stringr::str_trim(nota_de_empenho)),      # Nota (Texto)
+    data_empenho    = base::as.character(stringr::str_trim(data_empenho))          # Data (Texto)
+  )
+
+# ------------------------------------------------------------------------------
+# 5.1. CONSOLIDAÇÃO TOTAL E GERAÇÃO DE KPIS
+# ------------------------------------------------------------------------------
+
+bd_principal <- dplyr::left_join(
+  bd_itens, 
+  bd_processos, 
+  by     = "processo", 
+  suffix = base::c("_item", "_proc")
+) %>% 
+  dplyr::mutate(
+    # --- TRATAMENTO DE DATAS ---
+    data_de_entrada = lubridate::as_date(data_de_entrada),
+    data_de_saida   = lubridate::as_date(data_de_saida),
+    
+    # --- KPIS TEMPORAIS ---
+    ano             = lubridate::year(data_de_entrada),
+    mes_entrada     = lubridate::month(data_de_entrada, label = TRUE, abbr = FALSE),
+    mes_saida       = lubridate::month(data_de_saida, label = TRUE, abbr = FALSE)
+  ) %>% 
+  
+  # --- CÁLCULO DE DIAS ÚTEIS (LINHA POR LINHA) ---
+  dplyr::rowwise() %>% 
+  dplyr::mutate(
+    dias_uteis = calcular_dias_uteis_alex(data_de_entrada, data_de_saida)
+  ) %>% 
+  dplyr::ungroup() %>% 
+  
+  # --- DEMAIS VARIÁVEIS DE INTELIGÊNCIA ---
+  dplyr::mutate(
+    # Status Financeiro
+    status_item      = dplyr::if_else(!base::is.na(nota_de_empenho) & nota_de_empenho != "", 
+                                      "EMPENHADO", "NÃO EMPENHADO"),
+    valor_total      = base::round(qtde * valor_unitario, 3)
+    ) %>% 
+  
+  # --- MÉTRICAS AGRUPADAS POR PROCESSO ---
+  dplyr::group_by(processo) %>% 
+  dplyr::mutate(
+    qtd_itens_processo = dplyr::n(),
+    pct_empenho        = base::round((base::sum(status_item == "EMPENHADO") / dplyr::n()) * 100, 2)
+  ) %>% 
+  dplyr::ungroup()
+
+
+bd_principal <- bd_principal %>% 
+  
+  # 7.1. Detalhamento do ID (Catálogo e-Compras)
+  dplyr::left_join(
+    bd_catalogo %>% dplyr::select(id, catalogo_descricao = descricao, grupo, subgrupo,  elemento = elemento),
+    by = "id"
+  ) %>% 
+  
+  # 7.2. Detalhamento da Fonte de Recurso
+  dplyr::left_join(
+    bd_fonte %>% dplyr::select(fonte, fonte_desc = descricao, fonte_tipo = tipo),
+    by = base::c("fonte_recurso" = "fonte")
+  ) %>% 
+  
+  # 7.3. Detalhamento da Natureza da Despesa
+  dplyr::left_join(
+    bd_natureza %>% dplyr::select(cod, nd_especificacao = especificacao),
+    by = base::c("natureza_despesa" = "cod")
+  ) 
+
+# ------------------------------------------------------------------------------
+# 8. ORGANIZAÇÃO FINAL DAS COLUNAS (O RELATÓRIO DO ALEX)
+# ------------------------------------------------------------------------------
+
+bd_principal <- bd_principal %>% 
+  dplyr::select(
+    # Gestão e Cabeçalho
+    processo, modalidade_processo, agente, setor, emenda, qtd_itens_processo,                
+    
+    # Detalhes do Produto e Classificação de Compra
+    elemento, id, catalogo_descricao, grupo, subgrupo, fornecedor,  
+
+    # Dados Financeiros e de Empenho
+    qtde, valor_unitario, valor_total, 
+    nota_de_empenho, data_empenho, status_item,           
+    
+    # Contabilidade Pública
+    natureza_despesa, nd_especificacao,                   
+    fonte_recurso, fonte_desc, fonte_tipo,                
+    
+    # KPIs e Inteligência de Tempo
+    dias_uteis, ano, data_de_entrada, data_de_saida, mes_entrada, mes_saida, pct_empenho  
+  )
+
+```
+
+<!-- ### Processos -->
+
+
+<br>
+
+```{r}
+#| label: Análise exploratória 2
+#| code-summary: "Análise exploratória"
+#| echo: false
+#| warning: false
+#| message: false
+#| out-width: "100%"
+#| fig-height: 7
+
+
+# htmltools::tagList(
+#   htmltools::tags$style(htmltools::HTML("
+#     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Fira+Code&display=swap');
+#     
+#     /* Força a fonte Inter */
+#     .js-plotly-plot .plotly text { font-family: 'Inter', sans-serif !important; }
+#     
+#     /* DEIXA OS BOTÕES ARREDONDADOS */
+#     .updatemenu-container .updatemenu-header, 
+#     .updatemenu-container .updatemenu-item {
+#       border-radius: 12px !important; /* Ajuste o número para ficar mais ou menos redondo */
+#       border: 1px solid #D3D3D3 !important;
+#       margin-bottom: 2px !important;
+#     }
+# 
+#     /* Ajuste para o fundo do botão quando passar o mouse */
+#     .updatemenu-item:hover {
+#       background-color: #f0f0f0 !important;
+#     }
+#   "))
+# )
+
+# ==========================================================
+# --- ÁREA DE PERSONALIZAÇÃO (PAINEL DE CONTROLE) ---
+# ==========================================================
+
+# Textos Principais
+titulo_nome       <- "Gráfico 1: Fluxo Operacional de Processos | Subgerência de - Compras 2025"
+subtitulo_texto   <- "Comparativo Mensal de Entradas e Saídas"
+
+# Estilo dos Títulos (Sugestão: Titulo sempre > Subtitulo)
+# titulo_cor        <- "#001d3d"
+titulo_cor        <- "#03045e"
+titulo_tamanho    <- 16         # Ajustado para destaque (era 10)
+sub_cor           <- "#000000"
+sub_tamanho       <- 13         
+
+# Cores das Séries (Contraste alto para facilitar distinção)
+cor_entradas      <- "#001d3d"  # Profundo e sério
+cor_saidas        <- "#ff4d6d"  # Alerta e movimento
+
+# Configuração de Textos Internos
+tamanho_rotulos   <- 10         # Valores acima das barras/pontos
+cor_rotulos       <- "#000000"
+
+tamanho_eixo_x    <- 11         # Nome dos meses
+cor_eixo_x        <- "#000000"
+
+# Componentes de Interatividade
+tamanho_legenda   <- 12         # Texto de Entradas/Saídas no topo
+cor_legenda       <- "#000000"         # Texto de Entradas/Saídas no topo
+
+tamanho_botoes    <- 12         # Filtros Dropdown
+
+# Estilo do Hover (Balão de informações detalhadas)
+hover_bg_cor      <- "#FFFFFF"  # Fundo branco para limpeza visual
+hover_txt_cor     <- "#000000"  # Texto preto para leitura máxima
+hover_fonte_tam   <- 12         # Fonte levemente menor (Fira Code)
+borda_balao_hover <- "#000000"  # Contorno do balão
+alinhamento_balao_hover <- "left" # Facilita leitura de listas
+
+# ==========================================================
+# ==========================================================
+
+# --- 3. DADOS ---
+meses_ordem <- c("<b>Janeiro</b>", "<b>Fevereiro</b>", "<b>Março</b>", "<b>Abril</b>", 
+                 "<b>Maio</b>", "<b>Junho</b>", "<b>Julho</b>", "<b>Agosto</b>", 
+                 "<b>Setembro</b>", "<b>Outubro</b>", "<b>Novembro</b>", "<b>Dezembro</b>")
+
+dados_base_limpa <- bd_principal %>%
+  dplyr::distinct(processo, .keep_all = TRUE) %>%
+  dplyr::select(processo, mes_entrada, mes_saida, modalidade_processo, status_item) %>%
+  tidyr::pivot_longer(cols = c(mes_entrada, mes_saida), names_to = "Origem", values_to = "Mes_Nome") %>%
+  dplyr::mutate(Tipo = dplyr::if_else(Origem == "mes_entrada", "Entradas", "Saídas")) %>%
+  dplyr::filter(!is.na(Mes_Nome)) %>%
+  dplyr::mutate(Mes_Bold = factor(paste0("<b>", stringr::str_to_title(as.character(Mes_Nome)), "</b>"), levels = meses_ordem))
+
+esqueleto <- expand.grid(Mes_Bold = factor(meses_ordem, levels = meses_ordem), Tipo = c("Entradas", "Saídas"), stringsAsFactors = FALSE)
+
+gerar_dados_seguros <- function(df, mod = NULL, stat = NULL) {
+  if (!is.null(mod) && mod != "Todas as Modalidades") { df <- df %>% dplyr::filter(modalidade_processo == mod) }
+  if (!is.null(stat) && stat != "Todos os Status") { df <- df %>% dplyr::filter(status_item == stat) }
+  
+  df_res <- df %>%
+    dplyr::group_by(Mes_Bold, Tipo, modalidade_processo) %>%
+    dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
+    dplyr::group_by(Mes_Bold, Tipo) %>%
+    dplyr::mutate(total = sum(n), txt_h = paste0("• ", modalidade_processo, ": ", n, " (", round((n/total)*100,1), "%)")) %>%
+    dplyr::summarise(Quantidade = max(total), Hover = paste(txt_h, collapse = "<br>"), .groups = "drop") %>%
+    dplyr::right_join(esqueleto, by = c("Mes_Bold", "Tipo")) %>%
+    dplyr::mutate(Quantidade = ifelse(is.infinite(Quantidade) | is.na(Quantidade), 0, Quantidade), 
+                  Hover = ifelse(is.na(Hover), "Sem processos registrados", Hover)) %>%
+    dplyr::arrange(Tipo, Mes_Bold)
+  return(df_res)
+}
+
+montar_botoes <- function(lista, tipo) {
+  lapply(lista, function(v) {
+    d <- if(tipo == "mod") gerar_dados_seguros(dados_base_limpa, mod = v) else gerar_dados_seguros(dados_base_limpa, stat = v)
+    de <- d %>% dplyr::filter(Tipo == "Entradas"); ds <- d %>% dplyr::filter(Tipo == "Saídas")
+    t_e <- sum(de$Quantidade); t_s <- sum(ds$Quantidade)
+    list(method = "update", label = v,
+         args = list(list(y = list(de$Quantidade, ds$Quantidade),
+                          text = list(paste0("<b>", de$Quantidade, "</b>"), paste0("<b>", ds$Quantidade, "</b>")),
+                          hovertext = list(de$Hover, ds$Hover),
+                          name = list(paste0("<b>Entradas (Total: ", t_e, ")</b>"), 
+                                      paste0("<b>Saídas (Total: ", t_s, ")</b>")))))
+  })
+}
+
+lista_m <- c("Todas as Modalidades", sort(as.character(unique(dados_base_limpa$modalidade_processo))))
+lista_s <- c("Todos os Status", sort(as.character(unique(dados_base_limpa$status_item))))
+
+df_i <- gerar_dados_seguros(dados_base_limpa)
+df_e_ini <- df_i %>% dplyr::filter(Tipo == "Entradas")
+df_s_ini <- df_i %>% dplyr::filter(Tipo == "Saídas")
+
+# --- 4. GRÁFICO FINAL ---
+plotly::plot_ly() %>%
+  plotly::add_bars(x = df_e_ini$Mes_Bold, y = df_e_ini$Quantidade, 
+                   name = paste0("<b>Entradas (Total: ", sum(df_e_ini$Quantidade), ")</b>"),
+                   marker = list(color = cor_entradas),
+                   text = paste0("<b>", df_e_ini$Quantidade, "</b>"),
+                   textposition = 'outside', cliponaxis = FALSE,
+                   textfont = list(family = "Inter, sans-serif", size = tamanho_rotulos, color = cor_rotulos),
+                   hoverinfo = "text", hovertext = df_e_ini$Hover) %>%
+  plotly::add_bars(x = df_s_ini$Mes_Bold, y = df_s_ini$Quantidade, 
+                   name = paste0("<b>Saídas (Total: ", sum(df_s_ini$Quantidade), ")</b>"),
+                   marker = list(color = cor_saidas),
+                   text = paste0("<b>", df_s_ini$Quantidade, "</b>"),
+                   textposition = 'outside', cliponaxis = FALSE,
+                   textfont = list(family = "Inter, sans-serif", size = tamanho_rotulos, color = cor_rotulos),
+                   hoverinfo = "text", hovertext = df_s_ini$Hover) %>%
+  plotly::layout(
+    font = list(family = "Inter, sans-serif"),
+    title = list(
+      # AQUI ESTÃO AS VARIÁVEIS APLICADAS NO TÍTULO E SUBTÍTULO
+      text = paste0("<b style='color:", titulo_cor, "; font-size:", titulo_tamanho, "px'>", titulo_nome, "</b>",
+                    "<br><span style='color:", sub_cor, "; font-size:", sub_tamanho, "px'>", subtitulo_texto, "</span>"),
+      x = 0, 
+      y = 0.98, 
+      xanchor = "left", 
+      xref = "paper"
+    ),
+    # AQUI AS OPÇÕES DO HOVER LABEL (TOTALMENTE EDITÁVEIS)
+    hoverlabel = list(
+      bgcolor = hover_bg_cor,       # Cor de fundo do balão
+      font = list(
+        family = "Inter, sans-serif",       # Fonte técnica para alinhar números
+        size = hover_fonte_tam,     # Tamanho da fonte
+        color = hover_txt_cor       # Cor do texto
+      ),
+      bordercolor = borda_balao_hover,      # Cor da borda do balão (Pode criar uma variável se quiser)
+      align = alinhamento_balao_hover                # Alinhamento do texto dentro do balão
+    ),
+    xaxis = list(
+      title = "",
+      showgrid = FALSE, 
+      tickfont = list(family = "Inter, sans-serif", size = tamanho_eixo_x, color = cor_eixo_x),
+      # Fixamos a posição do eixo para ele não "subir" para dentro das barras
+      fixedrange = TRUE
+    ),
+    
+    # xaxis = list(title = list(text = "<br><br><br>", font = list(size = 1)),
+    #              showgrid = FALSE, 
+    #              tickfont = list(family = "Inter, sans-serif", size = tamanho_eixo_x, color = cor_eixo_x)
+    #              ),
+    yaxis = list(title = "", 
+                 showticklabels = FALSE, 
+                 showgrid = TRUE, 
+                 gridcolor = "#F0F0F0", 
+                 range = list(0, max(df_i$Quantidade) * 1.5)),
+    barmode = 'group',
+    bargap = 0.2,       # Espaço entre os meses
+    bargroupgap = 0.1,  # DISTÂNCIA ENTRE AS BARRAS DO MESMO MÊS (Teste valores entre 0.0 e 0.5)
+    
+    updatemenus = list(
+      list(active = 0, 
+           x = 0, 
+           y = 1.13, 
+           xanchor = "left", 
+           buttons = montar_botoes(lista_m, "mod"),
+           font = list(family = "Inter, sans-serif", size = tamanho_botoes)),
+      list(active = 0, 
+           x = 0.30, 
+           y = 1.13, 
+           xanchor = "left", 
+           buttons = montar_botoes(lista_s, "stat"),
+           font = list(family = "Inter, sans-serif", size = tamanho_botoes)),
+    #   list(active = 0, 
+    #        x = 0.55, 
+    #        y = 1.13, 
+    #        xanchor = "left",
+    #        buttons = list(
+    #          list(method = "restyle", label = "Gráfico: Barras", 
+    #               args = list(list(type = "bar", textposition = "outside"))),
+    #          list(method = "restyle", label = "Gráfico: Linhas", 
+    #               args = list(list(type = "scatter", mode = "lines+markers+text", textposition = "top center")))), 
+    #        # bgcolor = "#F8F9FA", bordercolor = "#D3D3D3", borderwidth = 1,
+    #        font = list(family = "Inter, sans-serif", size = tamanho_botoes))
+    # ),
+      list(active = 0, x = 0.55, y = 1.13, xanchor = "left",
+             buttons = list(
+               list(method = "update", # Mudança aqui
+                    label = "Gráfico: Barras", 
+                    args = list(
+                      list(type = "bar", textposition = "outside"), 
+                      list(margin = list(t = 160, b = 150, l = 30, r = 30)) # Força a margem aqui
+                    )),
+               list(method = "update", # Mudança aqui
+                    label = "Gráfico: Linhas", 
+                    args = list(
+                      list(type = "scatter", mode = "lines+markers+text", textposition = "top center"),
+                      list(margin = list(t = 160, b = 150, l = 30, r = 30)) # Força a margem aqui
+                    ))
+             ), 
+             font = list(family = "Inter, sans-serif", size = tamanho_botoes))
+      ),
+    legend = list(orientation = 'h', x = 0, xanchor = "left", y = 1.25,
+                  font = list(family = "Inter, sans-serif", size = tamanho_legenda, color = cor_legenda)),
+    margin = list(
+      t = 140,  # Espaço para Título + Subtítulo + Legenda + 3 Botões
+      b = 170,  # Espaço para os Meses (Eixo X) respirares
+      l = 30,   # Respiro na esquerda
+      r = 30    # Respiro na direita
+      ),
+    # margin = list(t = 160, 
+    #               b = 120, 
+    #               l = 50, 
+    #               r = 50),
+    plot_bgcolor = "white", paper_bgcolor = "white"
+  ) %>%
+  plotly::config(displayModeBar = FALSE, responsive = TRUE)
+```
+
+
+
+```{r}
+#| label: Visualização dos dados
+#| code-summary: "Visualização dos dados"
+
+# --- 1. AJUSTE DE LARGURAS (ESTRUTURA HORIZONTAL) ---
+# Definimos um vetor de larguras fixas para garantir que a tabela não "dance" na tela.
+# O primeiro valor ("30px") é crucial: ele trava a coluna de numeração (índice).
+# Os demais valores seguem a ordem das colunas escolhidas no passo 2.
+minhas_larguras <- base::c("30px", "240px", "120px", "150px", "120px", "120px", "250px")
+
+# --- 2. SELEÇÃO E RENOMEAÇÃO (CURADORIA DE DADOS) ---
+# Escolhemos apenas as variáveis necessárias do banco 'bd_processos'.
+# O formato é: "Nome Exibido na Tabela" = "nome_original_no_banco".
+# Isso permite usar nomes com espaços e acentos sem dar erro no R.
+minhas_colunas <- base::c(
+  "Agente"            = "agente",
+  "Nº Processo"       = "processo",
+  "Modalidade"        = "modalidade_processo",
+  "Data Entrada"      = "data_de_entrada",
+  "Data Saída"        = "data_de_saida",
+  "Natureza Despesa"  = "natureza_despesa"
+)
+# 
+# # --- 3. EXECUÇÃO COM DESIGN COMPACTO ---
+tabela_interativa(
+  dados = bd_processos,
+  titulo_tabela = "Detalhamento de Processos por Agente",
+  
+  # Configuração de Fontes (Visual Compacto)
+  tam_fonte_corpo = "11px",    # Fonte dos dados: pequena para maximizar a visualização
+  tam_fonte_titulo = "14px",   # Título: discreto e elegante em azul oficial
+  tam_fonte_header = "12px",   # Cabeçalho: equilibrado entre as linhas pretas grossas
+  cor_titulo = "#03045e",        # NOVA: Cor exclusiva do Título
+  cor_primaria = "#000000",      # Cor do Cabeçalho e Hover
+  cor_texto_corpo = "#000000", 
+  # Controle de Filtros e Pesquisa
+  mostrar_filtro = FALSE,      # Desativa os filtros individuais (caixas brancas no topo)
+  pesquisa_geral = TRUE,       # Ativa a barra de busca em NEGRITO PRETO abaixo do título
+  
+  # Parâmetros de Layout
+  largura_cols_vetor = minhas_larguras,
+  colunas_selecionadas = minhas_colunas
+)
+
+```
+
+
+```{r}
+#| label: Análise exploratória
+#| code-summary: "Análise exploratória"
+# --- 1. REGISTRO DE FONTES ---
+
+# Base para o Gráfico (Resumo por Mês e Tipo)
+dados_resumo <- bd_principal %>%
+  dplyr::distinct(processo, .keep_all = TRUE) %>%
+  dplyr::select(processo, mes_entrada, mes_saida, modalidade_processo) %>%
+  tidyr::pivot_longer(cols = c(mes_entrada, mes_saida), 
+                      names_to = "Tipo_Data", 
+                      values_to = "Mes") %>%
+  dplyr::mutate(Tipo = ifelse(Tipo_Data == "mes_entrada", "Entradas", "Saídas")) %>%
+  dplyr::filter(!is.na(Mes)) %>%
+  # Garantir Primeira Letra Maiúscula
+  dplyr::mutate(Mes = stringr::str_to_title(as.character(Mes)))
+
+# Cálculo de Porcentagem por Modalidade para o Tooltip Dinâmico
+breakdown_modalidade <- dados_resumo %>%
+  dplyr::group_by(Mes, Tipo, modalidade_processo) %>%
+  dplyr::summarise(n = n(), .groups = "drop") %>%
+  dplyr::group_by(Mes, Tipo) %>%
+  dplyr::mutate(pct = (n / sum(n)) * 100) %>%
+  dplyr::summarise(
+    detalhe_modalidade = paste0(modalidade_processo, ": ", round(pct, 1), "%", collapse = "<br>"),
+    total_mes = sum(n),
+    .groups = "drop"
+  )
+
+# Unindo tudo
+dados_finais_alex <- dados_resumo %>%
+  dplyr::group_by(Mes, Tipo) %>%
+  dplyr::summarise(Quantidade = n(), .groups = "drop") %>%
+  dplyr::left_join(breakdown_modalidade, by = c("Mes", "Tipo"))
+
+
+
+
+
+# --- 1. REGISTRO DE FONTES DO SEU CABEÇALHO ---
+sysfonts::font_add_google("Inter", "inter")
+sysfonts::font_add_google("Fira Code", "fira_code")
+showtext::showtext_auto()
+
+# --- 2. PREPARAÇÃO DOS DADOS (PROCESSOS ÚNICOS) ---
+dados_fluxo_rosa <- bd_principal %>%
+  dplyr::select(processo, mes_entrada, mes_saida) %>%
+  dplyr::distinct(processo, .keep_all = TRUE) %>%
+  dplyr::group_by(Mes = mes_entrada) %>%
+  dplyr::summarise(Entradas = dplyr::n()) %>%
+  dplyr::left_join(
+    bd_principal %>%
+      dplyr::distinct(processo, .keep_all = TRUE) %>%
+      dplyr::group_by(Mes = mes_saida) %>%
+      dplyr::summarise(Saídas = dplyr::n()),
+    by = "Mes"
+  ) %>%
+  tidyr::pivot_longer(cols = c("Entradas", "Saídas"), 
+                      names_to = "Tipo", 
+                      values_to = "Quantidade") %>%
+  dplyr::filter(!base::is.na(Mes))
+
+
+
+
+
+
+
+# --- 3. GRÁFICO COM A PALETA ROSA E FONTE INTER ---
+cor_entrada_vinho <- "#a4133c" # O rosa escuro/vinho
+cor_saida_rosa    <- "#ff4d6d" # O rosa vibrante
+
+grafico_rosa_executivo <- ggplot2::ggplot(dados_fluxo_rosa, 
+                                          ggplot2::aes(x = Mes, y = Quantidade, fill = Tipo)) +
+  # Barras com espaçamento elegante
+  ggplot2::geom_bar(stat = "identity", 
+                    position = ggplot2::position_dodge(width = 0.8), 
+                    width = 0.7) +
+  
+  
+  # Rótulos de dados (10px) - Usando a fonte Inter
+  ggplot2::geom_text(ggplot2::aes(label = Quantidade), 
+                     position = ggplot2::position_dodge(width = 0.8), 
+                     vjust = -0.6, 
+                     size = 3.5, # Aprox 10px
+                     fontface = "bold", 
+                     family = "inter", 
+                     color = "#000000") +
+  
+  # Aplicação das cores solicitadas
+  ggplot2::scale_fill_manual(values = c("Entradas" = cor_entrada_vinho, "Saídas" = cor_saida_rosa)) +
+  
+  # Títulos e Identidade (Usando Inter)
+  ggplot2::labs(
+    title = "FLUXO OPERACIONAL DE PROCESSOS | SUBCOMP",
+    subtitle = "Comparativo mensal de entradas e saídas (Fontes: Inter & Fira Code)",
+    x = NULL, y = "QUANTIDADE", fill = NULL
+  ) +
+  
+  # Tema personalizado para combinar com o HTML do seu relatório
+  ggplot2::theme_minimal(base_family = "inter") +
+  ggplot2::theme(
+    # Título (16px)
+    plot.title = ggplot2::element_text(size = 16, face = "bold", color = "#a4133c"),
+    # Subtítulo (11px)
+    plot.subtitle = ggplot2::element_text(size = 11, color = "grey30", margin = margin(b=15)),
+    
+    # Eixos (10px e 11px)
+    axis.text.x = ggplot2::element_text(size = 11, face = "bold", color = "black"),
+    axis.text.y = ggplot2::element_text(size = 10, color = "grey50"),
+    axis.title.y = ggplot2::element_text(size = 10, face = "bold", color = "#a4133c"),
+    legend.position = "top",
+    legend.text = ggplot2::element_text(size = 11, face = "bold"),
+    
+    # Grid horizontal suave
+    panel.grid.major.x = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank(),
+    panel.grid.major.y = ggplot2::element_line(color = "#f8f9fa"),
+    plot.background = ggplot2::element_rect(fill = "white", color = NA),
+    plot.margin = margin(20, 20, 20, 20)
+  )
+
+# Renderizar
+base::print(grafico_rosa_executivo)
+
+```
+
+
+:::
+
+
+
+<br>
+
+::: {style="border-top: 2px solid #003366;"}
+:::
+
+<br>
+

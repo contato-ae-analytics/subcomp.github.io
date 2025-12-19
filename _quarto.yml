@@ -1,19 +1,129 @@
 project:
   type: website
+  # output-dir: docs # Pasta para o GitHub Pages
 
 website:
-  title: "subcomp.github.io"
-  navbar:
-    left:
-      - href: index.qmd
-        text: Home
-      - about.qmd
+  # title: "ΛΣ"
+  # description: "Portfólio de projetos de Alexssandro Silva"
+  # As setas no final da página (Só funcionam se tiver sidebar definindo a ordem)
+  # page-navigation: true 
 
-format:
-  html:
-    theme: cosmo
-    css: styles.css
-    toc: true
+website:
+  navbar: false
+  sidebar: false
+  
+  # # 1. Barra de Navegação (Navbar)
+  # navbar:
+  #   # background: primary
+  #   search: true
+  #   # --- O QUE O COLLAPSE FAZ ---
+  #   # true  = (Recomendado) Em telas pequenas (celular), esconde o menu 
+  #   #         dentro de um botão "hambúrguer" (☰) para não quebrar o site.
+  #   # false = Tenta mostrar todos os botões espremidos, o que fica ruim no celular.
+  #   collapse: true 
+  #   
+    # left:
+    #   - text: "Início"
+    #     icon: house
+    #     href: index.qmd
+      
+      # - text: "Portfólio"
+      #   icon: journal-code
+      #   href: portfolio.qmd # Link direto para a Galeria (Vitrine)
+      # 
+      # - text: "Consultoria"
+      #   icon: clipboard-data
+      #   href: consultoria.qmd
+
+      #   icon: briefcase 
+      #   icon: clipboard-data
+      #   icon: graph-up-arrow
+      #   href: consultoria.qmd
+        
+
+# Lado Direito: Apenas ÍCONES (para ficar uniforme e profissional)
+    # right:
+      # - icon: file-person  # Ícone de "Currículo" (bonequinho no arquivo)
+      #   href: extra/pdf/Curriculum_Alexssandro_Silva_Oliveira.pdf
+      #   target: _blank
+      #   aria-label: "Currículo" # Isso serve para leitores de tela saberem o que é
+      
+      # - icon: github
+      #   href: https://github.com/Alexssandrosilv
+      #   aria-label: GitHub
+      #   
+      # - icon: linkedin
+      #   href: https://www.linkedin.com/in/alexssandro-silva-3b63aa19b/
+      #   aria-label: LinkedIn
+
+# 2. Rodapé (Com as Redes Sociais)
+  # page-footer:
+  #   background: "black" #"light"
+  #   border: true
+  #   
+  #   # Lado Esquerdo: Seu nome
+  #   left: 
+  #     - text: "<b> © 2025 Alexssandro Silva | ΛΣ Consultoria Estatística</b>"
+  #     
+  #   # Centro: A frase
+  #   center: 
+  #     - text: "<b><i>E pelas primeiras vezes, o que passou, passou... comece de novo.</i></b>"
+      
+    # Lado Direito: Ícones das Redes Sociais
+    # right:
+    #   - icon: github
+    #     href: https://github.com/Alexssandrosilv
+    #     aria-label: GitHub
+    #   - icon: linkedin
+    #     href: https://www.linkedin.com/in/alexssandro-silva-3b63aa19b/
+    #     aria-label: LinkedIn
+    #   - icon: envelope
+    #     href: mailto:alexssandrosg@gmail.com
+    #     aria-label: Email
+format: 
+  html: 
+    theme: flatly # IMPORTANTE: Remove o tema padrão para usar 100% o nosso CSS
+    # css: s7.css
+    
+    # Configurações de Layout
+    toc: true # Table of Contents (Menu da Direita)
+    toc-title: "Nesta página"
+    fontsize: 0.9em
+    margin-left: 0em
+    margin-right: 0em
+    margin-bottom: 0em
+    margin-top: -1em
+    number-sections: true
+    code-fold: true
+    code-summary: "Mostrar/Ocultar Código"
+    
+    # Importa as fontes profissionais do Google e o CSS extra
+    include-in-header:
+      - text: |
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Fira+Code&display=swap" rel="stylesheet">
+          
+          <!-- Estilo CSS para detalhes/sumário -->
+          <style>
+          details > summary {
+            color: #132a13;
+            font-weight: bold;
+            cursor: pointer;
+          }
+          </style>
+    
+
+# 4. Configuração do R
+execute:
+  freeze: auto    # "Congela" resultados
+  message: false  # Ocultar mensagens 
+  warning: false  # Ocultar warnings 
 
 
+# 5. Configuração de Idioma e tradução
+lang: pt
+language:
+  listing-categories: "Filtrar por Assunto"  # <--- O nome personalizado da barra lateral
+  search-no-results-text: "Nenhum resultado"
 
