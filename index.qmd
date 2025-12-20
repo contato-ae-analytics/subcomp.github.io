@@ -115,10 +115,19 @@ if(!require("Hmisc")) install.packages("Hmisc", quiet = TRUE) ; library("Hmisc")
 # D. Apresentação de Resultados, Relatórios e Interatividade
 # ------------------------------------------------------------------------------
 
-if(!require("DT")) install.packages("DT", quiet = TRUE) ; library("DT")         
+# ------------------------------------------------------------------------------
+# D. Apresentação de Resultados, Relatórios e Interatividade
+# ------------------------------------------------------------------------------
+
+if(!require("DT")) install.packages("DT", quiet = TRUE) ; library("DT")          
 if(!require("reactable")) install.packages("reactable", quiet = TRUE) ; library("reactable")
 if(!require("kableExtra")) install.packages("kableExtra", quiet = TRUE) ; library("kableExtra")
 if(!require("flextable")) install.packages("flextable", quiet = TRUE) ; library("flextable")
+
+# --- DEPENDÊNCIAS ESSENCIAIS PARA O FLEXTABLE (Evita erro no Quarto) ---
+if(!require("gdtools")) install.packages("gdtools", quiet = TRUE) ; library("gdtools")
+if(!require("systemfonts")) install.packages("systemfonts", quiet = TRUE) ; library("systemfonts")
+
 if(!require("officer")) install.packages("officer", quiet = TRUE) ; library("officer")
 if(!require("htmltools")) install.packages("htmltools", quiet = TRUE) ; library("htmltools")
 if(!require("sjPlot")) install.packages("sjPlot", quiet = TRUE) ; library("sjPlot")
