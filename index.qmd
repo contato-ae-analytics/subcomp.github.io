@@ -852,6 +852,66 @@ tabela_interativa(
   colunas_selecionadas = minhas_colunas
 )
 
+
+
+library(crosstalk)
+
+# 1. Cria o elo de ligação entre os componentes
+sd <- SharedData$new(bd_principal)
+
+# 2. Filtros Superiores (Controlam Gráfico e Tabela simultaneamente)
+filtros_dinamicos <- bscols(
+  widths = c(6, 6),
+  filter_select("f_mod", "Selecione a Modalidade", sd, ~modalidade_processo),
+  filter_select("f_stat", "Filtrar por Status", sd, ~status_item)
+)
+
+# 3. Gráfico Adaptado para Crosstalk
+# Note: Usamos o objeto 'sd' em vez do dataframe fixo
+p_dinamico <- plotly::plot_ly(sd, x = ~Mes_Bold) %>%
+  plotly::add_bars(
+    y = ~ifelse(!is.na(mes_entrada), 1, 0), 
+    name = "Entradas",
+    marker = list(color = cor_entradas),
+    hovertemplate = "Mês: %{x}<br>Qtd: %{y}<extra></extra>"
+  ) %>%
+  plotly::add_bars(
+    y = ~ifelse(!is.na(mes_saida), 1, 0), 
+    name = "Saídas",
+    marker = list(color = cor_saidas),
+    hovertemplate = "Mês: %{x}<br>Qtd: %{y}<extra></extra>"
+  ) %>%
+  plotly::layout(
+    barmode = "group",
+    title = list(text = paste0("<b style='color:", titulo_cor, "'>", titulo_nome, "</b>")),
+    font = list(family = "Inter, sans-serif"),
+    yaxis = list(title = "Nº de Processos"),
+    xaxis = list(title = ""),
+    margin = list(t = 120, b = 50)
+  ) %>%
+  plotly::config(displayModeBar = FALSE)
+
+# 4. Sua Tabela Interativa aplicada ao SharedData
+t_dinamica <- tabela_interativa(
+  dados = sd, 
+  titulo_tabela = "Detalhamento Técnico dos Processos",
+  tam_fonte_corpo = "11px",
+  tam_fonte_header = "12px",
+  cor_primaria = "#03045e", # Azul marinho para combinar com o gráfico
+  pesquisa_geral = TRUE,
+  colunas_selecionadas = minhas_colunas_v3,
+  largura_cols_vetor = minhas_larguras_v3
+)
+
+# 5. Exibição Final no Quarto/RMarkdown
+htmltools::tagList(
+  filtros_dinamicos,
+  br(),
+  p_dinamico,
+  br(), br(),
+  t_dinamica
+)
+
 ```
 
 
