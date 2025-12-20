@@ -610,7 +610,9 @@ sub_tamanho       <- 13
 
 # Cores das Séries (Contraste alto para facilitar distinção)
 cor_entradas      <- "#001d3d"  # Profundo e sério
-cor_saidas        <- "#ff4d6d"  # Alerta e movimento
+# cor_saidas        <- "#ff4d6d"  # Alerta e movimento
+cor_saidas        <- "#48cae4"  # Alerta e movimento
+
 
 # Configuração de Textos Internos
 tamanho_rotulos   <- 10         # Valores acima das barras/pontos
@@ -635,10 +637,15 @@ alinhamento_balao_hover <- "left" # Facilita leitura de listas
 # ==========================================================
 # ==========================================================
 
-# --- 3. DADOS ---
-meses_ordem <- c("<b>Janeiro</b>", "<b>Fevereiro</b>", "<b>Março</b>", "<b>Abril</b>", 
-                 "<b>Maio</b>", "<b>Junho</b>", "<b>Julho</b>", "<b>Agosto</b>", 
-                 "<b>Setembro</b>", "<b>Outubro</b>", "<b>Novembro</b>", "<b>Dezembro</b>")
+# # --- 3. DADOS ---
+# meses_ordem <- c("<b>Janeiro</b>", "<b>Fevereiro</b>", "<b>Março</b>", "<b>Abril</b>", 
+#                  "<b>Maio</b>", "<b>Junho</b>", "<b>Julho</b>", "<b>Agosto</b>", 
+#                  "<b>Setembro</b>", "<b>Outubro</b>", "<b>Novembro</b>", "<b>Dezembro</b>")
+# 
+
+# Tente simplificar para testar se o problema é o HTML nas strings
+meses_ordem <- c("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+                 "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro")
 
 dados_base_limpa <- bd_principal %>%
   dplyr::distinct(processo, .keep_all = TRUE) %>%
@@ -651,21 +658,43 @@ dados_base_limpa <- bd_principal %>%
 esqueleto <- expand.grid(Mes_Bold = factor(meses_ordem, levels = meses_ordem), Tipo = c("Entradas", "Saídas"), stringsAsFactors = FALSE)
 
 gerar_dados_seguros <- function(df, mod = NULL, stat = NULL) {
+  # Filtros de segurança
   if (!is.null(mod) && mod != "Todas as Modalidades") { df <- df %>% dplyr::filter(modalidade_processo == mod) }
   if (!is.null(stat) && stat != "Todos os Status") { df <- df %>% dplyr::filter(status_item == stat) }
   
   df_res <- df %>%
-    dplyr::group_by(Mes_Bold, Tipo, modalidade_processo) %>%
+    # LIMPEZA CRUCIAL: Remove espaços e garante formato "Janeiro"
+    dplyr::mutate(Mes_Nome = stringr::str_trim(stringr::str_to_title(as.character(Mes_Nome)))) %>%
+    dplyr::group_by(Mes_Nome, Tipo) %>%
     dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
-    dplyr::group_by(Mes_Bold, Tipo) %>%
-    dplyr::mutate(total = sum(n), txt_h = paste0("• ", modalidade_processo, ": ", n, " (", round((n/total)*100,1), "%)")) %>%
-    dplyr::summarise(Quantidade = max(total), Hover = paste(txt_h, collapse = "<br>"), .groups = "drop") %>%
+    # Monta o label exatamente como o Plotly espera
+    dplyr::mutate(Mes_Bold = factor(paste0("<b>", Mes_Nome, "</b>"), levels = meses_ordem)) %>%
     dplyr::right_join(esqueleto, by = c("Mes_Bold", "Tipo")) %>%
-    dplyr::mutate(Quantidade = ifelse(is.infinite(Quantidade) | is.na(Quantidade), 0, Quantidade), 
-                  Hover = ifelse(is.na(Hover), "Sem processos registrados", Hover)) %>%
+    dplyr::mutate(
+      Quantidade = tidyr::replace_na(n, 0),
+      Hover = ifelse(Quantidade > 0, paste0("Total: ", Quantidade), "Sem registros")
+    ) %>%
     dplyr::arrange(Tipo, Mes_Bold)
+  
   return(df_res)
 }
+
+# gerar_dados_seguros <- function(df, mod = NULL, stat = NULL) {
+#   if (!is.null(mod) && mod != "Todas as Modalidades") { df <- df %>% dplyr::filter(modalidade_processo == mod) }
+#   if (!is.null(stat) && stat != "Todos os Status") { df <- df %>% dplyr::filter(status_item == stat) }
+#   
+#   df_res <- df %>%
+#     dplyr::group_by(Mes_Bold, Tipo, modalidade_processo) %>%
+#     dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
+#     dplyr::group_by(Mes_Bold, Tipo) %>%
+#     dplyr::mutate(total = sum(n), txt_h = paste0("• ", modalidade_processo, ": ", n, " (", round((n/total)*100,1), "%)")) %>%
+#     dplyr::summarise(Quantidade = max(total), Hover = paste(txt_h, collapse = "<br>"), .groups = "drop") %>%
+#     dplyr::right_join(esqueleto, by = c("Mes_Bold", "Tipo")) %>%
+#     dplyr::mutate(Quantidade = ifelse(is.infinite(Quantidade) | is.na(Quantidade), 0, Quantidade), 
+#                   Hover = ifelse(is.na(Hover), "Sem processos registrados", Hover)) %>%
+#     dplyr::arrange(Tipo, Mes_Bold)
+#   return(df_res)
+# }
 
 montar_botoes <- function(lista, tipo) {
   lapply(lista, function(v) {
@@ -851,134 +880,6 @@ tabela_interativa(
   largura_cols_vetor = minhas_larguras,
   colunas_selecionadas = minhas_colunas
 )
-
-```
-
-
-```{r}
-#| label: Análise exploratória
-#| code-summary: "Análise exploratória"
-# --- 1. REGISTRO DE FONTES ---
-
-# Base para o Gráfico (Resumo por Mês e Tipo)
-dados_resumo <- bd_principal %>%
-  dplyr::distinct(processo, .keep_all = TRUE) %>%
-  dplyr::select(processo, mes_entrada, mes_saida, modalidade_processo) %>%
-  tidyr::pivot_longer(cols = c(mes_entrada, mes_saida), 
-                      names_to = "Tipo_Data", 
-                      values_to = "Mes") %>%
-  dplyr::mutate(Tipo = ifelse(Tipo_Data == "mes_entrada", "Entradas", "Saídas")) %>%
-  dplyr::filter(!is.na(Mes)) %>%
-  # Garantir Primeira Letra Maiúscula
-  dplyr::mutate(Mes = stringr::str_to_title(as.character(Mes)))
-
-# Cálculo de Porcentagem por Modalidade para o Tooltip Dinâmico
-breakdown_modalidade <- dados_resumo %>%
-  dplyr::group_by(Mes, Tipo, modalidade_processo) %>%
-  dplyr::summarise(n = n(), .groups = "drop") %>%
-  dplyr::group_by(Mes, Tipo) %>%
-  dplyr::mutate(pct = (n / sum(n)) * 100) %>%
-  dplyr::summarise(
-    detalhe_modalidade = paste0(modalidade_processo, ": ", round(pct, 1), "%", collapse = "<br>"),
-    total_mes = sum(n),
-    .groups = "drop"
-  )
-
-# Unindo tudo
-dados_finais_alex <- dados_resumo %>%
-  dplyr::group_by(Mes, Tipo) %>%
-  dplyr::summarise(Quantidade = n(), .groups = "drop") %>%
-  dplyr::left_join(breakdown_modalidade, by = c("Mes", "Tipo"))
-
-
-
-
-
-# --- 1. REGISTRO DE FONTES DO SEU CABEÇALHO ---
-sysfonts::font_add_google("Inter", "inter")
-sysfonts::font_add_google("Fira Code", "fira_code")
-showtext::showtext_auto()
-
-# --- 2. PREPARAÇÃO DOS DADOS (PROCESSOS ÚNICOS) ---
-dados_fluxo_rosa <- bd_principal %>%
-  dplyr::select(processo, mes_entrada, mes_saida) %>%
-  dplyr::distinct(processo, .keep_all = TRUE) %>%
-  dplyr::group_by(Mes = mes_entrada) %>%
-  dplyr::summarise(Entradas = dplyr::n()) %>%
-  dplyr::left_join(
-    bd_principal %>%
-      dplyr::distinct(processo, .keep_all = TRUE) %>%
-      dplyr::group_by(Mes = mes_saida) %>%
-      dplyr::summarise(Saídas = dplyr::n()),
-    by = "Mes"
-  ) %>%
-  tidyr::pivot_longer(cols = c("Entradas", "Saídas"), 
-                      names_to = "Tipo", 
-                      values_to = "Quantidade") %>%
-  dplyr::filter(!base::is.na(Mes))
-
-
-
-
-
-
-
-# --- 3. GRÁFICO COM A PALETA ROSA E FONTE INTER ---
-cor_entrada_vinho <- "#a4133c" # O rosa escuro/vinho
-cor_saida_rosa    <- "#ff4d6d" # O rosa vibrante
-
-grafico_rosa_executivo <- ggplot2::ggplot(dados_fluxo_rosa, 
-                                          ggplot2::aes(x = Mes, y = Quantidade, fill = Tipo)) +
-  # Barras com espaçamento elegante
-  ggplot2::geom_bar(stat = "identity", 
-                    position = ggplot2::position_dodge(width = 0.8), 
-                    width = 0.7) +
-  
-  
-  # Rótulos de dados (10px) - Usando a fonte Inter
-  ggplot2::geom_text(ggplot2::aes(label = Quantidade), 
-                     position = ggplot2::position_dodge(width = 0.8), 
-                     vjust = -0.6, 
-                     size = 3.5, # Aprox 10px
-                     fontface = "bold", 
-                     family = "inter", 
-                     color = "#000000") +
-  
-  # Aplicação das cores solicitadas
-  ggplot2::scale_fill_manual(values = c("Entradas" = cor_entrada_vinho, "Saídas" = cor_saida_rosa)) +
-  
-  # Títulos e Identidade (Usando Inter)
-  ggplot2::labs(
-    title = "FLUXO OPERACIONAL DE PROCESSOS | SUBCOMP",
-    subtitle = "Comparativo mensal de entradas e saídas (Fontes: Inter & Fira Code)",
-    x = NULL, y = "QUANTIDADE", fill = NULL
-  ) +
-  
-  # Tema personalizado para combinar com o HTML do seu relatório
-  ggplot2::theme_minimal(base_family = "inter") +
-  ggplot2::theme(
-    # Título (16px)
-    plot.title = ggplot2::element_text(size = 16, face = "bold", color = "#a4133c"),
-    # Subtítulo (11px)
-    plot.subtitle = ggplot2::element_text(size = 11, color = "grey30", margin = margin(b=15)),
-    
-    # Eixos (10px e 11px)
-    axis.text.x = ggplot2::element_text(size = 11, face = "bold", color = "black"),
-    axis.text.y = ggplot2::element_text(size = 10, color = "grey50"),
-    axis.title.y = ggplot2::element_text(size = 10, face = "bold", color = "#a4133c"),
-    legend.position = "top",
-    legend.text = ggplot2::element_text(size = 11, face = "bold"),
-    
-    # Grid horizontal suave
-    panel.grid.major.x = ggplot2::element_blank(),
-    panel.grid.minor = ggplot2::element_blank(),
-    panel.grid.major.y = ggplot2::element_line(color = "#f8f9fa"),
-    plot.background = ggplot2::element_rect(fill = "white", color = NA),
-    plot.margin = margin(20, 20, 20, 20)
-  )
-
-# Renderizar
-base::print(grafico_rosa_executivo)
 
 ```
 
