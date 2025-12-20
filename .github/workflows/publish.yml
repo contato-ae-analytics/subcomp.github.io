@@ -290,6 +290,8 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: |
+            any::readxl
+            any::plotly
             any::gdtools
             any::systemfonts
             any::flextable
@@ -297,7 +299,6 @@ jobs:
             any::patchwork
             any::showtext
             any::ggtext
-            any::plotly
             any::kableExtra
             any::forecast
             any::bizdays
