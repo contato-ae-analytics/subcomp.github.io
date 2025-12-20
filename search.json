@@ -4,13 +4,20 @@
     "href": "about.html",
     "title": "About",
     "section": "",
-    "text": "About this site\n\n1 + 1\n\n[1] 2"
+    "text": "About this site\n\n\nMostrar/Ocultar Código\n1 + 1\n\n\n[1] 2"
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "subcomp.github.io",
-    "section": "",
-    "text": "This is a Quarto website.\nTo learn more about Quarto websites visit https://quarto.org/docs/websites.\n\n1 + 1\n\n[1] 2"
+    "objectID": "index.html#estrutura-organizacional",
+    "href": "index.html#estrutura-organizacional",
+    "title": "Relatório Analítico Subgerência de Compras 2025",
+    "section": "1 Estrutura Organizacional",
+    "text": "1 Estrutura Organizacional\n\n1.1 Equipe Técnica\n\n\n\n\nFunção\nResponsável\n\n\n\n\nSubgerente\nRodrigo Ferreira Andrade\n\n\nAssistente Administrativo\nDaniel Andrade\n\n\nAssistente Administrativo\nJosé Victor\n\n\nEstagiário I\nFernanda Viana\n\n\n\n\n\n\n1.2 Escopo de Atuação\n\nO setor atua de forma estratégica na coordenação e execução de compras e contratações, com foco em:\n\n\n\nPlanejamento: Colaboração na elaboração do Plano de Contratações Anual (PCA).\nConformidade: Análise técnica de Projetos Básicos e Termos de Referência.\nMonitoramento: Acompanhamento em tempo real do status processual junto aos órgãos externos.\nModernização: Contribuição ativa em políticas de gestão administrativa."
+  },
+  {
+    "objectID": "index.html#gestão-de-fluxos-e-indicadores",
+    "href": "index.html#gestão-de-fluxos-e-indicadores",
+    "title": "Relatório Analítico Subgerência de Compras 2025",
+    "section": "2 Gestão de Fluxos e Indicadores",
+    "text": "2 Gestão de Fluxos e Indicadores\n\n\n\n\n\n\n\n\n\n\n\nTabela 1: Detalhamento de Processos por Agente"
   }
 ]
