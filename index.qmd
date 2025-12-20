@@ -833,6 +833,39 @@ plotly::plot_ly() %>%
     plot_bgcolor = "white", paper_bgcolor = "white"
   ) %>%
   plotly::config(displayModeBar = FALSE, responsive = TRUE)
+
+
+
+# --- 1. DADOS "ANTES" (BRUTOS DO PIVOT) ---
+# Aqui vemos se o R conseguiu extrair as datas do Excel corretamente
+dados_antes_plotly <- dados_base_limpa %>%
+  dplyr::group_by(Mes_Nome, Tipo) %>%
+  dplyr::summarise(Total_Real = dplyr::n(), .groups = "drop")
+
+# --- 2. DADOS "DEPOIS" (PROCESSADOS PELA FUNÇÃO) ---
+# Aqui vemos se o 'right_join' ou os 'factors' zeraram os dados
+dados_depois_plotly <- gerar_dados_seguros(dados_base_limpa) %>%
+  dplyr::select(Mes_Bold, Tipo, Quantidade)
+
+# --- 3. EXIBIÇÃO: TABELA ANTES ---
+tabela_interativa(
+  dados = dados_antes_plotly,
+  titulo_tabela = "AUDITORIA 1: Dados Brutos Extraídos (Antes do Esqueleto)",
+  tam_fonte_corpo = "11px",
+  cor_titulo = "#0077b6", # Azul para o 'Antes'
+  largura_cols_vetor = c("30px", "200px", "150px", "150px"),
+  colunas_selecionadas = c("Mês" = "Mes_Nome", "Fluxo" = "Tipo", "Contagem" = "Total_Real")
+)
+
+# --- 4. EXIBIÇÃO: TABELA DEPOIS ---
+tabela_interativa(
+  dados = dados_depois_plotly,
+  titulo_tabela = "AUDITORIA 2: Dados Finais Enviados ao Plotly (Depois do Esqueleto)",
+  tam_fonte_corpo = "11px",
+  cor_titulo = "#d62828", # Vermelho para o 'Depois' (Onde os zeros aparecem)
+  largura_cols_vetor = c("30px", "200px", "150px", "150px"),
+  colunas_selecionadas = c("Mês HTML" = "Mes_Bold", "Fluxo" = "Tipo", "Quantidade" = "Quantidade")
+)
 ```
 
 
