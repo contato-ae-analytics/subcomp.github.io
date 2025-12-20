@@ -714,8 +714,8 @@ lista_m <- c("Todas as Modalidades", sort(as.character(unique(dados_base_limpa$m
 lista_s <- c("Todos os Status", sort(as.character(unique(dados_base_limpa$status_item))))
 
 df_i <- gerar_dados_seguros(dados_base_limpa)
-df_e_ini <- df_i %>% dplyr::filter(Tipo == "Entradas")
-df_s_ini <- df_i %>% dplyr::filter(Tipo == "Saídas")
+df_e_ini <- df_i %>% dplyr::filter(Tipo == "Entradas") ; print(df_e_ini)
+df_s_ini <- df_i %>% dplyr::filter(Tipo == "Saídas") ; print(df_s_ini)
 
 # --- 4. GRÁFICO FINAL ---
 plotly::plot_ly() %>%
