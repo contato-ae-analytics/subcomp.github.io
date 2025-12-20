@@ -811,75 +811,49 @@ plotly::plot_ly() %>%
 ```{r}
 #| label: Visualização dos dados
 #| code-summary: "Visualização dos dados"
-
-# --- 1. AJUSTE DE LARGURAS (ESTRUTURA HORIZONTAL) ---
-# Definimos um vetor de larguras fixas para garantir que a tabela não "dance" na tela.
-# O primeiro valor ("30px") é crucial: ele trava a coluna de numeração (índice).
-# Os demais valores seguem a ordem das colunas escolhidas no passo 2.
-minhas_larguras <- base::c("30px", "240px", "120px", "150px", "120px", "120px", "250px")
-
-# --- 2. SELEÇÃO E RENOMEAÇÃO (CURADORIA DE DADOS) ---
-# Escolhemos apenas as variáveis necessárias do banco 'bd_processos'.
-# O formato é: "Nome Exibido na Tabela" = "nome_original_no_banco".
-# Isso permite usar nomes com espaços e acentos sem dar erro no R.
-minhas_colunas <- base::c(
-  "Agente"            = "agente",
-  "Nº Processo"       = "processo",
-  "Modalidade"        = "modalidade_processo",
-  "Data Entrada"      = "data_de_entrada",
-  "Data Saída"        = "data_de_saida",
-  "Natureza Despesa"  = "natureza_despesa"
-)
-# 
-# # --- 3. EXECUÇÃO COM DESIGN COMPACTO ---
-tabela_interativa(
-  dados = bd_processos,
-  titulo_tabela = "Detalhamento de Processos por Agente",
-  
-  # Configuração de Fontes (Visual Compacto)
-  tam_fonte_corpo = "11px",    # Fonte dos dados: pequena para maximizar a visualização
-  tam_fonte_titulo = "14px",   # Título: discreto e elegante em azul oficial
-  tam_fonte_header = "12px",   # Cabeçalho: equilibrado entre as linhas pretas grossas
-  cor_titulo = "#03045e",        # NOVA: Cor exclusiva do Título
-  cor_primaria = "#000000",      # Cor do Cabeçalho e Hover
-  cor_texto_corpo = "#000000", 
-  # Controle de Filtros e Pesquisa
-  mostrar_filtro = FALSE,      # Desativa os filtros individuais (caixas brancas no topo)
-  pesquisa_geral = TRUE,       # Ativa a barra de busca em NEGRITO PRETO abaixo do título
-  
-  # Parâmetros de Layout
-  largura_cols_vetor = minhas_larguras,
-  colunas_selecionadas = minhas_colunas
-)
-
-
-
 library(crosstalk)
+library(plotly)
 
-# 1. Cria o elo de ligação entre os componentes
-sd <- SharedData$new(bd_principal)
+# --- 1. PREPARAÇÃO DO SHARED DATA ---
+# IMPORTANTE: Usamos a base 'dados_base_limpa' que já tem os meses traduzidos e o Mes_Bold
+sd <- SharedData$new(dados_base_limpa)
 
-# 2. Filtros Superiores (Controlam Gráfico e Tabela simultaneamente)
+# --- 2. CONFIGURAÇÃO DA TABELA (Colunas que você pediu) ---
+minhas_colunas_v3 <- c(
+  "Modalidade"         = "modalidade_processo",
+  "Nº Processo"        = "processo",
+  "Itens"              = "qtd_itens_processo",
+  "Natureza"           = "natureza_despesa",
+  "Valor Total (R$)"   = "valor_total",
+  "Empenho (%)"        = "pct_empenho",
+  "Status"             = "status_item"
+)
+
+# Ajuste de larguras (7 colunas + 1 do índice = 8 valores)
+minhas_larguras_v3 <- c("30px", "150px", "120px", "60px", "130px", "100px", "80px", "120px")
+
+# --- 3. FILTROS DINÂMICOS ---
 filtros_dinamicos <- bscols(
   widths = c(6, 6),
   filter_select("f_mod", "Selecione a Modalidade", sd, ~modalidade_processo),
   filter_select("f_stat", "Filtrar por Status", sd, ~status_item)
 )
 
-# 3. Gráfico Adaptado para Crosstalk
-# Note: Usamos o objeto 'sd' em vez do dataframe fixo
+# --- 4. GRÁFICO ADAPTADO ---
 p_dinamico <- plotly::plot_ly(sd, x = ~Mes_Bold) %>%
-  plotly::add_bars(
-    y = ~ifelse(!is.na(mes_entrada), 1, 0), 
+  plotly::add_histogram( # Usamos histogram para ele contar as linhas automaticamente
+    y = ~ifelse(Tipo == "Entradas", 1, 0),
     name = "Entradas",
     marker = list(color = cor_entradas),
-    hovertemplate = "Mês: %{x}<br>Qtd: %{y}<extra></extra>"
+    histfunc = "sum",
+    hovertemplate = "Entradas: %{y}<extra></extra>"
   ) %>%
-  plotly::add_bars(
-    y = ~ifelse(!is.na(mes_saida), 1, 0), 
+  plotly::add_histogram(
+    y = ~ifelse(Tipo == "Saídas", 1, 0),
     name = "Saídas",
     marker = list(color = cor_saidas),
-    hovertemplate = "Mês: %{x}<br>Qtd: %{y}<extra></extra>"
+    histfunc = "sum",
+    hovertemplate = "Saídas: %{y}<extra></extra>"
   ) %>%
   plotly::layout(
     barmode = "group",
@@ -891,19 +865,19 @@ p_dinamico <- plotly::plot_ly(sd, x = ~Mes_Bold) %>%
   ) %>%
   plotly::config(displayModeBar = FALSE)
 
-# 4. Sua Tabela Interativa aplicada ao SharedData
+# --- 5. TABELA INTERATIVA (Chamando sua função) ---
 t_dinamica <- tabela_interativa(
   dados = sd, 
   titulo_tabela = "Detalhamento Técnico dos Processos",
   tam_fonte_corpo = "11px",
   tam_fonte_header = "12px",
-  cor_primaria = "#03045e", # Azul marinho para combinar com o gráfico
+  cor_primaria = "#03045e",
   pesquisa_geral = TRUE,
   colunas_selecionadas = minhas_colunas_v3,
   largura_cols_vetor = minhas_larguras_v3
 )
 
-# 5. Exibição Final no Quarto/RMarkdown
+# --- 6. EXIBIÇÃO FINAL ---
 htmltools::tagList(
   filtros_dinamicos,
   br(),
