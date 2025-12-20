@@ -1,1 +1,47 @@
 /* css styles */
+/* 1. Estilização dos Dropdowns do Plotly (Botões) */
+.js-plotly-plot .control-group {
+    background-color: transparent !important;
+}
+
+.js-plotly-plot .control-panel {
+    background-color: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+}
+
+/* Estilo do item selecionado e da lista suspensa */
+.js-plotly-plot .updatemenu-container .updatemenu-button {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    color: #333 !important;
+    background-color: #ffffff !important;
+    border: 1px solid #d1d1d1 !important;
+    border-radius: 4px !important;
+    padding: 5px 10px !important;
+    transition: all 0.2s ease !important;
+}
+
+.js-plotly-plot .updatemenu-container .updatemenu-button:hover {
+    background-color: #f0f0f0 !important;
+    border-color: #03045e !important; /* Cor azul do seu título */
+}
+
+/* 2. Melhoria no Hover (Balão de Informações) */
+/* Garante que o balão tenha um leve sombreamento */
+.js-plotly-plot .hoverlayer .hovertext path {
+    stroke: #000 !important;
+    stroke-width: 0.5px !important;
+}
+
+/* 3. Ajuste de Responsividade do Gráfico */
+.js-plotly-plot .plotly .main-svg {
+    border-radius: 12px !important;
+}
+
+/* 4. Estilo Extra para o Título (se renderizado como HTML) */
+.plotly-title {
+    letter-spacing: -0.5px !important;
+    padding-bottom: 20px !important;
+}
