@@ -7,8 +7,6 @@ website:
   # description: "Portfólio de projetos de Alexssandro Silva"
   # As setas no final da página (Só funcionam se tiver sidebar definindo a ordem)
   # page-navigation: true 
-
-website:
   navbar: false
   sidebar: false
   
