@@ -143,37 +143,46 @@ if(!require("dplyr")) install.packages("dplyr", quiet = TRUE) ; library("dplyr")
 # E. FUNÇÕES DE APRESENTAÇÃO
 # ==============================================================================
 
-
 tabela_interativa <- function(dados, 
                               titulo_tabela, 
                               tam_fonte_corpo = "13px",   
                               tam_fonte_titulo = "20px",  
                               tam_fonte_header = "14px",  
-                              cor_titulo = "#03045e",        # NOVA: Cor exclusiva do Título
-                              cor_primaria = "#03045e",      # Cor do Cabeçalho e Hover
+                              cor_titulo = "#03045e",        
+                              cor_primaria = "#03045e",      
                               cor_texto_corpo = "#333333",   
                               mostrar_filtro = TRUE,      
                               pesquisa_geral = FALSE,     
                               largura_cols_vetor = NULL,  
                               colunas_selecionadas = NULL) {
 
+  # --- AJUSTE PARA COMPATIBILIDADE COM CROSSTALK ---
+  # Se os dados forem SharedData, extraímos o dataframe interno para processar colunas
+  is_shared <- inherits(dados, "SharedData")
+  df_interno <- if(is_shared) dados$origData() else dados
+
   # --- SEGURANÇA DO CONTADOR ---
   if (!base::exists("contador_tabelas_alex")) {
     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
   }
 
-  # --- 1. SELEÇÃO E RENOMEAÇÃO ---
-  dados_processados <- dados
+  # --- 1. SELEÇÃO E RENOMEAÇÃO (NA ORIGEM) ---
   if (!base::is.null(colunas_selecionadas)) {
-    dados_processados <- dados %>% 
+    # Filtramos as colunas no dataframe original
+    df_interno <- df_interno %>% 
       dplyr::select(tidyselect::all_of(colunas_selecionadas))
+    
+    # Se for SharedData, precisamos reconstruir o objeto com as colunas certas
+    if(is_shared) {
+      dados <- SharedData$new(df_interno, group = dados$groupName())
+    } else {
+      dados <- df_interno
+    }
   }
 
   # --- 2. CÁLCULO DE LARGURAS ---
-  n_colunas_dados <- base::ncol(dados_processados)
-  lista_columnDefs <- base::list(
-    base::list(width = '30px', targets = 0) 
-  )
+  n_colunas_dados <- base::ncol(df_interno)
+  lista_columnDefs <- base::list(base::list(width = '30px', targets = 0))
   
   if (!base::is.null(largura_cols_vetor)) {
     for (i in base::seq_along(largura_cols_vetor)) {
@@ -190,17 +199,15 @@ tabela_interativa <- function(dados,
   base::assign("contador_tabelas_alex", contador_tabelas_alex + 1, envir = .GlobalEnv)
   titulo_final <- base::paste0("Tabela ", contador_tabelas_alex, ": ", titulo_tabela)
 
-  # --- 4. CRIAÇÃO DO TÍTULO (HTML INDEPENDENTE COM COR PRÓPRIA) ---
-  # Aqui usamos a 'cor_titulo', separada do resto da tabela
   html_titulo <- htmltools::tags$h2(
     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
     titulo_final
   )
 
-  # --- 5. RENDERIZAÇÃO DA TABELA (DT) ---
+  # --- 5. RENDERIZAÇÃO ---
   tabela <- DT::datatable(
-    base::data.frame(dados_processados, check.names = FALSE),
+    dados, # Aqui ele usa o objeto SharedData ou Dataframe corretamente
     rownames = TRUE, 
     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
     width = "100%", 
@@ -211,51 +218,143 @@ tabela_interativa <- function(dados,
       searching = TRUE, 
       lengthChange = FALSE,
       info = FALSE,
-      ordering = FALSE,     
+      ordering = FALSE,      
       autoWidth = FALSE,    
       scrollX = TRUE,       
       columnDefs = lista_columnDefs,
-      
       initComplete = DT::JS(
         base::paste0("function(settings, json) {",
-                     # Estilo do corpo
                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
-                     
-                     # Cabeçalho: Usa a 'cor_primaria'
-                     "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap', 'background-image': 'none !important'});",
-                     
-                     # MOLDURA PRETA (Topo e Baixo do Header)
+                     "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
-                     
-                     # Linha Preta de fechamento final
                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
-                     
-                     # ESTILO DA PESQUISA GERAL
                      "var searchDiv = $('.dataTables_filter');",
                      "searchDiv.css({'text-align': 'left', 'margin-bottom': '15px', 'float': 'none'});",
-                     "searchDiv.find('label').css({'font-weight': 'bold', 'color': '#000000'});",
-                     
                      if(pesquisa_geral) "" else "$('.dataTables_filter').hide();",
-                     
-                     # HOVER: Usa a 'cor_primaria'
-                     "var tableContainer = $(this.api().table().container());",
-                     "tableContainer.find('tbody').on('mouseenter', 'tr', function() { $(this).css({'color': '", cor_primaria, "', 'font-weight': '600', 'transition': '0.2s'}); }).on('mouseleave', 'tr', function() { $(this).css({'color': '", cor_texto_corpo, "', 'font-weight': 'normal'}); });",
-                     
-                     "$(this.api().table().header()).removeClass('sorting sorting_asc sorting_desc');",
                      "}")
       ),
       language = base::list(
         paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
-        emptyTable = "Sem dados",
-        zeroRecords = "Nenhum registro encontrado",
         search = "Pesquisa Geral:"
       )
     )
   )
 
-  # Retorno consolidado
   htmltools::tagList(html_titulo, tabela)
 }
+
+# tabela_interativa <- function(dados, 
+#                               titulo_tabela, 
+#                               tam_fonte_corpo = "13px",   
+#                               tam_fonte_titulo = "20px",  
+#                               tam_fonte_header = "14px",  
+#                               cor_titulo = "#03045e",        # NOVA: Cor exclusiva do Título
+#                               cor_primaria = "#03045e",      # Cor do Cabeçalho e Hover
+#                               cor_texto_corpo = "#333333",   
+#                               mostrar_filtro = TRUE,      
+#                               pesquisa_geral = FALSE,     
+#                               largura_cols_vetor = NULL,  
+#                               colunas_selecionadas = NULL) {
+# 
+#   # --- SEGURANÇA DO CONTADOR ---
+#   if (!base::exists("contador_tabelas_alex")) {
+#     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
+#   }
+# 
+#   # --- 1. SELEÇÃO E RENOMEAÇÃO ---
+#   dados_processados <- dados
+#   if (!base::is.null(colunas_selecionadas)) {
+#     dados_processados <- dados %>% 
+#       dplyr::select(tidyselect::all_of(colunas_selecionadas))
+#   }
+# 
+#   # --- 2. CÁLCULO DE LARGURAS ---
+#   n_colunas_dados <- base::ncol(dados_processados)
+#   lista_columnDefs <- base::list(
+#     base::list(width = '30px', targets = 0) 
+#   )
+#   
+#   if (!base::is.null(largura_cols_vetor)) {
+#     for (i in base::seq_along(largura_cols_vetor)) {
+#       if (i <= (n_colunas_dados + 1)) {
+#          lista_columnDefs[[base::length(lista_columnDefs) + 1]] <- base::list(
+#            width = largura_cols_vetor[i], 
+#            targets = i - 1
+#          )
+#       }
+#     }
+#   }
+# 
+#   # --- 3. CONTADOR E TÍTULO ---
+#   base::assign("contador_tabelas_alex", contador_tabelas_alex + 1, envir = .GlobalEnv)
+#   titulo_final <- base::paste0("Tabela ", contador_tabelas_alex, ": ", titulo_tabela)
+# 
+#   # --- 4. CRIAÇÃO DO TÍTULO (HTML INDEPENDENTE COM COR PRÓPRIA) ---
+#   # Aqui usamos a 'cor_titulo', separada do resto da tabela
+#   html_titulo <- htmltools::tags$h2(
+#     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
+#                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
+#     titulo_final
+#   )
+# 
+#   # --- 5. RENDERIZAÇÃO DA TABELA (DT) ---
+#   tabela <- DT::datatable(
+#     base::data.frame(dados_processados, check.names = FALSE),
+#     rownames = TRUE, 
+#     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
+#     width = "100%", 
+#     class = "hover row-border", 
+#     options = base::list(
+#       dom = 'ft p', 
+#       pageLength = 10,
+#       searching = TRUE, 
+#       lengthChange = FALSE,
+#       info = FALSE,
+#       ordering = FALSE,     
+#       autoWidth = FALSE,    
+#       scrollX = TRUE,       
+#       columnDefs = lista_columnDefs,
+#       
+#       initComplete = DT::JS(
+#         base::paste0("function(settings, json) {",
+#                      # Estilo do corpo
+#                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
+#                      
+#                      # Cabeçalho: Usa a 'cor_primaria'
+#                      "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap', 'background-image': 'none !important'});",
+#                      
+#                      # MOLDURA PRETA (Topo e Baixo do Header)
+#                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
+#                      
+#                      # Linha Preta de fechamento final
+#                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
+#                      
+#                      # ESTILO DA PESQUISA GERAL
+#                      "var searchDiv = $('.dataTables_filter');",
+#                      "searchDiv.css({'text-align': 'left', 'margin-bottom': '15px', 'float': 'none'});",
+#                      "searchDiv.find('label').css({'font-weight': 'bold', 'color': '#000000'});",
+#                      
+#                      if(pesquisa_geral) "" else "$('.dataTables_filter').hide();",
+#                      
+#                      # HOVER: Usa a 'cor_primaria'
+#                      "var tableContainer = $(this.api().table().container());",
+#                      "tableContainer.find('tbody').on('mouseenter', 'tr', function() { $(this).css({'color': '", cor_primaria, "', 'font-weight': '600', 'transition': '0.2s'}); }).on('mouseleave', 'tr', function() { $(this).css({'color': '", cor_texto_corpo, "', 'font-weight': 'normal'}); });",
+#                      
+#                      "$(this.api().table().header()).removeClass('sorting sorting_asc sorting_desc');",
+#                      "}")
+#       ),
+#       language = base::list(
+#         paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
+#         emptyTable = "Sem dados",
+#         zeroRecords = "Nenhum registro encontrado",
+#         search = "Pesquisa Geral:"
+#       )
+#     )
+#   )
+# 
+#   # Retorno consolidado
+#   htmltools::tagList(html_titulo, tabela)
+# }
 
 # ==============================================================================
 # F. FUNÇÕES DE TRATAMENTO E AUDITORIA
