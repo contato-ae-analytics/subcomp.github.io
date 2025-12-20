@@ -322,6 +322,7 @@ jobs:
             any::viridis
             any::ggrepel
             any::reticulate
+            any::crosstalk
 
       # --- 6. RENDERIZAR E PUBLICAR ---
       - name: Render and Publish
