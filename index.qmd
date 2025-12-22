@@ -700,7 +700,7 @@ subtitulo_texto   <- "Comparativo Mensal de Entradas e Saídas"
 # Estilo dos Títulos (Sugestão: Titulo sempre > Subtitulo)
 # titulo_cor        <- "#001d3d"
 titulo_cor        <- "#03045e"
-titulo_tamanho    <- 14         # Ajustado para destaque (era 10)
+titulo_tamanho    <- 14.5         # Ajustado para destaque (era 10)
 sub_cor           <- "#000000"
 sub_tamanho       <- 13         
 
@@ -930,7 +930,7 @@ plotly::plot_ly() %>%
 <!-- Tabela - catalogo -->
 
 
-## Catálogo e-compras
+## Catálogo E-compras
 
 ::: {style="text-align: justify"}
 
@@ -941,6 +941,15 @@ plotly::plot_ly() %>%
 #| echo: false
 #| warning: false
 #| message: false
+
+  
+# Configuração de Fontes (Visual Compacto)
+tam_fonte_corpo = "11px"     # Fonte dos dados: pequena para maximizar a visualização
+tam_fonte_titulo = "14px"   # Título: discreto e elegante em azul oficial
+tam_fonte_header = "12px"   # Cabeçalho: equilibrado entre as linhas pretas grossas
+cor_titulo = "#03045e"        # NOVA: Cor exclusiva do Título
+cor_primaria = "#000000"     # Cor do Cabeçalho e Hover
+cor_texto_corpo = "#000000" 
 
 # --- 1. AJUSTE DE LARGURAS (ESTRUTURA HORIZONTAL) ---
 minhas_larguras_catalogo <- base::c(
@@ -968,14 +977,14 @@ tabela_interativa(
   titulo_tabela = "Catálogo e-Compras",
   
   # Configuração de fontes (visual compacto)
-  tam_fonte_corpo   = tamanho_eixo_x,
-  tam_fonte_titulo  = titulo_tamanho,
-  tam_fonte_header  = tamanho_legenda,
+  tam_fonte_corpo   = tam_fonte_corpo,
+  tam_fonte_titulo  = tam_fonte_titulo,
+  tam_fonte_header  = tam_fonte_header,
   
   # Cores
   cor_titulo        = "#03045e",
-  cor_primaria      = cor_eixo_x,
-  cor_texto_corpo   = cor_eixo_x,
+  cor_primaria      = cor_primaria,
+  cor_texto_corpo   = cor_texto_corpo,
   
   # Controle de filtros e pesquisa
   mostrar_filtro    = FALSE,
