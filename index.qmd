@@ -143,6 +143,7 @@ if(!require("dplyr")) install.packages("dplyr", quiet = TRUE) ; library("dplyr")
 # E. FUNÇÕES DE APRESENTAÇÃO
 # ==============================================================================
 
+
 tabela_interativa <- function(dados, 
                               titulo_tabela, 
                               tam_fonte_corpo = "13px",   
@@ -194,7 +195,7 @@ tabela_interativa <- function(dados,
   html_titulo <- htmltools::tags$h2(
     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
-    titulo_final
+    htmltools::tags$b(titulo_final) # <--- ALTERAÇÃO: Título em negrito
   )
 
   # --- 5. RENDERIZAÇÃO DA TABELA (DT) ---
@@ -210,7 +211,7 @@ tabela_interativa <- function(dados,
       searching = TRUE, 
       lengthChange = FALSE,
       info = FALSE,
-      ordering = FALSE,     
+      ordering = FALSE,      
       autoWidth = FALSE,    
       scrollX = TRUE,       
       columnDefs = lista_columnDefs,
@@ -255,6 +256,119 @@ tabela_interativa <- function(dados,
   # Retorno consolidado
   htmltools::tagList(html_titulo, tabela)
 }
+
+# tabela_interativa <- function(dados, 
+#                               titulo_tabela, 
+#                               tam_fonte_corpo = "13px",   
+#                               tam_fonte_titulo = "20px",  
+#                               tam_fonte_header = "14px",  
+#                               cor_titulo = "#03045e",        # NOVA: Cor exclusiva do Título
+#                               cor_primaria = "#03045e",      # Cor do Cabeçalho e Hover
+#                               cor_texto_corpo = "#333333",   
+#                               mostrar_filtro = TRUE,      
+#                               pesquisa_geral = FALSE,     
+#                               largura_cols_vetor = NULL,  
+#                               colunas_selecionadas = NULL) {
+# 
+#   # --- SEGURANÇA DO CONTADOR ---
+#   if (!base::exists("contador_tabelas_alex")) {
+#     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
+#   }
+# 
+#   # --- 1. SELEÇÃO E RENOMEAÇÃO ---
+#   dados_processados <- dados
+#   if (!base::is.null(colunas_selecionadas)) {
+#     dados_processados <- dados %>% 
+#       dplyr::select(tidyselect::all_of(colunas_selecionadas))
+#   }
+# 
+#   # --- 2. CÁLCULO DE LARGURAS ---
+#   n_colunas_dados <- base::ncol(dados_processados)
+#   lista_columnDefs <- base::list(
+#     base::list(width = '30px', targets = 0) 
+#   )
+#   
+#   if (!base::is.null(largura_cols_vetor)) {
+#     for (i in base::seq_along(largura_cols_vetor)) {
+#       if (i <= (n_colunas_dados + 1)) {
+#          lista_columnDefs[[base::length(lista_columnDefs) + 1]] <- base::list(
+#            width = largura_cols_vetor[i], 
+#            targets = i - 1
+#          )
+#       }
+#     }
+#   }
+# 
+#   # --- 3. CONTADOR E TÍTULO ---
+#   base::assign("contador_tabelas_alex", contador_tabelas_alex + 1, envir = .GlobalEnv)
+#   titulo_final <- base::paste0("Tabela ", contador_tabelas_alex, ": ", titulo_tabela)
+# 
+#   # --- 4. CRIAÇÃO DO TÍTULO (HTML INDEPENDENTE COM COR PRÓPRIA) ---
+#   # Aqui usamos a 'cor_titulo', separada do resto da tabela
+#   html_titulo <- htmltools::tags$h2(
+#     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
+#                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
+#     titulo_final
+#   )
+# 
+#   # --- 5. RENDERIZAÇÃO DA TABELA (DT) ---
+#   tabela <- DT::datatable(
+#     base::data.frame(dados_processados, check.names = FALSE),
+#     rownames = TRUE, 
+#     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
+#     width = "100%", 
+#     class = "hover row-border", 
+#     options = base::list(
+#       dom = 'ft p', 
+#       pageLength = 10,
+#       searching = TRUE, 
+#       lengthChange = FALSE,
+#       info = FALSE,
+#       ordering = FALSE,     
+#       autoWidth = FALSE,    
+#       scrollX = TRUE,       
+#       columnDefs = lista_columnDefs,
+#       
+#       initComplete = DT::JS(
+#         base::paste0("function(settings, json) {",
+#                      # Estilo do corpo
+#                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
+#                      
+#                      # Cabeçalho: Usa a 'cor_primaria'
+#                      "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap', 'background-image': 'none !important'});",
+#                      
+#                      # MOLDURA PRETA (Topo e Baixo do Header)
+#                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
+#                      
+#                      # Linha Preta de fechamento final
+#                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
+#                      
+#                      # ESTILO DA PESQUISA GERAL
+#                      "var searchDiv = $('.dataTables_filter');",
+#                      "searchDiv.css({'text-align': 'left', 'margin-bottom': '15px', 'float': 'none'});",
+#                      "searchDiv.find('label').css({'font-weight': 'bold', 'color': '#000000'});",
+#                      
+#                      if(pesquisa_geral) "" else "$('.dataTables_filter').hide();",
+#                      
+#                      # HOVER: Usa a 'cor_primaria'
+#                      "var tableContainer = $(this.api().table().container());",
+#                      "tableContainer.find('tbody').on('mouseenter', 'tr', function() { $(this).css({'color': '", cor_primaria, "', 'font-weight': '600', 'transition': '0.2s'}); }).on('mouseleave', 'tr', function() { $(this).css({'color': '", cor_texto_corpo, "', 'font-weight': 'normal'}); });",
+#                      
+#                      "$(this.api().table().header()).removeClass('sorting sorting_asc sorting_desc');",
+#                      "}")
+#       ),
+#       language = base::list(
+#         paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
+#         emptyTable = "Sem dados",
+#         zeroRecords = "Nenhum registro encontrado",
+#         search = "Pesquisa Geral:"
+#       )
+#     )
+#   )
+# 
+#   # Retorno consolidado
+#   htmltools::tagList(html_titulo, tabela)
+# }
 
 # ==============================================================================
 # F. FUNÇÕES DE TRATAMENTO E AUDITORIA
@@ -392,8 +506,6 @@ O setor atua de forma estratégica na coordenação e execução de compras e co
 
 ::: {style="text-align: justify"}
 
-
-
 ```{r}
 #| label: Importação das bases de dados
 #| code-summary: "Importação das bases de dados"
@@ -401,34 +513,149 @@ O setor atua de forma estratégica na coordenação e execução de compras e co
 # --- 2. IMPORTAÇÃO E FILTRAGEM INICIAL ---
 
 # 2.1. Base de Processos: Cabeçalho da Operação (Datas, Setores, Agentes)
+# bd_processos <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826") |> 
+#   janitor::clean_names() |> 
+#   dplyr::filter(!base::is.na(processo), processo != "-", stringr::str_detect(processo, "\\d"))
+# 
+# # 2.2. Base de Itens: Detalhamento Financeiro vinculado aos processos
+# bd_itens <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695#gid=1088782695") |> 
+#   janitor::clean_names() |> 
+#   dplyr::filter(!base::is.na(processo), processo != "-", stringr::str_detect(processo, "\\d"))
+# 
+# # 2.3. Natureza da Despesa: Dicionário para tradução de códigos contábeis
+# bd_natureza <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687") |> 
+#   janitor::clean_names() |> 
+#   dplyr::filter(!base::is.na(cod), stringr::str_detect(cod, "\\d"))
+# 
+# # 2.4. Fonte de Recurso: Identificação da origem do capital
+# bd_fonte <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696") |> 
+#   janitor::clean_names() |> 
+#   dplyr::filter(!base::is.na(fonte), fonte != "-")
+# 
+# # 2.5. Elemento de Despesa: Classificação detalhada do objeto de gasto
+# bd_elemento <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856") |> 
+#   janitor::clean_names() |> 
+#   dplyr::filter(!base::is.na(codigo), stringr::str_detect(codigo, "\\d"))
+# 
+# # 2.6. Catálogo e-Compras: Tabela mestra de padronização de itens do Estado
+# bd_catalogo <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131") |> 
+#   janitor::clean_names() |> 
+#   dplyr::filter(!base::is.na(id), id != "-")
+
+# 2.1. Base de Processos: Cabeçalho da Operação (Datas, Setores, Agentes)
 bd_processos <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826") |> 
   janitor::clean_names() |> 
-  dplyr::filter(!base::is.na(processo), processo != "-", stringr::str_detect(processo, "\\d"))
+  dplyr::filter(!base::is.na(processo),processo != "-",stringr::str_detect(processo, "\\d")) |> 
+  dplyr::mutate(
+    # Número do processo é um CÓDIGO administrativo
+    # Nunca deve ser tratado como número
+    processo = as.character(processo),
+    # Identificação do agente responsável
+    agente = as.character(agente),
+    # Modalidade do processo (ex: dispensa, pregão)
+    modalidade_processo = as.character(modalidade_processo),
+    # Setor demandante
+    setor = as.character(setor),
+    # Código orçamentário da despesa
+    natureza_despesa = as.character(natureza_despesa),
+    # Fonte de recurso pode ter espaços extras vindos do Sheets
+    fonte_recurso = stringr::str_squish(fonte_recurso),
+    # Campo textual livre
+    emenda = stringr::str_squish(emenda)
+  )
+
 
 # 2.2. Base de Itens: Detalhamento Financeiro vinculado aos processos
 bd_itens <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695#gid=1088782695") |> 
-  janitor::clean_names() |> 
-  dplyr::filter(!base::is.na(processo), processo != "-", stringr::str_detect(processo, "\\d"))
+  janitor::clean_names() |> dplyr::filter(!base::is.na(processo),processo != "-",stringr::str_detect(processo, "\\d")) |> 
+  dplyr::mutate(
+    # Processo é código administrativo
+    processo = as.character(processo),
+    # Identificador interno do item
+    id = as.numeric(id),
+    # Nome do fornecedor
+    fornecedor = as.character(fornecedor),
+    # Quantidade adquirida
+    qtde = as.numeric(qtde),
+    # Valor unitário do item
+    valor_unitario = as.numeric(valor_unitario),
+    # Número da nota de empenho
+    nota_de_empenho = stringr::str_squish(nota_de_empenho),
+    # Data mantida como texto (pode haver formatos mistos)
+    data_empenho = stringr::str_squish(data_empenho)
+  )
+
+
 
 # 2.3. Natureza da Despesa: Dicionário para tradução de códigos contábeis
 bd_natureza <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687") |> 
   janitor::clean_names() |> 
-  dplyr::filter(!base::is.na(cod), stringr::str_detect(cod, "\\d"))
+  dplyr::filter(!base::is.na(cod),stringr::str_detect(cod, "\\d")) |> 
+  dplyr::mutate(
+    # Código da natureza de despesa (sempre texto)
+    cod = as.character(cod),
+    # Situação da natureza (ATIVA / INATIVA)
+    status = toupper(status),
+    # Descrição da natureza
+    especificacao = stringr::str_squish(especificacao),
+    # Código contábil (não é variável numérica)
+    conta_contabil = as.character(conta_contabil),
+    # Descrição da conta contábil
+    conta_contabil_descricao = stringr::str_squish(conta_contabil_descricao)
+  )
+
+
 
 # 2.4. Fonte de Recurso: Identificação da origem do capital
 bd_fonte <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696") |> 
   janitor::clean_names() |> 
-  dplyr::filter(!base::is.na(fonte), fonte != "-")
+  dplyr::filter(!base::is.na(fonte),fonte != "-") |> 
+  dplyr::mutate(
+    # Código da fonte de recurso
+    fonte = stringr::str_trim(fonte),
+    # Descrição da fonte
+    descricao = stringr::str_squish(descricao),
+    # Tipo da fonte (ORDINÁRIO, VINCULADO, etc.)
+    tipo = toupper(tipo),
+    # Situação da fonte
+    situacao = toupper(situacao)
+  )
+
+
 
 # 2.5. Elemento de Despesa: Classificação detalhada do objeto de gasto
-bd_elemento <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856") |> 
+bd_elemento <- gsheet::gsheet2tbl(
+  "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856") |> 
   janitor::clean_names() |> 
-  dplyr::filter(!base::is.na(codigo), stringr::str_detect(codigo, "\\d"))
+  dplyr::filter(!base::is.na(codigo),stringr::str_detect(codigo, "\\d")) |> 
+  dplyr::mutate(
+    # Código do elemento (texto categórico)
+    codigo = as.character(codigo),
+    # Nome do elemento
+    elemento = toupper(elemento),
+    # Descrição do elemento
+    descricao = stringr::str_squish(descricao)
+  )
+
+
 
 # 2.6. Catálogo e-Compras: Tabela mestra de padronização de itens do Estado
-bd_catalogo <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131") |> 
+bd_catalogo <- gsheet::gsheet2tbl(
+  "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131") |> 
   janitor::clean_names() |> 
-  dplyr::filter(!base::is.na(id), id != "-")
+  dplyr::filter(!base::is.na(id), id != "-") |> 
+  dplyr::mutate(
+    # Identificador do item no catálogo
+    id = as.numeric(id),
+    # Descrição padronizada do item
+    descricao = stringr::str_squish(descricao),
+    # Padronização textual para evitar inconsistências
+    elemento = toupper(elemento),
+    grupo = toupper(grupo),
+    subgrupo = toupper(subgrupo),
+    grupo_item = toupper(grupo_item)
+  )
+
 ```
 
 ```{r}
@@ -560,6 +787,8 @@ bd_principal <- bd_principal %>%
 
 <br>
 
+<!-- grafico - Entrada e saida de processos -->
+
 ```{r}
 #| label: Entrada e saida processos
 #| code-summary: "Entrada e saida processos"
@@ -580,7 +809,7 @@ subtitulo_texto   <- "Comparativo Mensal de Entradas e Saídas"
 # Estilo dos Títulos (Sugestão: Titulo sempre > Subtitulo)
 # titulo_cor        <- "#001d3d"
 titulo_cor        <- "#03045e"
-titulo_tamanho    <- 16         # Ajustado para destaque (era 10)
+titulo_tamanho    <- 14         # Ajustado para destaque (era 10)
 sub_cor           <- "#000000"
 sub_tamanho       <- 13         
 
@@ -805,150 +1034,64 @@ plotly::plot_ly() %>%
   plotly::config(displayModeBar = FALSE, responsive = TRUE)
 ```
 
+<!-- Tabela - catalogo -->
+
+
+##  Catálogo e-compras
 
 
 ```{r}
-#| label: Visualização dos dados
-#| code-summary: "Visualização dos dados"
-library(crosstalk)
-library(plotly)
+#| label: Tabela catalogo
+#| code-summary: "Tabela do catálogo"
+#| echo: false
+#| warning: false
+#| message: false
 
-# ==========================================================
-# --- FUNÇÃO: TABELA INTERATIVA (VERSÃO COMPATÍVEL CROSSTALK) ---
-# ==========================================================
-tabela_interativa <- function(dados, titulo_tabela, tam_fonte_corpo = "13px", tam_fonte_titulo = "20px", 
-                              tam_fonte_header = "14px", cor_titulo = "#03045e", cor_primaria = "#03045e", 
-                              cor_texto_corpo = "#333333", mostrar_filtro = TRUE, pesquisa_geral = FALSE, 
-                              largura_cols_vetor = NULL, colunas_selecionadas = NULL) {
-
-  # Tratamento para SharedData (Crosstalk)
-  is_shared <- inherits(dados, "SharedData")
-  df_interno <- if(is_shared) dados$origData() else dados
-
-  if (!base::exists("contador_tabelas_alex")) { base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv) }
-
-  # Seleção de colunas antes da renderização
-  if (!base::is.null(colunas_selecionadas)) {
-    df_interno <- df_interno %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
-    if(is_shared) {
-      dados <- crosstalk::SharedData$new(df_interno, group = dados$groupName())
-    } else { dados <- df_interno }
-  }
-
-  n_colunas_dados <- base::ncol(df_interno)
-  lista_columnDefs <- base::list(base::list(width = '30px', targets = 0))
-  if (!base::is.null(largura_cols_vetor)) {
-    for (i in base::seq_along(largura_cols_vetor)) {
-      if (i <= (n_colunas_dados + 1)) {
-         lista_columnDefs[[base::length(lista_columnDefs) + 1]] <- base::list(width = largura_cols_vetor[i], targets = i - 1)
-      }
-    }
-  }
-
-  base::assign("contador_tabelas_alex", contador_tabelas_alex + 1, envir = .GlobalEnv)
-  
-  html_titulo <- htmltools::tags$h2(
-    style = base::paste0("color:", cor_titulo, "; font-size:", tam_fonte_titulo, "; font-weight:bold; margin-bottom:10px;"), 
-    base::paste0("Tabela ", contador_tabelas_alex, ": ", titulo_tabela)
-  )
-
-  tabela <- DT::datatable(
-    dados, 
-    rownames = TRUE, 
-    filter = if(mostrar_filtro) base::list(position = "top") else "none",
-    width = "100%", 
-    class = "hover row-border", 
-    options = base::list(
-      dom = 'ft p', 
-      pageLength = 10, 
-      searching = TRUE, 
-      info = FALSE, 
-      ordering = FALSE, 
-      autoWidth = FALSE, 
-      scrollX = TRUE,
-      columnDefs = lista_columnDefs,
-      initComplete = DT::JS(base::paste0("function(settings, json) {",
-                                         "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Inter, sans-serif'});",
-                                         "$(this.api().table().header()).css({'background-color': '#ffffff', 'color': '", cor_primaria, "'});",
-                                         "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
-                                         "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
-                                         if(pesquisa_geral) "" else "$('.dataTables_filter').hide();", "}"))
-    ),
-    language = base::list(paginate = base::list("previous" = "Anterior", "next" = "Próximo"), search = "Pesquisa:")
-  )
-  
-  htmltools::tagList(html_titulo, tabela)
-}
-
-
-# --- DICIONÁRIO E ORDEM ---
-meses_ordem_limpo <- c("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro")
-tradutor_meses <- c("January"="Janeiro", "February"="Fevereiro", "March"="Março", "April"="Abril", "May"="Maio", "June"="Junho", "July"="Julho", "August"="Agosto", "September"="Setembro", "October"="Outubro", "November"="Novembro", "December"="Dezembro")
-
-# --- REESTRUTURAÇÃO ---
-dados_base_limpa <- bd_principal %>%
-  dplyr::distinct(processo, .keep_all = TRUE) %>%
-  # Selecionamos todas as colunas que você pediu para a tabela
-  dplyr::select(
-    processo, mes_entrada, mes_saida, modalidade_processo, status_item, 
-    agente, qtd_itens_processo, natureza_despesa, valor_total, pct_empenho
-  ) %>%
-  tidyr::pivot_longer(cols = c(mes_entrada, mes_saida), names_to = "Origem", values_to = "Mes_Nome") %>%
-  dplyr::mutate(Tipo = dplyr::if_else(Origem == "mes_entrada", "Entradas", "Saídas")) %>%
-  dplyr::filter(!is.na(Mes_Nome)) %>%
-  dplyr::mutate(
-    Mes_Nome_Limpo = dplyr::recode(Mes_Nome, !!!tradutor_meses),
-    Mes_Bold = factor(paste0("<b>", Mes_Nome_Limpo, "</b>"), levels = paste0("<b>", meses_ordem_limpo, "</b>"))
-  )
-
-
-# --- 1. CONFIGURAÇÕES DA TABELA ---
-minhas_colunas <- c(
-  "Modalidade"       = "modalidade_processo", 
-  "Nº Processo"      = "processo", 
-  "Itens"            = "qtd_itens_processo", 
-  "Natureza"         = "natureza_despesa", 
-  "Valor Total (R$)" = "valor_total", 
-  "Empenho (%)"      = "pct_empenho"
+# --- 1. AJUSTE DE LARGURAS (ESTRUTURA HORIZONTAL) ---
+minhas_larguras_catalogo <- base::c(
+  "30px",   # índice
+  "80px",   # ID do item
+  "360px",  # Descrição do item
+  "130px",  # Elemento (Material / Serviço)
+  "260px",  # Grupo
+  "260px",  # Subgrupo
+  "260px"   # Grupo do item
 )
 
-# 6 colunas + 1 numeração = 7 larguras
-minhas_larguras <- c("30px", "150px", "120px", "60px", "130px", "100px", "80px")
+# --- 2. SELEÇÃO E RENOMEAÇÃO (CURADORIA DE DADOS) ---
+minhas_colunas_catalogo <- base::c(
+  "ID"           = "id",
+  "Descrição"    = "descricao",
+  "Elemento"     = "elemento",
+  "Grupo"        = "grupo",
+  "Subgrupo"     = "subgrupo",
+  "Grupo do Item"= "grupo_item"
+)
 
-# --- 2. CRIAÇÃO DO OBJETO COMPARTILHADO ---
-sd <- crosstalk::SharedData$new(dados_base_limpa)
+tabela_interativa(
+  dados = bd_catalogo,
+  titulo_tabela = "Catálogo e-Compras",
+  
+  # Configuração de fontes (visual compacto)
+  tam_fonte_corpo   = tamanho_eixo_x,
+  tam_fonte_titulo  = titulo_tamanho,
+  tam_fonte_header  = tamanho_legenda,
+  
+  # Cores
+  cor_titulo        = "#03045e",
+  cor_primaria      = cor_eixo_x,
+  cor_texto_corpo   = cor_eixo_x,
+  
+  # Controle de filtros e pesquisa
+  mostrar_filtro    = FALSE,
+  pesquisa_geral    = TRUE,
+  
+  # Layout
+  largura_cols_vetor   = minhas_larguras_catalogo,
+  colunas_selecionadas = minhas_colunas_catalogo
+)
 
-# --- 3. EXIBIÇÃO FINAL ---
-htmltools::tagList(
-  # Filtros que comandam ambos
-  crosstalk::bscols(widths = c(6, 6),
-         crosstalk::filter_select("f_mod", "Selecione a Modalidade", sd, ~modalidade_processo),
-         crosstalk::filter_select("f_stat", "Filtrar por Status", sd, ~status_item)),
-  br(),
-  
-  # Gráfico Dinâmico (Sincronizado)
-  plotly::plot_ly(sd, x = ~Mes_Bold) %>%
-    plotly::add_histogram(y = ~ifelse(Tipo == "Entradas", 1, 0), name = "Entradas", 
-                          marker = list(color = "#001d3d"), histfunc = "sum") %>%
-    plotly::add_histogram(y = ~ifelse(Tipo == "Saídas", 1, 0), name = "Saídas", 
-                          marker = list(color = "#48cae4"), histfunc = "sum") %>%
-    plotly::layout(barmode = "group", xaxis = list(title = ""), yaxis = list(title = "Qtd Processos"),
-                   title = list(text = "<b>Fluxo Operacional de Processos</b>", x = 0),
-                   font = list(family = "Inter, sans-serif")),
-  br(), br(),
-  
-  # Tabela Interativa (Sincronizada)
-  tabela_interativa(
-    dados = sd, 
-    titulo_tabela = "Detalhamento Técnico dos Processos", 
-    tam_fonte_corpo = "11px", 
-    pesquisa_geral = TRUE, 
-    colunas_selecionadas = minhas_colunas, 
-    largura_cols_vetor = minhas_larguras
-  )
-)S
 ```
-
 
 :::
 
