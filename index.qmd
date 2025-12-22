@@ -931,7 +931,7 @@ plotly::plot_ly() %>%
 
 ### Índices de Produtividade Individual
 
-## DLE — Dispensa de Licitação Eletrônica
+## Dispensa de Licitação Eletrônica - (DLE)
 
 
 ::: {style="text-align: justify"}
@@ -942,7 +942,7 @@ plotly::plot_ly() %>%
 <!-- Tabela - catalogo -->
 
 
-## Gestão do Catálogo E-compras e Fluxo de Itens
+## Catálogo E-compras e Fluxo de Itens
 
 ::: {style="text-align: justify"}
 
