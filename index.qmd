@@ -927,10 +927,22 @@ plotly::plot_ly() %>%
 
 :::
 
+### Índices de Produtividade Setorial
+
+### Índices de Produtividade Individual
+
+## DLE — Dispensa de Licitação Eletrônica
+
+
+::: {style="text-align: justify"}
+
+
+:::
+
 <!-- Tabela - catalogo -->
 
 
-## Catálogo E-compras
+## Gestão do Catálogo E-compras e Fluxo de Itens
 
 ::: {style="text-align: justify"}
 
@@ -945,7 +957,7 @@ plotly::plot_ly() %>%
   
 # Configuração de Fontes (Visual Compacto)
 tam_fonte_corpo = "11.3px"     # Fonte dos dados: pequena para maximizar a visualização
-tam_fonte_titulo = "14.5px"   # Título: discreto e elegante em azul oficial
+tam_fonte_titulo = "14.3px"   # Título: discreto e elegante em azul oficial
 tam_fonte_header = "12.2px"   # Cabeçalho: equilibrado entre as linhas pretas grossas
 cor_titulo = "#03045e"        # NOVA: Cor exclusiva do Título
 cor_primaria = "#000000"     # Cor do Cabeçalho e Hover
