@@ -143,7 +143,6 @@ if(!require("dplyr")) install.packages("dplyr", quiet = TRUE) ; library("dplyr")
 # E. FUNÇÕES DE APRESENTAÇÃO
 # ==============================================================================
 
-
 tabela_interativa <- function(dados, 
                               titulo_tabela, 
                               tam_fonte_corpo = "13px",   
@@ -155,7 +154,9 @@ tabela_interativa <- function(dados,
                               mostrar_filtro = TRUE,      
                               pesquisa_geral = FALSE,     
                               largura_cols_vetor = NULL,  
-                              colunas_selecionadas = NULL) {
+                              colunas_selecionadas = NULL,
+                              n_pages = 10,
+                              mostrar_indice = TRUE) {      # NOVO: Argumento para mostrar/ocultar índice
 
   # --- SEGURANÇA DO CONTADOR ---
   if (!base::exists("contador_tabelas_alex")) {
@@ -201,13 +202,13 @@ tabela_interativa <- function(dados,
   # --- 5. RENDERIZAÇÃO DA TABELA (DT) ---
   tabela <- DT::datatable(
     base::data.frame(dados_processados, check.names = FALSE),
-    rownames = TRUE, 
+    rownames = mostrar_indice,                      # <--- APLICAÇÃO: mostrar ou não o índice
     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
     width = "100%", 
     class = "hover row-border", 
     options = base::list(
       dom = 'ft p', 
-      pageLength = 10,
+      pageLength = n_pages,
       searching = TRUE, 
       lengthChange = FALSE,
       info = FALSE,
@@ -256,119 +257,6 @@ tabela_interativa <- function(dados,
   # Retorno consolidado
   htmltools::tagList(html_titulo, tabela)
 }
-
-# tabela_interativa <- function(dados, 
-#                               titulo_tabela, 
-#                               tam_fonte_corpo = "13px",   
-#                               tam_fonte_titulo = "20px",  
-#                               tam_fonte_header = "14px",  
-#                               cor_titulo = "#03045e",        # NOVA: Cor exclusiva do Título
-#                               cor_primaria = "#03045e",      # Cor do Cabeçalho e Hover
-#                               cor_texto_corpo = "#333333",   
-#                               mostrar_filtro = TRUE,      
-#                               pesquisa_geral = FALSE,     
-#                               largura_cols_vetor = NULL,  
-#                               colunas_selecionadas = NULL) {
-# 
-#   # --- SEGURANÇA DO CONTADOR ---
-#   if (!base::exists("contador_tabelas_alex")) {
-#     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
-#   }
-# 
-#   # --- 1. SELEÇÃO E RENOMEAÇÃO ---
-#   dados_processados <- dados
-#   if (!base::is.null(colunas_selecionadas)) {
-#     dados_processados <- dados %>% 
-#       dplyr::select(tidyselect::all_of(colunas_selecionadas))
-#   }
-# 
-#   # --- 2. CÁLCULO DE LARGURAS ---
-#   n_colunas_dados <- base::ncol(dados_processados)
-#   lista_columnDefs <- base::list(
-#     base::list(width = '30px', targets = 0) 
-#   )
-#   
-#   if (!base::is.null(largura_cols_vetor)) {
-#     for (i in base::seq_along(largura_cols_vetor)) {
-#       if (i <= (n_colunas_dados + 1)) {
-#          lista_columnDefs[[base::length(lista_columnDefs) + 1]] <- base::list(
-#            width = largura_cols_vetor[i], 
-#            targets = i - 1
-#          )
-#       }
-#     }
-#   }
-# 
-#   # --- 3. CONTADOR E TÍTULO ---
-#   base::assign("contador_tabelas_alex", contador_tabelas_alex + 1, envir = .GlobalEnv)
-#   titulo_final <- base::paste0("Tabela ", contador_tabelas_alex, ": ", titulo_tabela)
-# 
-#   # --- 4. CRIAÇÃO DO TÍTULO (HTML INDEPENDENTE COM COR PRÓPRIA) ---
-#   # Aqui usamos a 'cor_titulo', separada do resto da tabela
-#   html_titulo <- htmltools::tags$h2(
-#     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
-#                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
-#     titulo_final
-#   )
-# 
-#   # --- 5. RENDERIZAÇÃO DA TABELA (DT) ---
-#   tabela <- DT::datatable(
-#     base::data.frame(dados_processados, check.names = FALSE),
-#     rownames = TRUE, 
-#     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
-#     width = "100%", 
-#     class = "hover row-border", 
-#     options = base::list(
-#       dom = 'ft p', 
-#       pageLength = 10,
-#       searching = TRUE, 
-#       lengthChange = FALSE,
-#       info = FALSE,
-#       ordering = FALSE,     
-#       autoWidth = FALSE,    
-#       scrollX = TRUE,       
-#       columnDefs = lista_columnDefs,
-#       
-#       initComplete = DT::JS(
-#         base::paste0("function(settings, json) {",
-#                      # Estilo do corpo
-#                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
-#                      
-#                      # Cabeçalho: Usa a 'cor_primaria'
-#                      "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap', 'background-image': 'none !important'});",
-#                      
-#                      # MOLDURA PRETA (Topo e Baixo do Header)
-#                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
-#                      
-#                      # Linha Preta de fechamento final
-#                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
-#                      
-#                      # ESTILO DA PESQUISA GERAL
-#                      "var searchDiv = $('.dataTables_filter');",
-#                      "searchDiv.css({'text-align': 'left', 'margin-bottom': '15px', 'float': 'none'});",
-#                      "searchDiv.find('label').css({'font-weight': 'bold', 'color': '#000000'});",
-#                      
-#                      if(pesquisa_geral) "" else "$('.dataTables_filter').hide();",
-#                      
-#                      # HOVER: Usa a 'cor_primaria'
-#                      "var tableContainer = $(this.api().table().container());",
-#                      "tableContainer.find('tbody').on('mouseenter', 'tr', function() { $(this).css({'color': '", cor_primaria, "', 'font-weight': '600', 'transition': '0.2s'}); }).on('mouseleave', 'tr', function() { $(this).css({'color': '", cor_texto_corpo, "', 'font-weight': 'normal'}); });",
-#                      
-#                      "$(this.api().table().header()).removeClass('sorting sorting_asc sorting_desc');",
-#                      "}")
-#       ),
-#       language = base::list(
-#         paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
-#         emptyTable = "Sem dados",
-#         zeroRecords = "Nenhum registro encontrado",
-#         search = "Pesquisa Geral:"
-#       )
-#     )
-#   )
-# 
-#   # Retorno consolidado
-#   htmltools::tagList(html_titulo, tabela)
-# }
 
 # ==============================================================================
 # F. FUNÇÕES DE TRATAMENTO E AUDITORIA
@@ -475,7 +363,7 @@ cli::cli_alert_success("Ambiente e Funções de Tratamento carregados com sucess
 
 ### Equipe Técnica
 
-::: {style="font-size: 0.9em; text-align: justify; margin-top: 15px; margin-bottom: 20px; "}
+::: {style="font-size: 0.9em; text-align: justify; border-left: 4px solid #000000; padding-left: 15px; margin-top: 15px; margin-bottom: 20px; "}
 
 | Função | Responsável |
 |:--- |:--- |
@@ -494,7 +382,7 @@ O setor atua de forma estratégica na coordenação e execução de compras e co
 
 :::
 
-::: {style="text-align: justify; border-left: 4px solid #000000; padding-left: 20px; margin-top: 15px; margin-bottom: 20px; "}
+::: {style="text-align: justify; border-left: 4px solid #000000; padding-left: 15px; margin-top: 15px; margin-bottom: 20px; "}
 
 * **Planejamento:** Colaboração na elaboração do Plano de Contratações Anual (PCA).
 * **Conformidade:** Análise técnica de Projetos Básicos e Termos de Referência.
@@ -503,6 +391,9 @@ O setor atua de forma estratégica na coordenação e execução de compras e co
 :::
 
 ## Gestão de Fluxos e Indicadores 
+
+
+<!-- Importação das bases de dados -->
 
 ::: {style="text-align: justify"}
 
@@ -658,6 +549,9 @@ bd_catalogo <- gsheet::gsheet2tbl(
 
 ```
 
+
+<!-- Reestruturação e tratamento dos dados -->
+
 ```{r}
 #| label: Reestruturação e tratamento dos dados
 #| code-summary: "Reestruturação e tratamento dos dados"
@@ -781,9 +675,6 @@ bd_principal <- bd_principal %>%
   )
 
 ```
-
-<!-- ### Processos -->
-
 
 <br>
 
@@ -1034,10 +925,14 @@ plotly::plot_ly() %>%
   plotly::config(displayModeBar = FALSE, responsive = TRUE)
 ```
 
+:::
+
 <!-- Tabela - catalogo -->
 
 
-##  Catálogo e-compras
+## Catálogo e-compras
+
+::: {style="text-align: justify"}
 
 
 ```{r}
@@ -1049,7 +944,7 @@ plotly::plot_ly() %>%
 
 # --- 1. AJUSTE DE LARGURAS (ESTRUTURA HORIZONTAL) ---
 minhas_larguras_catalogo <- base::c(
-  "30px",   # índice
+  # "30px",   # índice
   "80px",   # ID do item
   "360px",  # Descrição do item
   "130px",  # Elemento (Material / Serviço)
@@ -1088,7 +983,9 @@ tabela_interativa(
   
   # Layout
   largura_cols_vetor   = minhas_larguras_catalogo,
-  colunas_selecionadas = minhas_colunas_catalogo
+  colunas_selecionadas = minhas_colunas_catalogo,
+  n_pages = 6,
+  mostrar_indice = FALSE
 )
 
 ```
