@@ -946,11 +946,11 @@ plotly::plot_ly() %>%
 minhas_larguras_catalogo <- base::c(
   # "30px",   # índice
   "80px",   # ID do item
-  "360px",  # Descrição do item
+  "460px",  # Descrição do item
   "130px",  # Elemento (Material / Serviço)
-  "260px",  # Grupo
-  "260px",  # Subgrupo
-  "260px"   # Grupo do item
+  "230px",  # Grupo
+  "230px",  # Subgrupo
+  "230px"   # Grupo do item
 )
 
 # --- 2. SELEÇÃO E RENOMEAÇÃO (CURADORIA DE DADOS) ---
