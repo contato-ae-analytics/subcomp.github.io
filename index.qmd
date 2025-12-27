@@ -455,25 +455,36 @@ bd_processos <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1UAgV
     emenda = stringr::str_squish(emenda)
   )
 
-
 # 2.2. Base de Itens: Detalhamento Financeiro vinculado aos processos
 bd_itens <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695#gid=1088782695") |> 
   janitor::clean_names() |> dplyr::filter(!base::is.na(processo),processo != "-",stringr::str_detect(processo, "\\d")) |> 
   dplyr::mutate(
     # Processo é código administrativo
-    processo = as.character(processo),
+    processo   = base::as.character(processo),
     # Identificador interno do item
-    id = as.numeric(id),
+    id         = base::as.numeric(id),
     # Nome do fornecedor
-    fornecedor = as.character(fornecedor),
+    fornecedor = base::as.character(fornecedor),
+    
     # Quantidade adquirida
-    qtde = as.numeric(qtde),
+    # --- TRATAMENTO DE QUANTIDADE ---
+    qtde = base::as.numeric(qtde) |> (\(x) dplyr::if_else(base::is.na(x), 0, x))(),
+    
     # Valor unitário do item
-    valor_unitario = as.numeric(valor_unitario),
+    # --- TRATAMENTO DE VALOR UNITÁRIO (3 CASAS DECIMAIS E SEM AVISOS) ---
+    valor_unitario = valor_unitario |> 
+      stringr::str_replace_all("-", "0") |>          
+      stringr::str_remove_all("[^0-9,]") |>          
+      stringr::str_replace_all(",", ".") |>          
+      base::as.numeric() |>                          
+      base::round(digits = 3) |>                     # Arredondamento solicitado
+      (\(x) dplyr::if_else(base::is.na(x), 0, x))(), 
+
     # Número da nota de empenho
     nota_de_empenho = stringr::str_squish(nota_de_empenho),
-    # Data mantida como texto (pode haver formatos mistos)
-    data_empenho = stringr::str_squish(data_empenho)
+     # Data mantida como texto (pode haver formatos mistos)
+     # 
+    data_empenho    = stringr::str_squish(data_empenho)
   )
 
 
@@ -572,6 +583,8 @@ bd_processos <- bd_processos %>%
     setor               = padronizar.categorias.nominais(setor)                    # Setor (Title Case)
   )
 
+
+
 # 4.2. Tratamento da Base de Itens (Conversão Financeira e IDs)
 bd_itens <- bd_itens %>% 
   dplyr::mutate(
@@ -580,10 +593,11 @@ bd_itens <- bd_itens %>%
     id              = base::as.numeric(id),                                        # ID p/ Catálogo
     fornecedor      = padronizar.categorias.nominais(fornecedor),                  # Fornecedor (Title Case)
     qtde            = base::as.numeric(qtde),                                      # Qtd Numérica
-    valor_unitario  = padronizar.valores(valor_unitario),                          # Valor Limpo
+    valor_unitario  = as.numeric(valor_unitario),                          # Valor Limpo
     nota_de_empenho = base::as.character(stringr::str_trim(nota_de_empenho)),      # Nota (Texto)
     data_empenho    = base::as.character(stringr::str_trim(data_empenho))          # Data (Texto)
   )
+
 
 # ------------------------------------------------------------------------------
 # 5.1. CONSOLIDAÇÃO TOTAL E GERAÇÃO DE KPIS
@@ -923,6 +937,248 @@ plotly::plot_ly() %>%
     plot_bgcolor = "white", paper_bgcolor = "white"
   ) %>%
   plotly::config(displayModeBar = FALSE, responsive = TRUE)
+
+
+# ==========================================================
+# --- ÁREA DE PERSONALIZAÇÃO (PAINEL DE CONTROLE) ---
+# ==========================================================
+
+# Define o título principal que identifica a subgerência e o ano
+titulo_nome        <- "Gráfico 1: Fluxo Operacional de Processos | Subgerência de - Compras 2025"
+# Define o texto do subtítulo descritivo do fluxo
+subtitulo_texto    <- "Comparativo Mensal de Entradas e Saídas"
+
+# Configuração de cor e tamanho para o título principal (Azul Escuro)
+titulo_cor         <- "#03045e"
+titulo_tamanho     <- 14.5
+# Configuração de cor e tamanho para o subtítulo (Preto)
+sub_cor            <- "#000000"
+sub_tamanho        <- 13         
+
+# Definição das cores das barras para Entradas e Saídas (Padrão Alex)
+cor_entradas       <- "#001d3d"  # Azul Marinho Profundo
+cor_saidas         <- "#48cae4"  # Azul Celeste Claro
+
+# Configurações de tamanho e cor para os rótulos de valores nas pontas das barras
+tamanho_rotulos    <- 10         
+cor_rotulos        <- "#000000"
+# Configurações de tamanho e cor para o texto do eixo X (meses)
+tamanho_eixo_x     <- 11         
+cor_eixo_x         <- "#000000"
+
+# Configurações de interatividade para legenda e botões do gráfico
+tamanho_legenda    <- 12         
+cor_legenda        <- "#000000"
+tamanho_botoes     <- 12         
+
+# Estilo visual do balão de hover (Fundo branco com borda preta)
+hover_bg_cor       <- "#FFFFFF"  # Fundo branco
+hover_txt_cor      <- "#000000"  # Texto preto
+hover_fonte_tam    <- 12         # Tamanho da fonte interna
+borda_balao_hover  <- "#000000"  # Cor da borda do balão
+alinhamento_balao_hover <- "left" # Texto alinhado à esquerda
+
+# ==========================================================
+# --- 1. PREPARAÇÃO DOS DADOS ---
+# ==========================================================
+
+# Vetor para garantir a ordem cronológica dos meses no gráfico
+meses_ordem_limpo <- base::c("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+                             "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro")
+
+# Dicionário de tradução dos meses de Inglês para Português
+tradutor_meses <- base::c(
+  "January" = "Janeiro", "February" = "Fevereiro", "March" = "Março", 
+  "April" = "Abril", "May" = "Maio", "June" = "Junho", 
+  "July" = "Julho", "August" = "Agosto", "September" = "Setembro", 
+  "October" = "Outubro", "November" = "Novembro", "December" = "Dezembro"
+)
+
+# Início do tratamento da base de dados principal (bd_principal)
+dados_base_limpa <- bd_principal %>%
+  # Remove duplicatas para garantir contagem única por processo
+  dplyr::distinct(processo, .keep_all = TRUE) %>%
+  # Seleciona apenas as colunas essenciais para o gráfico e o hover
+  dplyr::select(processo, mes_entrada, mes_saida, modalidade_processo, status_item) %>%
+  # Transforma colunas de entrada/saída em linhas (Correção: uso de all_of para nomes de colunas)
+  tidyr::pivot_longer(cols = dplyr::all_of(base::c("mes_entrada", "mes_saida")), 
+                      names_to = "Origem", 
+                      values_to = "Mes_Nome") %>%
+  # Cria coluna de Tipo para separar Entradas de Saídas
+  dplyr::mutate(Tipo = dplyr::if_else(Origem == "mes_entrada", "Entradas", "Saídas")) %>%
+  # Filtra registros com meses válidos
+  dplyr::filter(!base::is.na(Mes_Nome)) %>%
+  # Traduz o nome do mês e cria o fator ordenado com a tag HTML de negrito
+  dplyr::mutate(
+    Mes_Nome_Limpo = dplyr::recode(Mes_Nome, !!!tradutor_meses),
+    Mes_Bold = base::factor(base::paste0("<b>", Mes_Nome_Limpo, "</b>"), 
+                            levels = base::paste0("<b>", meses_ordem_limpo, "</b>"))
+  )
+
+# Cria esqueleto completo para garantir que todos os meses apareçam, mesmo com valor zero
+esqueleto <- base::expand.grid(
+  Mes_Bold = base::factor(base::paste0("<b>", meses_ordem_limpo, "</b>"), 
+                          levels = base::paste0("<b>", meses_ordem_limpo, "</b>")), 
+  Tipo = base::c("Entradas", "Saídas"), 
+  stringsAsFactors = FALSE
+)
+
+# Função para processar dados com a regra de Hover Condicional solicitada
+gerar_dados_seguros <- function(df, mod = NULL) {
+  # Filtra por modalidade específica se não for a opção "Todas"
+  df_f <- df
+  if (!base::is.null(mod) && mod != "Todas as Modalidades") { 
+    df_f <- df_f %>% dplyr::filter(modalidade_processo == mod) 
+  }
+  
+  # Consolida contagens e define o Hover inicial
+  df_res <- df_f %>%
+    dplyr::group_by(Mes_Bold, Tipo) %>%
+    dplyr::summarise(
+      Quantidade = dplyr::n(),
+      # Correção: Uso de dplyr::if_else para processar a lógica do Hover sem erro de sintaxe
+      Hover = dplyr::if_else(
+        base::is.null(mod) || mod == "Todas as Modalidades",
+        "Resumo Geral", 
+        base::paste0("<b>Processos:</b><br>", base::paste(base::unique(base::paste0("• ", processo)), collapse = "<br>"))
+      ),
+      .groups = "drop"
+    ) %>%
+    # Join com esqueleto para preencher meses vazios no gráfico
+    dplyr::right_join(esqueleto, by = base::c("Mes_Bold", "Tipo")) %>%
+    # Trata valores NA resultantes do Join
+    dplyr::mutate(
+      Quantidade = base::ifelse(base::is.na(Quantidade), 0, Quantidade), 
+      Hover = base::ifelse(base::is.na(Hover), "Sem processos registrados", Hover)
+    ) %>%
+    # Ordena cronologicamente para a renderização do Plotly
+    dplyr::arrange(Tipo, Mes_Bold)
+  
+  # Bloco para preencher o "Resumo Geral" no Hover quando selecionado "Todas as Modalidades"
+  if (base::is.null(mod) || mod == "Todas as Modalidades") {
+    hover_todas <- df_f %>%
+      dplyr::group_by(Mes_Bold, Tipo, modalidade_processo) %>%
+      dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
+      dplyr::group_by(Mes_Bold, Tipo) %>%
+      dplyr::mutate(total = base::sum(n)) %>%
+      dplyr::summarise(
+        Hover_Full = base::paste(base::paste0("• ", modalidade_processo, ": ", n, " (", base::round((n/total)*100,1), "%)"), collapse = "<br>"),
+        .groups = "drop"
+      )
+    # Atualiza o dataframe de resultados com o texto de hover detalhado
+    df_res <- df_res %>%
+      dplyr::left_join(hover_todas, by = base::c("Mes_Bold", "Tipo")) %>%
+      dplyr::mutate(Hover = base::ifelse(!base::is.na(Hover_Full), Hover_Full, Hover)) %>%
+      dplyr::select(-Hover_Full)
+  }
+  
+  return(df_res)
+}
+
+# Função para montar os botões de modalidade de forma dinâmica
+montar_botoes <- function(lista) {
+  base::lapply(lista, function(v) {
+    # Recalcula dados e hover específico para a modalidade do botão
+    d <- gerar_dados_seguros(dados_base_limpa, mod = v)
+    de <- d %>% dplyr::filter(Tipo == "Entradas"); ds <- d %>% dplyr::filter(Tipo == "Saídas")
+    t_e <- base::sum(de$Quantidade); t_s <- base::sum(ds$Quantidade)
+    # Retorna lista de argumentos de atualização para o Plotly
+    base::list(method = "update", label = v,
+               args = base::list(base::list(y = base::list(de$Quantidade, ds$Quantidade),
+                                            text = base::list(base::paste0("<b>", de$Quantidade, "</b>"), base::paste0("<b>", ds$Quantidade, "</b>")),
+                                            hovertext = base::list(de$Hover, ds$Hover),
+                                            name = base::list(base::paste0("<b>Entradas (Total: ", t_e, ")</b>"), 
+                                                              base::paste0("<b>Saídas (Total: ", t_s, ")</b>")))))
+  })
+}
+
+# Gera a lista de modalidades única para alimentar o dropdown do gráfico
+lista_m <- base::c("Todas as Modalidades", base::sort(base::as.character(base::unique(dados_base_limpa$modalidade_processo))))
+
+# Define os dados iniciais do primeiro render do gráfico
+df_i <- gerar_dados_seguros(dados_base_limpa)
+df_e_ini <- df_i %>% dplyr::filter(Tipo == "Entradas") 
+df_s_ini <- df_i %>% dplyr::filter(Tipo == "Saídas") 
+
+# ==========================================================
+# --- 4. GRÁFICO FINAL (PLOTLY) ---
+# ==========================================================
+
+plotly::plot_ly() %>%
+  # Adiciona a série de Entradas (Barras Escuras)
+  plotly::add_bars(x = df_e_ini$Mes_Bold, y = df_e_ini$Quantidade, 
+                   name = base::paste0("<b>Entradas (Total: ", base::sum(df_e_ini$Quantidade), ")</b>"),
+                   marker = base::list(color = cor_entradas),
+                   text = base::paste0("<b>", df_e_ini$Quantidade, "</b>"),
+                   textposition = 'outside', cliponaxis = FALSE,
+                   textfont = base::list(family = "Inter, sans-serif", size = tamanho_rotulos, color = cor_rotulos),
+                   hoverinfo = "text", hovertext = df_e_ini$Hover) %>%
+  # Adiciona a série de Saídas (Barras Claras)
+  plotly::add_bars(x = df_s_ini$Mes_Bold, y = df_s_ini$Quantidade, 
+                   name = base::paste0("<b>Saídas (Total: ", base::sum(df_s_ini$Quantidade), ")</b>"),
+                   marker = base::list(color = cor_saidas),
+                   text = base::paste0("<b>", df_s_ini$Quantidade, "</b>"),
+                   textposition = 'outside', cliponaxis = FALSE,
+                   textfont = base::list(family = "Inter, sans-serif", size = tamanho_rotulos, color = cor_rotulos),
+                   hoverinfo = "text", hovertext = df_s_ini$Hover) %>%
+  # Define o Layout, Estilos de Hover, Eixos e Menus Dropdown
+  plotly::layout(
+    font = base::list(family = "Inter, sans-serif"),
+    # Configura Título e Subtítulo com as variáveis de cor e tamanho do Alex
+    title = base::list(
+      text = base::paste0("<b style='color:", titulo_cor, "; font-size:", titulo_tamanho, "px'>", titulo_nome, "</b>",
+                          "<br><span style='color:", sub_cor, "; font-size:", sub_tamanho, "px'>", subtitulo_texto, "</span>"),
+      x = 0, y = 0.98, xanchor = "left", xref = "paper"
+    ),
+    # Aplica o estilo do Hover Label definido pelo Alex
+    hoverlabel = base::list(
+      bgcolor = hover_bg_cor,
+      font = base::list(family = "Inter, sans-serif", size = hover_fonte_tam, color = hover_txt_cor),
+      bordercolor = borda_balao_hover,
+      align = alinhamento_balao_hover
+    ),
+    # Configura o Eixo X com os nomes dos meses em negrito
+    xaxis = base::list(
+      title = "",
+      showgrid = FALSE, 
+      tickfont = base::list(family = "Inter, sans-serif", size = tamanho_eixo_x, color = cor_eixo_x),
+      fixedrange = TRUE
+    ),
+    # Configura o Eixo Y ocultando os números e definindo o intervalo de visualização
+    yaxis = base::list(title = "", 
+                       showticklabels = FALSE, 
+                       showgrid = TRUE, 
+                       gridcolor = "#F0F0F0", 
+                       range = base::list(0, base::max(df_i$Quantidade) * 1.5)),
+    barmode = 'group', # Define barras lado a lado
+    bargap = 0.2,      # Distância entre grupos mensais
+    bargroupgap = 0.1, # Distância entre barras internas do mês
+    # Menus de botões (Updatemenus)
+    updatemenus = base::list(
+      # Menu de Modalidades (Dropdown na posição esquerda 0)
+      base::list(active = 0, x = 0, y = 1.13, xanchor = "left", 
+                 buttons = montar_botoes(lista_m),
+                 font = base::list(family = "Inter, sans-serif", size = tamanho_botoes)),
+      # Menu de Tipo de Gráfico (Dropdown na posição 0.30)
+      base::list(active = 0, x = 0.30, y = 1.13, xanchor = "left",
+                 buttons = base::list(
+                   base::list(method = "update", label = "Gráfico: Barras", 
+                              args = base::list(base::list(type = "bar", textposition = "outside"), 
+                                                base::list(margin = base::list(t = 150, b = 170, l = 30, r = 30)))),
+                   base::list(method = "update", label = "Gráfico: Linhas", 
+                              args = base::list(base::list(type = "scatter", mode = "lines+markers+text", textposition = "top center"),
+                                                base::list(margin = base::list(t = 150, b = 170, l = 30, r = 30))))
+                 ), font = base::list(family = "Inter, sans-serif", size = tamanho_botoes))
+    ),
+    # Legenda superior horizontal configurada pelo Alex
+    legend = base::list(orientation = 'h', x = 0, xanchor = "left", y = 1.25,
+                        font = base::list(family = "Inter, sans-serif", size = tamanho_legenda, color = cor_legenda)),
+    # Ajuste fino das margens do gráfico
+    margin = base::list(t = 150, b = 170, l = 30, r = 30),
+    plot_bgcolor = "white", paper_bgcolor = "white"
+  ) %>%
+  # Configuração de responsividade e ocultação da barra do Plotly
+  plotly::config(displayModeBar = FALSE, responsive = TRUE)
 ```
 
 :::
@@ -931,7 +1187,35 @@ plotly::plot_ly() %>%
 
 ### Índices de Produtividade Individual
 
-## Dispensa de Licitação Eletrônica - (DLE)
+## Modalidade do Processo | Natureza da Despesa (R$)
+
+::: {.panel-tabset}
+
+## AD
+Conteúdo da modalidade AD  
+Texto, gráfico, tabela ou código
+
+## ARP - ATA
+Conteúdo da modalidade ARP - ATA
+
+## CAE
+Conteúdo da modalidade CAE
+
+## DLE
+Conteúdo da modalidade DLE
+
+## INEX
+Conteúdo da modalidade INEX
+
+## PE
+Conteúdo da modalidade PE
+
+## RDL
+Conteúdo da modalidade RDL
+
+:::
+
+
 
 
 ::: {style="text-align: justify"}
@@ -986,7 +1270,7 @@ minhas_colunas_catalogo <- base::c(
 
 tabela_interativa(
   dados = bd_catalogo,
-  titulo_tabela = "Catálogo e-Compras",
+  titulo_tabela = "Catálogo E-Compras",
   
   # Configuração de fontes (visual compacto)
   tam_fonte_corpo   = tam_fonte_corpo,
@@ -1014,7 +1298,7 @@ tabela_interativa(
 :::
 
 
-
+  
 <br>
 
 ::: {style="border-top: 2px solid #003366;"}
