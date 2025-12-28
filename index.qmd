@@ -149,6 +149,10 @@ if(!require("dplyr")) install.packages("dplyr", quiet = TRUE) ; library("dplyr")
 # E. FUNÇÕES DE APRESENTAÇÃO - ESTILO ORIGINAL ALEX
 # ==============================================================================
 
+# ==============================================================================
+# E. FUNÇÕES DE APRESENTAÇÃO - VERSÃO FINAL ALEX (CORRIGIDA)
+# ==============================================================================
+
 tabela_interativa <- function(dados, 
                               titulo_tabela, 
                               tam_fonte_corpo = "13px",   
@@ -173,23 +177,23 @@ tabela_interativa <- function(dados,
     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
   }
 
-  n_colunas_dados <- base::ncol(dados_processados)
+  n_colunas_reais <- base::ncol(dados_processados)
   lista_columnDefs <- base::list(base::list(width = '30px', targets = 0))
   
   if (!base::is.null(largura_cols_vetor)) {
     for (i in base::seq_along(largura_cols_vetor)) {
-      if (i < n_colunas_dados) { # Trava para evitar o erro de parâmetro desconhecido
+      # CORREÇÃO DO ERRO '7': O alvo não pode exceder o número de colunas
+      if ((i - 1) < n_colunas_reais) {
          lista_columnDefs[[base::length(lista_columnDefs) + 1]] <- base::list(
            width = largura_cols_vetor[i], 
-           targets = i
+           targets = i - 1
          )
       }
     }
   }
 
-  contador <- base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1
-  base::assign("contador_tabelas_alex", contador, envir = .GlobalEnv)
-  titulo_final <- base::paste0("Tabela ", contador, ": ", titulo_tabela)
+  base::assign("contador_tabelas_alex", base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1, envir = .GlobalEnv)
+  titulo_final <- base::paste0("Tabela ", base::get("contador_tabelas_alex", envir = .GlobalEnv), ": ", titulo_tabela)
 
   html_titulo <- htmltools::tags$h2(
     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
@@ -204,7 +208,7 @@ tabela_interativa <- function(dados,
     width = "100%", 
     class = "hover row-border", 
     options = base::list(
-      dom = 'f t p', # 'f' na esquerda como era antes
+      dom = 'ft p', # PESQUISA NA ESQUERDA (f na frente do t)
       pageLength = n_pages,
       searching = TRUE, 
       lengthChange = FALSE,
@@ -220,7 +224,7 @@ tabela_interativa <- function(dados,
                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
                      
-                     # HOVER ORIGINAL DO ALEX: Fundo cinza + Negrito + Texto Preto
+                     # SEU HOVER: Negrito + Cinza + Texto Preto
                      "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
                      "  $(this).css({'background-color': '#f1f1f1', 'color': '#000000', 'font-weight': 'bold', 'transition': '0.1s'});",
                      "}).on('mouseleave', 'tr', function() {",
@@ -264,10 +268,10 @@ tabela_interativa_detalhes <- function(dados,
   }
 
   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
+  n_colunas_reais <- base::ncol(dados_processados)
 
-  novo_valor <- base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1
-  base::assign("contador_tabelas_alex", novo_valor, envir = .GlobalEnv)
-  titulo_final <- base::paste0("Tabela ", novo_valor, ": ", titulo_tabela)
+  base::assign("contador_tabelas_alex", base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1, envir = .GlobalEnv)
+  titulo_final <- base::paste0("Tabela ", base::get("contador_tabelas_alex", envir = .GlobalEnv), ": ", titulo_tabela)
 
   html_titulo <- htmltools::tags$h2(
     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
@@ -285,7 +289,9 @@ tabela_interativa_detalhes <- function(dados,
   
   if (!base::is.null(largura_cols_vetor)) {
     for (i in 1:base::length(largura_cols_vetor)) {
-      lista_column_defs[[i + 1]] <- base::list(targets = i, width = largura_cols_vetor[i])
+      if (i < n_colunas_reais) { # CORREÇÃO ERRO '7'
+        lista_column_defs[[base::length(lista_column_defs) + 1]] <- base::list(targets = i, width = largura_cols_vetor[i])
+      }
     }
   }
 
@@ -297,7 +303,7 @@ tabela_interativa_detalhes <- function(dados,
     width = "100%", 
     class = "row-border", 
     options = base::list(
-      dom = 'f t p', # Barra de pesquisa na esquerda
+      dom = 'ft p', # PESQUISA NA ESQUERDA
       pageLength = n_pages,
       searching = TRUE, 
       lengthChange = FALSE,
@@ -341,7 +347,7 @@ tabela_interativa_detalhes <- function(dados,
                      "       html_sub += '</tr></thead><tbody>';",
                      "       sub_dados.forEach(r => {",
                      "          html_sub += '<tr style=\"border-bottom:1px solid #f1f1f1;\">';",
-                     "          colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important;\">' + (r[k] || '') + '</td>'; });",
+                     "          colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; background-color: transparent !important;\">' + (r[k] || '') + '</td>'; });",
                      "          html_sub += '</tr>';",
                      "       });",
                      "    } else { html_sub += '<tr><td>Nenhum detalhe disponível</td></tr>'; }",
@@ -350,7 +356,7 @@ tabela_interativa_detalhes <- function(dados,
                      "  }",
                      "});",
 
-                     # HOVER ORIGINAL DO ALEX: Fundo cinza + Negrito + Texto Preto
+                     # SEU HOVER PROTEGIDO: Só na tabela principal, nunca nos detalhes
                      "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
                      "  var tr = $(this);",
                      "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable')) {",
@@ -370,6 +376,7 @@ tabela_interativa_detalhes <- function(dados,
   )
   return(htmltools::tagList(html_titulo, tabela))
 }
+
 
 # ==============================================================================
 # F. FUNÇÕES DE TRATAMENTO E AUDITORIA
@@ -676,31 +683,17 @@ bd_catalogo <- gsheet::gsheet2tbl(
 ### Sobre os dados
 
 ```{r}
+
 # ==========================================================
 # 1. PREPARAÇÃO DA BASE DE DADOS PARA DOWNLOAD
 # ==========================================================
 
-# Criamos o dataframe com os nomes amigáveis, descrições e links reais fornecidos
 bd_central_downloads <- base::data.frame(
-  "id_planilha" = base::c(
-    "Processos", 
-    "Itens", 
-    "Natureza da Despesa", 
-    "Fonte de Recurso", 
-    "Elemento de Despesa", 
-    "Catálogo e-Compras"
-  ),
-  "descricao_bd" = base::c(
-    "Cabeçalho da Operação (Datas, Setores, Agentes)",
-    "Detalhamento Financeiro vinculado aos processos",
-    "Dicionário para tradução de códigos contábeis",
-    "Identificação da origem do capital",
-    "Classificação detalhada do objeto de gasto",
-    "Tabela mestra de padronização de itens do Estado"
-  ),
-  "url_original" = base::c(
+  "id_planilha" = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
+  "descricao"   = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", "Detalhamento Financeiro vinculado aos processos", "Dicionário para tradução de códigos contábeis", "Identificação da origem do capital", "Classificação detalhada do objeto de gasto", "Tabela mestra de padronização de itens do Estado"),
+  "url"         = base::c(
     "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826",
-    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695",
+    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826", # Itens
     "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687",
     "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696",
     "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856",
@@ -709,52 +702,37 @@ bd_central_downloads <- base::data.frame(
   stringsAsFactors = FALSE
 )
 
-# Criando a coluna com o botão de acesso (HTML) no estilo azul oficial
-bd_central_downloads$botao_acesso <- base::apply(bd_central_downloads, 1, function(linha) {
-  base::paste0(
-    "<a href='", linha['url_original'], "' target='_blank' ",
-    "style='background-color:#03045e; color:white; padding:4px 12px; ",
-    "text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px;'>",
-    "PLANILHA</a>"
-  )
+# Criando o botão de acesso (HTML) - Adicionamos display: inline-block para garantir o formato
+bd_central_downloads$botao <- base::apply(bd_central_downloads, 1, function(x) {
+  base::paste0("<a href='", x['url'], "' target='_blank' style='background-color:#03045e; color:white; padding:6px 14px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>PLANILHA</a>")
 })
 
-# --- VETORES DE CONFIGURAÇÃO ALEX ---
-minhas_colunas_downloads <- base::c(
-  "Banco de Dados" = "id_planilha", 
-  "Descrição do Conteúdo" = "descricao_bd", 
-  "Acesso Direto" = "botao_acesso"
-)
-
-minhas_larguras_downloads <- base::c("180px", "450px", "120px")
-
+# --- VETORES DE CONFIGURAÇÃO ---
+minhas_colunas_down <- base::c("Banco de Dados" = "id_planilha", "Descrição do Conteúdo" = "descricao", "Acesso Direto" = "botao")
+minhas_larguras_down <- base::c("180px", "450px", "120px")
 
 # ==========================================================
-# 2. EXECUÇÃO: TABELA CENTRAL DE DOWNLOADS
+# 2. EXECUÇÃO DA TABELA (COM CORREÇÃO DE ESCAPE)
 # ==========================================================
 
-tabela_interativa(
-  dados = bd_central_downloads,
-  titulo_tabela = "Repositório e Central de Downloads",
-  
-  # Configurações Visuais (Visual Compacto Alex)
-  tam_fonte_corpo  = "11.3px",
-  tam_fonte_header = "12.2px",
-  tam_fonte_titulo = "14.3px",
-  cor_titulo       = "#03045e",
-  cor_primaria     = "#000000",
-  cor_texto_corpo  = "#000000",
-  
-  # Parâmetros de Layout e Filtro
-  mostrar_filtro   = FALSE,
-  pesquisa_geral   = TRUE,
-  n_pages          = 6,
-  mostrar_indice   = FALSE,
-  
-  # Aplicação de Vetores e Seleção
-  largura_cols_vetor   = minhas_larguras_downloads,
-  colunas_selecionadas = minhas_colunas_downloads
-)
+# Chamamos a função, mas precisamos garantir que o DT não 'limpe' o HTML
+# Para isso, vamos passar o parâmetro escape = FALSE direto na chamada se sua função permitir, 
+# ou ajustar a função interna.
+
+tabela_interativa <- function(dados, 
+                              titulo_tabela, 
+                              # ... outros argumentos ...
+                              mostrar_indice = TRUE) {
+  # ... (resto do seu código inicial) ...
+
+  tabela <- DT::datatable(
+    base::data.frame(dados_processados, check.names = FALSE),
+    escape = FALSE,  # <--- ESSA É A CHAVE PARA O BOTÃO APARECER
+    rownames = mostrar_indice,
+    # ... (resto das suas opções) ...
+  )
+  return(htmltools::tagList(html_titulo, tabela))
+}
 ```
 
 
