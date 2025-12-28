@@ -541,29 +541,28 @@ tabela_interativa_detalhes_2 <- function(dados,
   htmltools::tagList(html_titulo, tabela)
 }
 
-
 # ==========================================================
-# --- FUNÇÃO: TABELA INTERATIVA PREMIUM (COM 3 MELHORIAS) ---
+# --- FUNÇÃO: TABELA INTERATIVA PREMIUM (CORREÇÃO DE FOOTER) ---
 # ==========================================================
 
 tabela_interativa_detalhes_premium <- function(dados, 
-                                              dados_detalhes,       
-                                              coluna_chave,         
-                                              titulo_tabela, 
-                                              colunas_detalhes_nomes = NULL, 
-                                              largura_detalhes_vetor = NULL, 
-                                              tam_fonte_corpo = "13px",   
-                                              tam_fonte_titulo = "20px",  
-                                              tam_fonte_header = "14px",  
-                                              cor_titulo = "#03045e",        
-                                              cor_primaria = "#03045e",      
-                                              cor_texto_corpo = "#333333",   
-                                              mostrar_filtro = TRUE,      
-                                              pesquisa_geral = FALSE,     
-                                              largura_cols_vetor = NULL,  
-                                              colunas_selecionadas = NULL,
-                                              n_pages = 10,
-                                              mostrar_indice = TRUE) {
+                                               dados_detalhes,       
+                                               coluna_chave,         
+                                               titulo_tabela, 
+                                               colunas_detalhes_nomes = NULL, 
+                                               largura_detalhes_vetor = NULL, 
+                                               tam_fonte_corpo = "13px",   
+                                               tam_fonte_titulo = "20px",  
+                                               tam_fonte_header = "14px",  
+                                               cor_titulo = "#03045e",        
+                                               cor_primaria = "#03045e",      
+                                               cor_texto_corpo = "#333333",   
+                                               mostrar_filtro = TRUE,      
+                                               pesquisa_geral = FALSE,     
+                                               largura_cols_vetor = NULL,  
+                                               colunas_selecionadas = NULL,
+                                               n_pages = 10,
+                                               mostrar_indice = TRUE) {
 
   # --- SEGURANÇA DO CONTADOR ---
   if (!base::exists("contador_tabelas_alex")) {
@@ -573,42 +572,36 @@ tabela_interativa_detalhes_premium <- function(dados,
   # --- 1. PREPARAÇÃO DOS DADOS PRINCIPAIS ---
   dados_processados <- dados
   if (!base::is.null(colunas_selecionadas)) {
+    # Filtra apenas as colunas que o Alex selecionou
     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
   }
 
-  # Captura o índice da coluna de Valor para o Heatmap e o Totalizador
-  idx_valor <- base::which(base::names(dados_processados) == "valor_total_proc")
-  # Captura o índice da coluna de Status
-  idx_status <- base::which(base::names(dados_processados) == "status")
-
   # --- 2. ADIÇÃO DA COLUNA DE CONTROLE (BOTÃO +) ---
+  # Insere a coluna vazia para o ícone de expansão na posição zero
   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
 
   # --- 3. CONTADOR E TÍTULO ---
   base::assign("contador_tabelas_alex", contador_tabelas_alex + 1, envir = .GlobalEnv)
   titulo_final <- base::paste0("Tabela ", contador_tabelas_alex, ": ", titulo_tabela)
 
+  # Título formatado com as variáveis de cor e tamanho do Alex
   html_titulo <- htmltools::tags$h2(
     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
     htmltools::tags$b(titulo_final)
   )
 
-  # --- 4. PREPARAÇÃO JSON PARA JS ---
+  # --- 4. PREPARAÇÃO DOS DADOS PARA JAVASCRIPT ---
   json_detalhes <- jsonlite::toJSON(dados_detalhes)
   nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
   larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
 
-  # --- 5. RENDERIZAÇÃO DA TABELA ---
+  # --- 5. RENDERIZAÇÃO DA TABELA (DT) ---
   tabela <- DT::datatable(
     base::data.frame(dados_processados, check.names = FALSE),
-    escape = FALSE,
-    container = htmltools::withTags(base::table(
-      class = "display",
-      htmltools::tags$thead(DT::tableHeader(base::names(dados_processados))),
-      htmltools::tags$tfoot(base::tr(base::lapply(base::names(dados_processados), function(x) htmltools::tags$th(""))))
-    )),
+    escape = FALSE, # Permite ícones HTML
     rownames = mostrar_indice,
+    # Lógica do filtro superior
     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
     width = "100%", 
     class = "hover row-border", 
@@ -618,33 +611,39 @@ tabela_interativa_detalhes_premium <- function(dados,
       searching = TRUE, 
       lengthChange = FALSE,
       info = FALSE,
-      ordering = TRUE, # Ativado para o Heatmap fazer sentido      
+      ordering = TRUE,      
       autoWidth = FALSE,    
       scrollX = TRUE,
+      # Força a coluna zero (ícone) a ser pequena e não ordenável
       columnDefs = base::list(
         base::list(visible = TRUE, targets = 0, className = 'details-control', width = '20px', orderable = FALSE)
       ),
       
-      # CALLBACK PARA TOTAIS NO RODAPÉ (SUGESTÃO 3)
+      # CALLBACK PARA TOTAIS NO RODAPÉ (Lógica JavaScript para somar Valor Total)
       footerCallback = DT::JS(
         "function(row, data, start, end, display) {",
         "  var api = this.api();",
         "  var intVal = function(i) { return typeof i === 'string' ? i.replace(/[\\R$,.]/g, '')*1/100 : typeof i === 'number' ? i : 0; };",
         "  var total = api.column('.valor_total_proc', {page: 'current'}).data().reduce(function(a, b) { return intVal(a) + intVal(b); }, 0);",
-        "  $(api.column('.valor_total_proc').footer()).html('Total: R$ ' + total.toLocaleString('pt-BR', {minimumFractionDigits: 2}));",
-        "  $(api.column(1).footer()).html('Resumo da Página');",
+        "  $(api.column('.valor_total_proc').footer()).html('<b>Total: R$ ' + total.toLocaleString('pt-BR', {minimumFractionDigits: 2}) + '</b>');",
+        "  $(api.column(1).footer()).html('<b>Resumo da Página</b>');",
         "}"
       ),
 
       initComplete = DT::JS(
         base::paste0("function(settings, json) {",
-                     # Estilos originais Alex
-                     "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif'});",
-                     "$(this.api().table().header()).css({'background-color': '#ffffff', 'color': '", cor_primaria, "'});",
+                     # Estilos visuais originais (Alex)
+                     "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
+                     "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
                      
-                     # 1. PÍLULAS DE STATUS (SUGESTÃO 1)
+                     # Estilo Pesquisa Geral (Alinhada à esquerda como você gosta)
+                     "var searchDiv = $('.dataTables_filter'); searchDiv.css({'text-align': 'left', 'margin-bottom': '15px', 'float': 'none'});",
+                     "searchDiv.find('label').css({'font-weight': 'bold', 'color': '#000000'});",
+                     if(pesquisa_geral) "" else "$('.dataTables_filter').hide();",
+                     
+                     # 1. PÍLULAS DE STATUS (Cores semafóricas)
                      "$(this.api().table().body()).find('td').each(function() {",
                      "  var txt = $(this).text();",
                      "  if(txt === 'EMPENHADO') $(this).html('<span style=\"background:#d1e7dd; color:#0f5132; padding:3px 8px; border-radius:12px; font-weight:bold; font-size:10px;\">EMPENHADO</span>');",
@@ -652,32 +651,57 @@ tabela_interativa_detalhes_premium <- function(dados,
                      "  if(txt === 'CANCELADO') $(this).html('<span style=\"background:#f8d7da; color:#842029; padding:3px 8px; border-radius:12px; font-weight:bold; font-size:10px;\">CANCELADO</span>');",
                      "});",
 
-                     # 2. HEATMAP/BARRA DE PROGRESSO (SUGESTÃO 2)
-                     # Esta parte exige que os dados financeiros sejam processados para identificar o maior valor
+                     # 2. LÓGICA DE CHILD ROWS (Expansão ao clicar no +)
+                     "var table = this.api();",
+                     "var detalhes_data = ", json_detalhes, ";",
+                     "var customNomes = ", nomes_detalhes_js, ";",
+                     "var customLarguras = ", larguras_detalhes_js, ";",
                      
-                     # Lógica Child Rows e Pesquisa (mantidas)
-                     "var table = this.api(); var detalhes_data = ", json_detalhes, ";",
                      "$(this.api().table().body()).on('click', 'td.details-control', function() {",
-                     "  var tr = $(this).closest('tr'); var row = table.row(tr);",
-                     "  if (row.child.isShown()) { row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;'); }",
-                     "  else {",
-                     "    var rowData = row.data(); var chave = rowData[", if(mostrar_indice) "2" else "1", "];",
+                     "  var tr = $(this).closest('tr');",
+                     "  var row = table.row(tr);",
+                     "  if (row.child.isShown()) {",
+                     "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
+                     "  } else {",
+                     "    var rowData = row.data();",
+                     "    var chave = rowData[", if(mostrar_indice) "2" else "1", "];",
                      "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
-                     "    var html_sub = '<table style=\"width:95%; margin-left:5%; border-collapse:collapse; border:1px solid #ddd;\"><thead><tr style=\"background:#f3f3f3; color:#03045e;\">';",
-                     "    Object.keys(sub_dados[0]).forEach((key, i) => { html_sub += '<th style=\"padding:8px; border-bottom:2px solid #000;\">' + (", nomes_detalhes_js, " && ", nomes_detalhes_js, "[i] ? ", nomes_detalhes_js, "[i] : key) + '</th>'; });",
+                     
+                     "    var html_sub = '<table style=\"width:95%; margin-left:5%; border-collapse: collapse; border: 1px solid #ddd;\"><thead><tr style=\"background:#f3f3f3; color:#03045e; font-weight:bold;\">';",
+                     "    var colKeys = Object.keys(sub_dados[0]);",
+                     "    colKeys.forEach((key, index) => {",
+                     "       var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
+                     "       var width = (customLarguras && customLarguras[index]) ? 'width:'+customLarguras[index]+';' : '';",
+                     "       html_sub += '<th style=\"padding:8px; border-bottom:2px solid #000; text-align:left; '+width+'\">' + label + '</th>';",
+                     "    });",
                      "    html_sub += '</tr></thead><tbody>';",
-                     "    sub_dados.forEach(r => { html_sub += '<tr>'; Object.values(r).forEach(v => { html_sub += '<td style=\"padding:8px; border-bottom:1px solid #eee;\">' + v + '</td>'; }); html_sub += '</tr>'; });",
+                     "    sub_dados.forEach(r => {",
+                     "       html_sub += '<tr style=\"border-bottom:1px solid #eee;\">';",
+                     "       colKeys.forEach(k => { html_sub += '<td style=\"padding:8px;\">' + r[k] + '</td>'; });",
+                     "       html_sub += '</tr>';",
+                     "    });",
                      "    html_sub += '</tbody></table>';",
+                     
                      "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
                      "  }",
                      "});",
+                     
+                     # 3. HOVER CUSTOMIZADO (Alex)
+                     "var tableContainer = $(this.api().table().container());",
+                     "tableContainer.find('tbody').on('mouseenter', 'tr', function() { $(this).css({'color': '", cor_primaria, "', 'font-weight': '600', 'transition': '0.2s'}); }).on('mouseleave', 'tr', function() { $(this).css({'color': '", cor_texto_corpo, "', 'font-weight': 'normal'}); });",
                      "}")
+      ),
+      # Tradução dos controles de paginação
+      language = base::list(
+        paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
+        emptyTable = "Sem dados", zeroRecords = "Nenhum registro encontrado", search = "Pesquisa Geral:"
       )
     )
   )
-  return(htmltools::tagList(html_titulo, tabela))
-}
 
+  # Retorno consolidado com título e tabela
+  htmltools::tagList(html_titulo, tabela)
+}
 # ==============================================================================
 # F. FUNÇÕES DE TRATAMENTO E AUDITORIA
 # ==============================================================================

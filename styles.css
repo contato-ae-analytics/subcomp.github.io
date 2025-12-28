@@ -4,18 +4,18 @@
 
 /* 1. CONTAINER GERAL DO BLOCO DE ABAS */
 .panel-tabset {
-  border: 1px solid #d1d1d1;           /* Borda cinza clara para definir o limite do bloco */
-  border-radius: 10px;                 /* Cantos arredondados para um visual moderno */
+/*  border: 1px solid #d1d1d1;           /* Borda cinza clara para definir o limite do bloco */
+/*  border-radius: 10px;                 /* Cantos arredondados para um visual moderno */
   background: #ffffff;                 /* Fundo branco para garantir contraste com gráficos e tabelas */
-  padding: 20px;                       /* Espaçamento interno para o conteúdo não encostar na borda */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Sombra suave para o bloco "flutuar" na página */
-  margin-bottom: 30px;                 /* Espaço entre este bloco e o próximo elemento */
+  padding: 10px;                       /* Espaçamento interno para o conteúdo não encostar na borda */
+/*   box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Sombra suave para o bloco "flutuar" na página */
+/*  margin-bottom: 30px;                 /* Espaço entre este bloco e o próximo elemento */
 }
 
 /* 2. MENU DE NAVEGAÇÃO (BARRA ONDE FICAM OS NOMES DAS MODALIDADES) */
 .nav-tabs {
-  border-bottom: 2px solid #03045e !important; /* Linha horizontal contínua em Azul Escuro */
-  gap: 5px;                            /* Pequeno espaço entre as abas individuais */
+  border-bottom: 1px solid #03045e !important; /* Linha horizontal contínua em Azul Escuro */
+  gap: 7px;                            /* Pequeno espaço entre as abas individuais */
   margin-bottom: 15px !important;      /* Espaço entre o menu e o conteúdo da aba */
 }
 
