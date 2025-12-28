@@ -269,94 +269,95 @@ tabela_interativa <- function(dados,
 # ==============================================================================
 
 tabela_interativa_detalhes <- function(dados, 
-                                       dados_detalhes,       # Base com os 722 itens
-                                       coluna_chave,         # Chave de ligação (ex: "processo")
-                                       titulo_tabela,        # Título do relatório
-                                       coluna_ordenacao = NULL, # Coluna para ordenar
-                                       ordem_decrescente = TRUE, # TRUE = Z-A
-                                       colunas_detalhes_nomes = NULL, # Nomes amigáveis itens
-                                       largura_detalhes_vetor = NULL, # Larguras px itens
-                                       tam_fonte_corpo = "11.3px",   
-                                       tam_fonte_header = "12.2px",  
-                                       tam_fonte_titulo = "14.3px",  
+                                       dados_detalhes,       
+                                       coluna_chave,         
+                                       titulo_tabela, 
+                                       colunas_detalhes_nomes = NULL, 
+                                       largura_detalhes_vetor = NULL, 
+                                       tam_fonte_corpo = "13px",   
+                                       tam_fonte_titulo = "20px",  
+                                       tam_fonte_header = "14px",  
                                        cor_titulo = "#03045e",        
-                                       cor_primaria = "#000000",      
-                                       cor_texto_corpo = "#000000",   
-                                       mostrar_filtro = TRUE,        
-                                       pesquisa_geral = TRUE,     
+                                       cor_primaria = "#03045e",      
+                                       cor_texto_corpo = "#333333",   
+                                       mostrar_filtro = TRUE,      
+                                       pesquisa_geral = FALSE,     
                                        largura_cols_vetor = NULL,  
                                        colunas_selecionadas = NULL,
                                        n_pages = 10,
-                                       mostrar_indice = FALSE) {
+                                       mostrar_indice = TRUE) {
 
-  # 1. GESTÃO DO CONTADOR (R)
+  # --- SEGURANÇA DO CONTADOR ---
   if (!base::exists("contador_tabelas_alex")) {
     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
   }
-  
+
+  # --- 1. PREPARAÇÃO DOS DADOS PRINCIPAIS ---
   dados_processados <- dados
-
-  # 2. ORDENAÇÃO (R) - Feita antes da renomeação para evitar erro de objeto
-  if (!base::is.null(coluna_ordenacao)) {
-    if (ordem_decrescente) {
-      dados_processados <- dados_processados %>% dplyr::arrange(dplyr::desc(.data[[coluna_ordenacao]]))
-    } else {
-      dados_processados <- dados_processados %>% dplyr::arrange(.data[[coluna_ordenacao]])
-    }
-  }
-
-  # 3. SELEÇÃO E RENOMEAÇÃO (R)
   if (!base::is.null(colunas_selecionadas)) {
-    dados_processados <- dados_processados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
+    dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
   }
 
-  # 4. ADIÇÃO DA COLUNA DE EXPANSÃO (R)
+  # Adiciona a coluna do botão [+]
   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
-  
-  # 5. CONTADOR E TÍTULO (R)
+
+  # Contador automático
   base::assign("contador_tabelas_alex", contador_tabelas_alex + 1, envir = .GlobalEnv)
   titulo_final <- base::paste0("Tabela ", contador_tabelas_alex, ": ", titulo_tabela)
 
-  # 6. CONVERSÃO PARA JSON (R para JS)
-  json_detalhes <- jsonlite::toJSON(dados_detalhes)
-  nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
-  larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
+  # Título em HTML
+  html_titulo <- htmltools::tags$h2(
+    style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
+                         "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
+    htmltools::tags$b(titulo_final)
+  )
 
-  # 7. RENDERIZAÇÃO DATATABLE
+  # --- 2. PREPARAÇÃO JSON PARA JAVASCRIPT (CORREÇÃO AQUI) ---
+  json_detalhes <- jsonlite::toJSON(dados_detalhes)
+  
+  nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) {
+    jsonlite::toJSON(colunas_detalhes_nomes)
+  } else {
+    "null"
+  }
+  
+  # Variável que estava faltando na versão anterior
+  larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) {
+    jsonlite::toJSON(largura_detalhes_vetor)
+  } else {
+    "null"
+  }
+
+  # --- 3. RENDERIZAÇÃO DA TABELA ---
   tabela <- DT::datatable(
     base::data.frame(dados_processados, check.names = FALSE),
     escape = FALSE, 
     rownames = mostrar_indice,
-    extensions = 'Buttons',
     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
+    width = "100%", 
+    class = "row-border", 
     options = base::list(
-      dom = 'Bft p', 
-      buttons = base::list('copy', 'excel', base::list(extend = 'pdfHtml5', title = titulo_final, orientation = 'landscape')),
+      dom = 'ft p', 
       pageLength = n_pages,
-      searching = pesquisa_geral,
-      ordering = FALSE, 
-      autoWidth = FALSE,
+      searching = TRUE, 
+      lengthChange = FALSE,
+      info = FALSE,
+      ordering = FALSE,      
+      autoWidth = FALSE,    
       scrollX = TRUE,
-      columnDefs = base::list(base::list(targets = 0, className = 'details-control', width = '30px')),
+      columnDefs = base::list(
+        base::list(visible = TRUE, targets = 0, className = 'details-control', width = '20px', orderable = FALSE)
+      ),
       
-      # INÍCIO DO BLOCO JAVASCRIPT (Sem comentários internos para não sumir a tabela)
       initComplete = DT::JS(
         base::paste0("function(settings, json) {",
-                     "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif'});",
-                     "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px', 'color': '", cor_primaria, "', 'font-size': '", tam_fonte_header, "'});",
+                     # Estilo base do Alex
+                     "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
+                     "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
+                     "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
                      
-                     "this.api().columns().every(function(index) {",
-                     "   var column = this;",
-                     "   if (index === 0) { $(column.filter()).empty(); } else {",
-                     "      var title = $(column.header()).text();",
-                     "      if (title.trim() !== '') {",
-                     "         $('input', column.filter()).attr('placeholder', 'Busca ' + title.trim());",
-                     "         $('input', column.filter()).css({'font-size': '10px', 'width': '100%'});",
-                     "      }",
-                     "   }",
-                     "});",
-
+                     # Expansão e destaque fixo
                      "var table = this.api(); var detalhes_data = ", json_detalhes, ";",
                      "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
                      
@@ -364,14 +365,14 @@ tabela_interativa_detalhes <- function(dados,
                      "  var tr = $(this).closest('tr'); var row = table.row(tr);",
                      "  if (row.child.isShown()) {",
                      "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
-                     "    tr.css({'background-color': '', 'font-weight': 'normal'});",
+                     "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal', 'border-left': 'none'});",
                      "  } else {",
-                     "    tr.addClass('shown'); $(this).html('&ominus;');",
-                     "    tr.css({'background-color': '#f8f9fa', 'font-weight': 'bold', 'color': '", cor_primaria, "'});",
-                     "    var rowData = row.data(); var chave = rowData[", if(mostrar_indice) "2" else "1", "];",
+                     "    tr.css({'background-color': '#f8f9fa', 'color': '", cor_primaria, "', 'font-weight': '600', 'border-left': '4px solid ", cor_primaria, "'});",
+                     "    var rowData = row.data();",
+                     "    var chave = rowData[", if(mostrar_indice) "2" else "1", "];",
                      "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
                      
-                     "    var html_sub = '<table class=\"subtable_alex\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff; color:#03045e; font-weight:bold;\">';",
+                     "    var html_sub = '<table class=\"subtable\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff; color:#03045e; font-weight:bold;\">';",
                      "    var colKeys = Object.keys(sub_dados[0]);",
                      "    colKeys.forEach((key, index) => {",
                      "       var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
@@ -380,32 +381,34 @@ tabela_interativa_detalhes <- function(dados,
                      "    });",
                      "    html_sub += '</tr></thead><tbody>';",
                      "    sub_dados.forEach(r => {",
-                     "       html_sub += '<tr>';",
-                     "       colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; background-color: transparent !important; font-weight: normal !important; color: #333 !important;\">' + r[k] + '</td>'; });",
+                     "       html_sub += '<tr style=\"border-bottom:1px solid #f1f1f1;\">';",
+                     "       colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; background-color: transparent !important;\">' + r[k] + '</td>'; });",
                      "       html_sub += '</tr>';",
                      "    });",
                      "    html_sub += '</tbody></table>';",
-                     "    row.child(html_sub).show();",
+                     "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
                      "  }",
                      "});",
                      
-                     "$(this.api().table().node()).on('mouseenter', 'tr', function() {",
+                     # Hover Protegido (Só na tabela pai e apenas se não estiver aberta)
+                     "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
                      "  var tr = $(this);",
-                     "  if (!tr.closest('table').hasClass('subtable_alex')) {",
-                     "    tr.css({'font-weight': 'bold', 'background-color': '#f1f1f1'});",
+                     "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable')) {",
+                     "    tr.css({'background-color': '#f1f1f1', 'transition': '0.1s'});",
                      "  }",
                      "}).on('mouseleave', 'tr', function() {",
                      "  var tr = $(this);",
-                     "  if (!tr.closest('table').hasClass('subtable_alex') && !tr.hasClass('shown')) {",
-                     "    tr.css({'font-weight': 'normal', 'background-color': ''});",
+                     "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable')) {",
+                     "    tr.css({'background-color': ''});",
                      "  }",
                      "});",
                      "}")
-      )
+      ),
+      language = base::list(paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
+                            emptyTable = "Sem dados", zeroRecords = "Nenhum registro encontrado", search = "Pesquisa Geral:")
     )
   )
-  
-  return(htmltools::tagList(htmltools::tags$h2(style=base::paste0("color:", cor_titulo, "; font-size:", tam_fonte_titulo), htmltools::tags$b(titulo_final)), tabela))
+  return(htmltools::tagList(html_titulo, tabela))
 }
 
 
@@ -1086,7 +1089,7 @@ plotly::plot_ly() %>%
     legend = base::list(orientation = 'h', x = 0, xanchor = "left", y = 1.25,
                         font = base::list(family = "Inter, sans-serif", size = tamanho_legenda, color = cor_legenda)),
     # Ajuste fino das margens do gráfico
-    margin = base::list(t = 150, b = 40, l = 130, r = 30),
+    margin = base::list(t = 150, b = 40, l = 230, r = 30),
     plot_bgcolor = "white", paper_bgcolor = "white"
   ) %>%
   # Configuração de responsividade e ocultação da barra do Plotly
@@ -1188,7 +1191,6 @@ tabela_interativa_detalhes(
   # --- TÍTULO E ORDENAÇÃO ---
   titulo_tabela          = "Gestão de Processos e Itens", # Título dinâmico do relatório
   coluna_ordenacao       = "processo",           # Variável alvo para a ordem inicial
-  ordem_decrescente      = TRUE,                 # TRUE para Maior -> Menor (Z-A)
   
   # --- CUSTOMIZAÇÃO DOS DETALHES (USANDO OS VETORES EXTERNOS) ---
   colunas_detalhes_nomes = meus_nomes_detalhes,     # Aplica os nomes amigáveis nos itens
