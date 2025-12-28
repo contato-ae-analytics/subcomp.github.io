@@ -548,7 +548,7 @@ tabela_interativa <- function(dados,
 # }
 
 # ==========================================================
-# --- FUNÇÃO: TABELA INTERATIVA COM DESTAQUE ELEGANTE ---
+# --- FUNÇÃO: TABELA INTERATIVA (CORREÇÃO DE VARIÁVEL JS) ---
 # ==========================================================
 
 tabela_interativa_detalhes <- function(dados, 
@@ -570,37 +570,55 @@ tabela_interativa_detalhes <- function(dados,
                                        n_pages = 10,
                                        mostrar_indice = TRUE) {
 
+  # --- SEGURANÇA DO CONTADOR ---
   if (!base::exists("contador_tabelas_alex")) {
     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
   }
 
+  # --- 1. PREPARAÇÃO DOS DADOS PRINCIPAIS ---
   dados_processados <- dados
   if (!base::is.null(colunas_selecionadas)) {
     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
   }
 
+  # Adiciona a coluna do botão [+]
   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
 
+  # Contador automático
   base::assign("contador_tabelas_alex", contador_tabelas_alex + 1, envir = .GlobalEnv)
   titulo_final <- base::paste0("Tabela ", contador_tabelas_alex, ": ", titulo_tabela)
 
+  # Título em HTML
   html_titulo <- htmltools::tags$h2(
     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
     htmltools::tags$b(titulo_final)
   )
 
+  # --- 2. PREPARAÇÃO JSON PARA JAVASCRIPT (CORREÇÃO AQUI) ---
   json_detalhes <- jsonlite::toJSON(dados_detalhes)
-  nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
-  larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
+  
+  nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) {
+    jsonlite::toJSON(colunas_detalhes_nomes)
+  } else {
+    "null"
+  }
+  
+  # Variável que estava faltando na versão anterior
+  larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) {
+    jsonlite::toJSON(largura_detalhes_vetor)
+  } else {
+    "null"
+  }
 
+  # --- 3. RENDERIZAÇÃO DA TABELA ---
   tabela <- DT::datatable(
     base::data.frame(dados_processados, check.names = FALSE),
     escape = FALSE, 
     rownames = mostrar_indice,
     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
     width = "100%", 
-    class = "hover row-border", 
+    class = "row-border", 
     options = base::list(
       dom = 'ft p', 
       pageLength = n_pages,
@@ -616,28 +634,27 @@ tabela_interativa_detalhes <- function(dados,
       
       initComplete = DT::JS(
         base::paste0("function(settings, json) {",
-                     # Estilo base
+                     # Estilo base do Alex
                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
                      "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
                      
-                     # Lógica de expansão com destaque ELEGANTE
+                     # Expansão e destaque fixo
                      "var table = this.api(); var detalhes_data = ", json_detalhes, ";",
-                     "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", largura_detalhes_js, ";",
+                     "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
                      
                      "$(this.api().table().body()).on('click', 'td.details-control', function() {",
                      "  var tr = $(this).closest('tr'); var row = table.row(tr);",
                      "  if (row.child.isShown()) {",
                      "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
-                     # VOLTA AO NORMAL
                      "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal', 'border-left': 'none'});",
                      "  } else {",
-                     # DESTAQUE REFINADO (Fundo claro + Negrito moderado + Borda lateral)
                      "    tr.css({'background-color': '#f8f9fa', 'color': '", cor_primaria, "', 'font-weight': '600', 'border-left': '4px solid ", cor_primaria, "'});",
                      "    var rowData = row.data();",
                      "    var chave = rowData[", if(mostrar_indice) "2" else "1", "];",
                      "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
+                     
                      "    var html_sub = '<table class=\"subtable\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff; color:#03045e; font-weight:bold;\">';",
                      "    var colKeys = Object.keys(sub_dados[0]);",
                      "    colKeys.forEach((key, index) => {",
@@ -647,8 +664,8 @@ tabela_interativa_detalhes <- function(dados,
                      "    });",
                      "    html_sub += '</tr></thead><tbody>';",
                      "    sub_dados.forEach(r => {",
-                     "       html_sub += '<tr style=\"border-bottom:1px solid #f1f1f1; color:#333 !important;\">';",
-                     "       colKeys.forEach(k => { html_sub += '<td style=\"padding:6px;\">' + r[k] + '</td>'; });",
+                     "       html_sub += '<tr style=\"border-bottom:1px solid #f1f1f1;\">';",
+                     "       colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; background-color: transparent !important;\">' + r[k] + '</td>'; });",
                      "       html_sub += '</tr>';",
                      "    });",
                      "    html_sub += '</tbody></table>';",
@@ -656,14 +673,16 @@ tabela_interativa_detalhes <- function(dados,
                      "  }",
                      "});",
                      
-                     # HOVER DISCRETO
+                     # Hover Protegido (Só na tabela pai e apenas se não estiver aberta)
                      "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
-                     "  if (!$(this).hasClass('shown') && !$(this).closest('table').hasClass('subtable')) {",
-                     "    $(this).css({'background-color': '#f1f1f1', 'transition': '0.1s'});",
+                     "  var tr = $(this);",
+                     "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable')) {",
+                     "    tr.css({'background-color': '#f1f1f1', 'transition': '0.1s'});",
                      "  }",
                      "}).on('mouseleave', 'tr', function() {",
-                     "  if (!$(this).hasClass('shown') && !$(this).closest('table').hasClass('subtable')) {",
-                     "    $(this).css({'background-color': ''});",
+                     "  var tr = $(this);",
+                     "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable')) {",
+                     "    tr.css({'background-color': ''});",
                      "  }",
                      "});",
                      "}")
