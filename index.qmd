@@ -26,8 +26,10 @@ page-layout: full
 title-block-banner: true
 ---
 
-<!-- ::: {style="border-top: 2px solid #003366;"} -->
-<!-- ::: -->
+<br>
+
+::: {style="border-top: 2px solid #003366;"}
+:::
 
 <br>
 
@@ -490,8 +492,6 @@ cli::cli_alert_success("Ambiente e Funções de Tratamento carregados com sucess
 
 ## Estrutura Organizacional
 
-
-
 ### Equipe Técnica
 
 ::: {style="font-size: 0.9em; text-align: justify; border-left: 4px solid #000000; padding-left: 15px; margin-top: 15px; margin-bottom: 20px; "}
@@ -521,7 +521,7 @@ O setor atua de forma estratégica na coordenação e execução de compras e co
 * **Modernização:** Contribuição ativa em políticas de gestão administrativa.
 :::
 
-## Gestão de Fluxos e Indicadores 
+## Repositório de Dados e Central de Downloads
 
 <!-- Importação das bases de dados -->
 
@@ -691,7 +691,7 @@ bd_catalogo <- gsheet::gsheet2tbl(
 ```
 
 
-### Repositório de Dados e Central de Downloads
+<!-- ## Gestão de Fluxos e Indicadores  -->
 
 ```{r}
 
@@ -850,7 +850,6 @@ gerar_central_cards(dados_cards)
 ```
 
 
-
 <!-- Reestruturação e tratamento dos dados -->
 
 ```{r}
@@ -980,7 +979,8 @@ bd_principal <- bd_principal %>%
 
 ```
 
-<br>
+
+## Gestão de Fluxos e Indicadores 
 
 <!-- grafico - Entrada e saida de processos -->
 
@@ -1217,10 +1217,10 @@ plotly::plot_ly() %>%
                  buttons = base::list(
                    base::list(method = "update", label = "Gráfico: Barras", 
                               args = base::list(base::list(type = "bar", textposition = "outside"), 
-                                                base::list(margin = base::list(t = 150, b = 170, l = 30, r = 30)))),
+                                                base::list(margin = base::list(t = 150, b = 90, l = 0, r = 0)))),
                    base::list(method = "update", label = "Gráfico: Linhas", 
                               args = base::list(base::list(type = "scatter", mode = "lines+markers+text", textposition = "top center"),
-                                                base::list(margin = base::list(t = 150, b = 170, l = 30, r = 30))))
+                                                base::list(margin = base::list(t = 150, b = 90, l = 0, r = 0))))
                  ), font = base::list(family = "Inter, sans-serif", size = tamanho_botoes))
     ),
     # Legenda superior horizontal configurada pelo Alex
