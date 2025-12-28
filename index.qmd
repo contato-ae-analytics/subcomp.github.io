@@ -706,7 +706,6 @@ O setor atua de forma estratégica na coordenação e execução de compras e co
 
 ## Gestão de Fluxos e Indicadores 
 
-
 <!-- Importação das bases de dados -->
 
 ::: {style="text-align: justify"}
@@ -875,6 +874,9 @@ bd_catalogo <- gsheet::gsheet2tbl(
 ```
 
 
+### Sobre os dados
+
+
 <!-- Reestruturação e tratamento dos dados -->
 
 ```{r}
@@ -1022,6 +1024,8 @@ titulo_nome        <- "Gráfico 1: Fluxo Operacional de Processos"
 # titulo_nome        <- "Gráfico 1: Fluxo Operacional de Processos | Subgerência de - Compras 2025"
 # Define o texto do subtítulo descritivo do fluxo
 # subtitulo_texto    <- "Comparativo Mensal de Entradas e Saídas"
+subtitulo_texto    <- ""
+
 
 # Configuração de cor e tamanho para o título principal (Azul Escuro)
 titulo_cor         <- "#03045e"
