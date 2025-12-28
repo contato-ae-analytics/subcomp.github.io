@@ -155,37 +155,52 @@ if(!require("dplyr")) install.packages("dplyr", quiet = TRUE) ; library("dplyr")
 # ==============================================================================
 # E. FUNÇÕES DE APRESENTAÇÃO - VERSÃO FINAL ALEX (SEM ERROS)
 # ==============================================================================
+# ==============================================================================
+# E. FUNÇÕES DE APRESENTAÇÃO - VERSÃO INTEGRAL COMENTADA LINHA POR LINHA
+# ==============================================================================
 
-tabela_interativa <- function(dados, 
-                              titulo_tabela, 
-                              tam_fonte_corpo = "13px",   
-                              tam_fonte_titulo = "20px",  
-                              tam_fonte_header = "14px",  
-                              cor_titulo = "#03045e",
-                              cor_primaria = "#03045e",
-                              cor_texto_corpo = "#333333",
-                              mostrar_filtro = TRUE,
-                              pesquisa_geral = FALSE,
-                              largura_cols_vetor = NULL,
-                              colunas_selecionadas = NULL,
-                              n_pages = 10,
-                              mostrar_indice = TRUE) {
+# Definição da função de tabela simples com todos os seus argumentos de entrada
+tabela_interativa <- function(dados,                # Dataframe com os dados brutos
+                              titulo_tabela,       # Texto que aparecerá no título H2
+                              tam_fonte_corpo = "13px",   # Tamanho da fonte das células
+                              tam_fonte_titulo = "20px",  # Tamanho da fonte do título H2
+                              tam_fonte_header = "14px",  # Tamanho da fonte do cabeçalho
+                              cor_titulo = "#03045e",     # Cor oficial do título (Marinho)
+                              cor_primaria = "#03045e",   # Cor de destaque do cabeçalho
+                              cor_texto_corpo = "#333333",# Cor do texto padrão das linhas
+                              mostrar_filtro = TRUE,      # Ativa/desativa filtros por coluna
+                              pesquisa_geral = FALSE,     # Ativa/desativa campo de busca global
+                              largura_cols_vetor = NULL,  # Vetor com larguras em px
+                              colunas_selecionadas = NULL,# Vetor com mapeamento de colunas
+                              n_pages = 10,               # Linhas visíveis por página
+                              mostrar_indice = TRUE) {    # Exibe ou oculta números das linhas
 
+  # Verifica se o contador de tabelas existe no ambiente global do R
   if (!base::exists("contador_tabelas_alex")) {
+    # Cria o contador iniciando em zero se for a primeira tabela
     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
   }
 
+  # Atribui os dados recebidos para uma variável de processamento
   dados_processados <- dados
+  # Checa se o usuário enviou um vetor para selecionar/renomear colunas
   if (!base::is.null(colunas_selecionadas)) {
+    # Filtra o dataframe usando o mapeamento fornecido via dplyr
     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
   }
 
-  n_col_reais <- base::ncol(dados_processados)
+  # Obtém o total de colunas para evitar erros de índice (Erro '7')
+  n_colunas_dados <- base::ncol(dados_processados)
+  # Inicia a lista de larguras com a coluna de índice (target 0) fixa em 30px
   lista_columnDefs <- base::list(base::list(width = '30px', targets = 0))
   
+  # Se o vetor de larguras existir, percorre os valores para aplicar às colunas
   if (!base::is.null(largura_cols_vetor)) {
+    # Inicia o laço de repetição sobre o vetor de larguras
     for (i in base::seq_along(largura_cols_vetor)) {
-      if ((i - 1) < n_col_reais) {
+      # Garante que não tentaremos aplicar largura em coluna inexistente
+      if ((i - 1) < n_colunas_dados) {
+         # Adiciona a definição de largura para a coluna alvo na lista técnica
          lista_columnDefs[[base::length(lista_columnDefs) + 1]] <- base::list(
            width = largura_cols_vetor[i], 
            targets = i - 1
@@ -194,151 +209,230 @@ tabela_interativa <- function(dados,
     }
   }
 
-  novo_cont <- base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1
-  base::assign("contador_tabelas_alex", novo_cont, envir = .GlobalEnv)
-  titulo_final <- base::paste0("Tabela ", novo_cont, ": ", titulo_tabela)
+  # Incrementa o contador global para que cada tabela receba um número sequencial
+  base::assign("contador_tabelas_alex", base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1, envir = .GlobalEnv)
+  # Formata o texto final do título incluindo o número atual do contador
+  titulo_final <- base::paste0("Tabela ", base::get("contador_tabelas_alex", envir = .GlobalEnv), ": ", titulo_tabela)
 
+  # Constrói o cabeçalho H2 utilizando tags HTML do pacote htmltools
   html_titulo <- htmltools::tags$h2(
+    # Aplica o CSS com as variáveis de cor e tamanho solicitadas por você
     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
+    # Define o texto do título dentro da tag de negrito (b)
     htmltools::tags$b(titulo_final)
   )
 
+  # Inicia a criação da tabela interativa através do pacote DT (DataTables)
   tabela <- DT::datatable(
+    # Converte para dataframe garantindo integridade dos nomes das colunas
     base::data.frame(dados_processados, check.names = FALSE),
-    escape = FALSE, # GARANTE QUE O BOTÃO DE DOWNLOAD APAREÇA
+    # escape = FALSE permite que links e botões HTML funcionem (não sejam texto puro)
+    escape = FALSE, 
+    # Determina se os números laterais das linhas serão exibidos
     rownames = mostrar_indice,
+    # Configura o filtro superior das colunas (estilo Alex)
     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
+    # Define que a tabela ocupe 100% da largura da página
     width = "100%", 
+    # Aplica classes CSS para realce de linha e bordas horizontais simples
     class = "hover row-border", 
+    # Inicia a lista de opções técnicas de controle do plugin DataTables
     options = base::list(
-      dom = 'ft p', # PESQUISA NA ESQUERDA
+      # dom = 'ft p' fixa a barra de pesquisa na ESQUERDA (f) antes da tabela (t)
+      dom = 'ft p', 
+      # Define a quantidade inicial de linhas mostradas por página
       pageLength = n_pages,
+      # Habilita o campo de busca/pesquisa geral
       searching = TRUE, 
+      # Desativa a opção do usuário alterar o número de registros por página
       lengthChange = FALSE,
+      # Oculta a frase informativa "Mostrando X de Y" do rodapé
       info = FALSE,
+      # Desativa a ordenação padrão por clique nas colunas (estilo Alex)
       ordering = FALSE,      
+      # Desativa o redimensionamento automático para usar as larguras fixas
       autoWidth = FALSE,    
+      # Ativa a barra de rolagem horizontal para evitar quebra de layout
       scrollX = TRUE,       
+      # Injeta as definições de largura de colunas calculadas anteriormente
       columnDefs = lista_columnDefs,
+      # Define código JavaScript para ser executado ao finalizar o carregamento
       initComplete = DT::JS(
         base::paste0("function(settings, json) {",
+                     # Aplica fonte, família e cor no container principal da tabela
                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
+                     # Estiliza o cabeçalho com fundo branco e cor de destaqueAlex
                      "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
+                     # Cria a borda preta grossa de 3px no topo e na base do cabeçalho
                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
+                     # Cria a borda preta grossa de 3px no encerramento da tabela
                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
-                     
-                     # SEU HOVER: Negrito + Cinza + Texto Preto
+                     # Monitora quando o mouse passa sobre uma linha da tabela
                      "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
-                     "  $(this).css({'background-color': '#f1f1f1', 'color': '#000000', 'font-weight': 'bold'});",
+                     # Garante que o hover só funcione na tabela pai (bloqueia sub-tabelas)
+                     "  if (!$(this).closest('table').hasClass('subtable')) {",
+                     # Aplica fundo cinza, texto preto e negrito no hover (Original Alex)
+                     "    $(this).css({'background-color': '#f1f1f1', 'color': '#000000', 'font-weight': 'bold'});",
+                     "  }",
+                     # Monitora quando o mouse sai da linha da tabela
                      "}).on('mouseleave', 'tr', function() {",
-                     "  $(this).css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
+                     # Verifica se não é sub-tabela para limpar os estilos aplicados
+                     "  if (!$(this).closest('table').hasClass('subtable')) {",
+                     # Remove o fundo e volta o peso da fonte para o normal
+                     "    $(this).css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
+                     "  }",
                      "});",
                      "}")
       ),
+      # Define as traduções para os textos de paginação e avisos do DataTables
       language = base::list(paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
                             emptyTable = "Sem dados", zeroRecords = "Nenhum registro encontrado", search = "Pesquisa Geral:")
     )
   )
+  # Retorna o título HTML e a tabela como um conjunto pronto para renderização
   return(htmltools::tagList(html_titulo, tabela))
 }
 
-tabela_interativa_detalhes <- function(dados, 
-                                       dados_detalhes,       
-                                       coluna_chave,         
-                                       titulo_tabela, 
-                                       colunas_detalhes_nomes = NULL, 
-                                       largura_detalhes_vetor = NULL, 
-                                       tam_fonte_corpo = "13px",   
-                                       tam_fonte_titulo = "20px",  
-                                       tam_fonte_header = "14px",  
-                                       cor_titulo = "#03045e",        
-                                       cor_primaria = "#03045e",      
-                                       cor_texto_corpo = "#333333",   
-                                       mostrar_filtro = TRUE,      
-                                       pesquisa_geral = FALSE,     
-                                       largura_cols_vetor = NULL,  
-                                       colunas_selecionadas = NULL,
-                                       n_pages = 10,
-                                       mostrar_indice = TRUE) {
 
+# Definição da função hierárquica (Pai e Filho) com todos os argumentos comentados
+tabela_interativa_detalhes <- function(dados,               # Dataframe principal (Pai)
+                                       dados_detalhes,      # Dataframe secundário (Filho)
+                                       coluna_chave,        # Nome da coluna que liga as duas bases
+                                       titulo_tabela,       # Título que aparecerá no topo
+                                       colunas_detalhes_nomes = NULL, # Nomes amigáveis dos detalhes
+                                       largura_detalhes_vetor = NULL, # Larguras px da sub-tabela
+                                       tam_fonte_corpo = "13px",   # Tamanho da fonte do corpo
+                                       tam_fonte_titulo = "20px",  # Tamanho da fonte do título
+                                       tam_fonte_header = "14px",  # Tamanho da fonte do cabeçalho
+                                       cor_titulo = "#03045e",     # Cor marinho do título
+                                       cor_primaria = "#03045e",   # Cor marinho do cabeçalho
+                                       cor_texto_corpo = "#333333",# Cor cinza do texto
+                                       mostrar_filtro = TRUE,      # Ativa filtros individuais
+                                       pesquisa_geral = FALSE,     # Ativa barra de busca global
+                                       largura_cols_vetor = NULL,  # Larguras px da tabela pai
+                                       colunas_selecionadas = NULL,# Seleção de colunas pai
+                                       n_pages = 10,               # Registros por página
+                                       mostrar_indice = TRUE) {    # Exibe ou não o índice numérico
+
+  # Verifica e inicializa o contador de tabelas no ambiente global
   if (!base::exists("contador_tabelas_alex", envir = .GlobalEnv)) {
+    # Define como zero caso não exista
     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
   }
 
+  # Prepara os dados da tabela pai
   dados_processados <- dados
+  # Se houver vetor de colunas, seleciona via dplyr::select Alex
   if (!base::is.null(colunas_selecionadas)) {
+    # Aplica filtro conforme mapeamento de colunas enviado
     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
   }
 
+  # Cria a coluna com o botão de expansão [+] na primeira posição lateral
   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
-  n_col_reais <- base::ncol(dados_processados)
+  # Obtém número total de colunas para cálculo de larguras
+  n_colunas_reais <- base::ncol(dados_processados)
 
-  novo_cont <- base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1
-  base::assign("contador_tabelas_alex", novo_cont, envir = .GlobalEnv)
-  titulo_final <- base::paste0("Tabela ", novo_cont, ": ", titulo_tabela)
+  # Atualiza o contador de tabelas do relatório
+  base::assign("contador_tabelas_alex", base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1, envir = .GlobalEnv)
+  # Gera o texto do título numerado sequencialmente
+  titulo_final <- base::paste0("Tabela ", base::get("contador_tabelas_alex", envir = .GlobalEnv), ": ", titulo_tabela)
 
+  # Constrói o cabeçalho H2 Alex em HTML
   html_titulo <- htmltools::tags$h2(
+    # Aplica estilos de fonte, cor e alinhamento
     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
+    # Texto do título em negrito
     htmltools::tags$b(titulo_final)
   )
 
+  # Serializa os dados de detalhes para JSON para processamento no navegador
   json_detalhes_js <- jsonlite::toJSON(dados_detalhes, ArrayOrder = "row")
+  # Serializa os nomes das colunas de detalhes para JSON (ou null)
   nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
+  # Serializa as larguras da sub-tabela para JSON (ou null)
   larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
 
+  # Inicia configuração de colunas pai, definindo a coluna 0 como classe details-control
   lista_column_defs <- base::list(
     base::list(targets = 0, className = 'details-control', width = '20px', orderable = FALSE)
   )
   
+  # Aplica as larguras nas colunas principais sem exceder o limite real (evita erro '7')
   if (!base::is.null(largura_cols_vetor)) {
     for (i in 1:base::length(largura_cols_vetor)) {
-      if (i < n_col_reais) {
+      if (i < n_colunas_reais) {
+        # Adiciona a largura fixa na lista técnica do DataTables
         lista_column_defs[[base::length(lista_column_defs) + 1]] <- base::list(targets = i, width = largura_cols_vetor[i])
       }
     }
   }
 
+  # Renderiza a tabela principal com suporte a expansão
   tabela <- DT::datatable(
+    # Envia os dados com a coluna de controle inclusa
     base::data.frame(dados_processados, check.names = FALSE),
+    # escape = FALSE é obrigatório para renderizar o ícone HTML [+]
     escape = FALSE, 
+    # Controla exibição dos números das linhas
     rownames = mostrar_indice,
+    # Define os filtros de coluna no topo
     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
+    # Define ocupação total da largura
     width = "100%", 
+    # Aplica bordas simples entre registros
     class = "row-border", 
+    # Inicia definições de comportamento DataTables
     options = base::list(
-      dom = 'ft p', # PESQUISA NA ESQUERDA
+      # dom = 'ft p' mantém campo de BUSCA na ESQUERDA
+      dom = 'ft p', 
+      # Linhas por página
       pageLength = n_pages,
+      # Ativa campo de busca global
       searching = TRUE, 
+      # Trava a quantidade de registros por página
       lengthChange = FALSE,
+      # Remove sumário de informações inferior
       info = FALSE,
+      # Remove ordenação padrão
       ordering = FALSE,      
+      # Trava larguras automáticas
       autoWidth = FALSE,    
+      # Habilita rolagem lateral
       scrollX = TRUE,
+      # Aplica a lista de larguras configurada
       columnDefs = lista_column_defs,
       
+      # Código JavaScript para gerenciar a lógica de expansão
       initComplete = DT::JS(
         base::paste0("function(settings, json) {",
+                     # CSS via JS: Aplica fontes, cabeçalho e bordas grossas 3px
                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
                      "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
                      
+                     # Instancia API e dados JSON em variáveis de script
                      "var table = this.api(); var detalhes_data = ", json_detalhes_js, ";",
                      "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
                      
+                     # Monitora clique na coluna de controle de expansão [+]
                      "$(this.api().table().body()).on('click', 'td.details-control', function() {",
                      "  var tr = $(this).closest('tr'); var row = table.row(tr);",
+                     # Se a linha já estiver aberta, fecha e limpa estilos
                      "  if (row.child.isShown()) {",
                      "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
-                     "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal', 'border-left': 'none'});",
+                     "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
                      "  } else {",
+                     # Se for abrir, aplica destaque visual Alex (f8 e borda lateral marinho)
                      "    tr.css({'background-color': '#f8f9fa', 'color': '", cor_primaria, "', 'font-weight': '600', 'border-left': '4px solid ", cor_primaria, "'});",
-                     "    var rowData = row.data();",
-                     "    var indexChave = ", if(mostrar_indice) "2" else "1", ";", 
-                     "    var chave = rowData[indexChave];",
+                     # Identifica o ID do processo clicado
+                     "    var rowData = row.data(); var indexChave = ", if(mostrar_indice) "2" else "1", "; var chave = rowData[indexChave];",
+                     # Filtra detalhes relativos àquela chave
                      "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
+                     # Inicia construção HTML da sub-tabela técnica
                      "    var html_sub = '<table class=\"subtable\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff; color:#03045e; font-weight:bold;\">';",
                      "    if(sub_dados.length > 0) {",
                      "       var colKeys = Object.keys(sub_dados[0]);",
@@ -355,11 +449,12 @@ tabela_interativa_detalhes <- function(dados,
                      "       });",
                      "    } else { html_sub += '<tr><td>Nenhum detalhe disponível</td></tr>'; }",
                      "    html_sub += '</tbody></table>';",
+                     # Mostra a sub-tabela e altera ícone para [-]
                      "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
                      "  }",
                      "});",
 
-                     # HOVER PROTEGIDO: Só na principal
+                     # Hover Alex: Garante que efeito não atinja sub-tabelas
                      "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
                      "  var tr = $(this);",
                      "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable')) {",
@@ -373,12 +468,15 @@ tabela_interativa_detalhes <- function(dados,
                      "});",
                      "}")
       ),
+      # Tradução para interface do usuário em Português
       language = base::list(paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
                             emptyTable = "Sem dados", zeroRecords = "Nenhum registro encontrado", search = "Pesquisa Geral:")
     )
   )
+  # Retorna o tagList com título e tabela hierárquica
   return(htmltools::tagList(html_titulo, tabela))
 }
+
 # ==============================================================================
 # F. FUNÇÕES DE TRATAMENTO E AUDITORIA
 # ==============================================================================
