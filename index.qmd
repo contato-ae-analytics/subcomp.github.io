@@ -494,7 +494,7 @@ cli::cli_alert_success("Ambiente e Funções de Tratamento carregados com sucess
 
 ### Equipe Técnica
 
-::: {style="font-size: 0.9em; text-align: justify; border-left: 4px solid #000000; padding-left: 15px; margin-top: 15px; margin-bottom: 20px; "}
+::: {style="font-size: 0.9em; text-align: justify; border-left: 4px solid #000000; padding-left: 15px; margin-top: 25px; margin-bottom: 25px; "}
 
 | Função | Responsável |
 |:--- |:--- |
@@ -507,7 +507,7 @@ cli::cli_alert_success("Ambiente e Funções de Tratamento carregados com sucess
 
 ### Escopo de Atuação
 
-::: {style="text-align: justify; margin-top: 15px; margin-bottom: 20px; "}
+::: {style="text-align: justify; margin-top: 25px; margin-bottom: 25px; "}
 
 O setor atua de forma estratégica na coordenação e execução de compras e contratações, com foco em:
 
@@ -525,7 +525,7 @@ O setor atua de forma estratégica na coordenação e execução de compras e co
 
 <!-- Importação das bases de dados -->
 
-::: {style="font-size: 0.9em; text-align: justify; margin-top: 15px; margin-bottom: 20px; "}
+::: {style="font-size: 0.9em; text-align: justify; margin-top: 25px; margin-bottom: 25px; "}
 
 
 ```{r}
@@ -989,7 +989,7 @@ bd_principal <- bd_principal %>%
 
 <!-- grafico - Entrada e saida de processos -->
 
-::: {style="font-size: 0.9em; text-align: justify; margin-top: 15px; margin-bottom: 20px; "}
+::: {style="font-size: 0.9em; text-align: justify; margin-top: 25px; margin-bottom: 25px; "}
 
 
 ```{r}
@@ -999,7 +999,7 @@ bd_principal <- bd_principal %>%
 #| warning: false
 #| message: false
 #| out-width: "100%"
-#| fig-height: 7
+#| fig-height: 6
 
 # Define o título principal que identifica a subgerência e o ano
 titulo_nome        <- "Gráfico 1: Fluxo Operacional de Processos"
@@ -1189,7 +1189,7 @@ plotly::plot_ly() %>%
     title = base::list(
       text = base::paste0("<b style='color:", titulo_cor, "; font-size:", titulo_tamanho, "px'>", titulo_nome, "</b>",
                           "<br><span style='color:", sub_cor, "; font-size:", sub_tamanho, "px'>", subtitulo_texto, "</span>"),
-      x = 0, y = 0.98, xanchor = "left", xref = "paper"
+      x = 0, y = 1, xanchor = "left", xref = "paper"
     ),
     # Aplica o estilo do Hover Label definido pelo Alex
     hoverlabel = base::list(
@@ -1221,21 +1221,21 @@ plotly::plot_ly() %>%
                  buttons = montar_botoes(lista_m),
                  font = base::list(family = "Inter, sans-serif", size = tamanho_botoes)),
       # Menu de Tipo de Gráfico (Dropdown na posição 0.30)
-      base::list(active = 0, x = 0.30, y = 1.13, xanchor = "left",
+      base::list(active = 0, x = 0, y = 1.13, xanchor = "left",
                  buttons = base::list(
                    base::list(method = "update", label = "Gráfico: Barras", 
                               args = base::list(base::list(type = "bar", textposition = "outside"), 
-                                                base::list(margin = base::list(t = 150, b = 90, l = 0, r = 0)))),
+                                                base::list(margin = base::list(t = 150, b = 30, l = 0, r = 0)))),
                    base::list(method = "update", label = "Gráfico: Linhas", 
                               args = base::list(base::list(type = "scatter", mode = "lines+markers+text", textposition = "top center"),
-                                                base::list(margin = base::list(t = 150, b = 90, l = 0, r = 0))))
+                                                base::list(margin = base::list(t = 150, b = 40, l = 0, r = 0))))
                  ), font = base::list(family = "Inter, sans-serif", size = tamanho_botoes))
     ),
     # Legenda superior horizontal configurada pelo Alex
     legend = base::list(orientation = 'h', x = 0, xanchor = "left", y = 1.25,
                         font = base::list(family = "Inter, sans-serif", size = tamanho_legenda, color = cor_legenda)),
     # Ajuste fino das margens do gráfico
-    margin = base::list(t = 120, b = 40, l = 0, r = 0),
+    margin = base::list(t = 150, b = 30, l = 0, r = 0),
     plot_bgcolor = "white", paper_bgcolor = "white"
   ) %>%
   # Configuração de responsividade e ocultação da barra do Plotly
