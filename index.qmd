@@ -782,49 +782,79 @@ bd_catalogo <- gsheet::gsheet2tbl(
 ### Sobre os dados
 
 ```{r}
+# ==========================================================
+# CENTRAL DE DOWNLOADS E ACESSO - VERSÃO INTEGRAL COMENTADA
+# ==========================================================
 
-# --- PREPARAÇÃO DOS DADOS ---
+# Inicia a criação do dataframe com os dados, descrições e links originais Alex
 bd_central_downloads <- base::data.frame(
+  # Define o nome amigável de cada banco de dados
   "id_planilha" = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
+  # Define a descrição técnica de cada base
   "descricao"   = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", "Detalhamento Financeiro vinculado aos processos", "Dicionário para tradução de códigos contábeis", "Identificação da origem do capital", "Classificação detalhada do objeto de gasto", "Tabela mestra de padronização de itens do Estado"),
+  # Define as URLs reais das planilhas que você enviou
   "url"         = base::c(
-    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826",
-    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695",
-    "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687",
-    "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696",
-    "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856",
-    "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131"
+    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826", # Link Processos
+    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695", # Link Itens
+    "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687", # Link Natureza
+    "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696", # Link Fonte
+    "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856", # Link Elemento
+    "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131"  # Link Catálogo
   ),
+  # Garante que as strings não virem fatores
   stringsAsFactors = FALSE
 )
 
-# Criando o botão HTML (Style Alex)
-bd_central_downloads$botao <- base::apply(bd_central_downloads, 1, function(x) {
-  base::paste0("<a href='", x['url'], "' target='_blank' style='background-color:#03045e; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>PLANILHA</a>")
+# --- GERAÇÃO DO BOTÃO ACESSAR (ABRE A PLANILHA NO NAVEGADOR) ---
+bd_central_downloads$acessar <- base::apply(bd_central_downloads, 1, function(x) {
+  # Retorna link HTML estilizado na cor azul marinho oficial Alex
+  base::paste0("<a href='", x['url'], "' target='_blank' style='background-color:#03045e; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>ACESSAR</a>")
 })
 
-# Vetores
-minhas_colunas_down <- base::c("Banco de Dados" = "id_planilha", "Descrição" = "descricao", "Acesso" = "botao")
-minhas_larguras_down <- base::c("180px", "450px", "120px")
+# --- GERAÇÃO DO BOTÃO DOWNLOAD (BAIXA O EXCEL AUTOMATICAMENTE) ---
+bd_central_downloads$download <- base::apply(bd_central_downloads, 1, function(x) {
+  # Transforma o link de edição em link de exportação direta para Excel (.xlsx)
+  url_download <- base::gsub("/edit.*", "/export?format=xlsx", x['url'])
+  # Retorna link HTML com cor preta para diferenciar do botão de acesso
+  base::paste0("<a href='", url_download, "' target='_blank' style='background-color:#333333; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>DOWNLOAD</a>")
+})
 
-# Execução
+# Define os vetores de mapeamento para as colunas que você quer exibir
+minhas_colunas_down <- base::c(
+  "Banco de Dados" = "id_planilha", 
+  "Descrição"      = "descricao", 
+  "Acesso Online"  = "acessar", 
+  "Baixar Arquivo" = "download"
+)
+
+# Define larguras fixas para acomodar os dois botões lateralmente
+minhas_larguras_down <- base::c("150px", "350px", "100px", "100px")
+
+# Executa a renderização da tabela com seus padrões de fonte e cores
 tabela_interativa(
+  # Passa o dataframe com as duas colunas de botões criadas
   dados = bd_central_downloads,
-  titulo_tabela = "Central de Downloads",
-  tam_fonte_corpo = "11.3px",
+  # Define o título do repositório
+  titulo_tabela = "Central de Downloads e Repositório de Dados",
+  # Aplica suas fontes compactas Alex
+  tam_fonte_corpo  = "11.3px",
   tam_fonte_header = "12.2px",
   tam_fonte_titulo = "14.3px",
-  cor_titulo = "#03045e",
-  cor_primaria = "#000000",
-  cor_texto_corpo = "#000000",
-  mostrar_filtro = FALSE,
-  pesquisa_geral = TRUE,
-  largura_cols_vetor = minhas_larguras_down,
+  # Aplica suas cores oficiais
+  cor_titulo       = "#03045e",
+  cor_primaria     = "#000000",
+  cor_texto_corpo  = "#000000",
+  # Mantém visual limpo sem filtros individuais
+  mostrar_filtro   = FALSE,
+  # Mantém busca global ativa na ESQUERDA
+  pesquisa_geral   = TRUE,
+  # Aplica vetores de configuração definidos acima
+  largura_cols_vetor   = minhas_larguras_down,
   colunas_selecionadas = minhas_colunas_down,
+  # Mostra 6 linhas por página e oculta o índice lateral
   n_pages = 6,
   mostrar_indice = FALSE
 )
-
 ```
 
 
