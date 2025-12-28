@@ -1,3 +1,73 @@
+/* ==========================================================
+   ESTILIZAÇÃO DOS PAINÉIS DE ABAS (PANEL-TABSET) - ESTILO ALEX
+   ========================================================== */
+
+/* 1. CONTAINER GERAL DO BLOCO DE ABAS */
+.panel-tabset {
+  border: 1px solid #d1d1d1;           /* Borda cinza clara para definir o limite do bloco */
+  border-radius: 10px;                 /* Cantos arredondados para um visual moderno */
+  background: #ffffff;                 /* Fundo branco para garantir contraste com gráficos e tabelas */
+  padding: 20px;                       /* Espaçamento interno para o conteúdo não encostar na borda */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Sombra suave para o bloco "flutuar" na página */
+  margin-bottom: 30px;                 /* Espaço entre este bloco e o próximo elemento */
+}
+
+/* 2. MENU DE NAVEGAÇÃO (BARRA ONDE FICAM OS NOMES DAS MODALIDADES) */
+.nav-tabs {
+  border-bottom: 2px solid #03045e !important; /* Linha horizontal contínua em Azul Escuro */
+  gap: 5px;                            /* Pequeno espaço entre as abas individuais */
+  margin-bottom: 15px !important;      /* Espaço entre o menu e o conteúdo da aba */
+}
+
+/* 3. ESTILO DE TODAS AS ABAS (ESTADO PADRÃO / INATIVO) */
+.nav-tabs .nav-link {
+  color: #444444 !important;           /* Texto em cinza escuro para abas não selecionadas */
+  background-color: #f8f9fa !important; /* Fundo cinza bem claro para diferenciar do fundo branco */
+  border: 1px solid #e9ecef !important; /* Borda leve para cada aba */
+  border-bottom: none !important;      /* Remove a borda inferior para conectar com a linha azul */
+  padding: 10px 20px;                  /* Tamanho interno da aba */
+  font-weight: 500;                    /* Peso da fonte normal/médio */
+  transition: all 0.2s ease-in-out;    /* Transição suave ao passar o mouse ou clicar */
+  font-family: 'Inter', sans-serif;    /* Fonte limpa e profissional */
+}
+
+/* 4. ESTILO DA ABA SELECIONADA (ATIVA - CONFORME SOLICITADO PELO ALEX) */
+.nav-tabs .nav-link.active {
+  background-color: #03045e !important; /* Fundo em Azul Escuro para destaque total */
+  color: #ffffff !important;           /* Texto em Branco para leitura sobre o azul */
+  border: 1px solid #03045e !important; /* Borda na mesma cor do fundo */
+  border-bottom: 4px solid #000000 !important; /* Base da aba em PRETO para reforçar a seleção */
+  
+  /* DESTAQUE DE FONTE SELECIONADA EM NEGRITO */
+  font-weight: 800 !important;         /* Negrito extra (extra-bold) para a aba selecionada */
+  transform: translateY(-2px);         /* Leve elevação para dar efeito de profundidade */
+}
+
+/* 5. EFEITO AO PASSAR O MOUSE (HOVER) NAS ABAS NÃO SELECIONADAS */
+.nav-tabs .nav-link:hover:not(.active) {
+  background-color: #e2e6ea !important; /* Escurece levemente o cinza do fundo */
+  color: #03045e !important;           /* Muda o texto para Azul Escuro */
+  border-color: #d1d1d1 !important;    /* Realça a borda */
+}
+
+/* 6. CONTEÚDO DENTRO DOS PAINÉIS */
+.tab-content {
+  padding: 20px 10px;                  /* Espaço interno para os gráficos e textos */
+  color: #000000;                      /* Cor do texto principal em PRETO */
+  font-family: 'Inter', sans-serif;    /* Mantém a fonte padronizada */
+}
+
+/* 7. ESTILIZAÇÃO DO TÍTULO H2 QUE ANTECEDE AS ABAS */
+h2 {
+  color: #03045e;                      /* Título em Azul Escuro */
+  border-left: 6px solid #000000;      /* Barra lateral em PRETO */
+  padding-left: 15px;                  /* Espaço entre a barra e o texto */
+  font-weight: 700;                    /* Título em Negrito */
+  margin-bottom: 25px;                 /* Espaço abaixo do título */
+  font-size: 1.5rem;                   /* Tamanho de fonte imponente */
+}
+
+
 /* css styles */
 /* 1. Estilização dos Dropdowns do Plotly (Botões) */
 .js-plotly-plot .control-group {

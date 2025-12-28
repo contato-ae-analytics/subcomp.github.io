@@ -708,235 +708,235 @@ bd_principal <- bd_principal %>%
 # ==========================================================
 
 # Textos Principais
-titulo_nome       <- "Gráfico 1: Fluxo Operacional de Processos | Subgerência de - Compras 2025"
-subtitulo_texto   <- "Comparativo Mensal de Entradas e Saídas"
-
-# Estilo dos Títulos (Sugestão: Titulo sempre > Subtitulo)
-# titulo_cor        <- "#001d3d"
-titulo_cor        <- "#03045e"
-titulo_tamanho    <- 14.5         # Ajustado para destaque (era 10)
-sub_cor           <- "#000000"
-sub_tamanho       <- 13         
-
-# Cores das Séries (Contraste alto para facilitar distinção)
-cor_entradas      <- "#001d3d"  # Profundo e sério
-# cor_saidas        <- "#ff4d6d"  # Alerta e movimento
-cor_saidas        <- "#48cae4"  # Alerta e movimento
-
-
-# Configuração de Textos Internos
-tamanho_rotulos   <- 10         # Valores acima das barras/pontos
-cor_rotulos       <- "#000000"
-
-tamanho_eixo_x    <- 11         # Nome dos meses
-cor_eixo_x        <- "#000000"
-
-# Componentes de Interatividade
-tamanho_legenda   <- 12         # Texto de Entradas/Saídas no topo
-cor_legenda       <- "#000000"         # Texto de Entradas/Saídas no topo
-
-tamanho_botoes    <- 12         # Filtros Dropdown
-
-# Estilo do Hover (Balão de informações detalhadas)
-hover_bg_cor      <- "#FFFFFF"  # Fundo branco para limpeza visual
-hover_txt_cor     <- "#000000"  # Texto preto para leitura máxima
-hover_fonte_tam   <- 12         # Fonte levemente menor (Fira Code)
-borda_balao_hover <- "#000000"  # Contorno do balão
-alinhamento_balao_hover <- "left" # Facilita leitura de listas
-
-# ==========================================================
-# ==========================================================
-
-# 1. Vetor de ordem (Base para o esqueleto e para os níveis do fator)
-meses_ordem_limpo <- c("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
-                       "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro")
-
-# 2. DICIONÁRIO DE TRADUÇÃO (Corrigido para converter Inglês -> Português)
-tradutor_meses <- c(
-  "January" = "Janeiro", "February" = "Fevereiro", "March" = "Março", 
-  "April" = "Abril", "May" = "Maio", "June" = "Junho", 
-  "July" = "Julho", "August" = "Agosto", "September" = "Setembro", 
-  "October" = "Outubro", "November" = "Novembro", "December" = "Dezembro"
-)
-
-# 3. Preparação da Base com Tradução e HTML
-dados_base_limpa <- bd_principal %>%
-  dplyr::distinct(processo, .keep_all = TRUE) %>%
-  dplyr::select(processo, mes_entrada, mes_saida, modalidade_processo, status_item) %>%
-  # Transforma colunas de entrada/saída em linhas
-  tidyr::pivot_longer(cols = c(mes_entrada, mes_saida), 
-                      names_to = "Origem", 
-                      values_to = "Mes_Nome") %>%
-  dplyr::mutate(Tipo = dplyr::if_else(Origem == "mes_entrada", "Entradas", "Saídas")) %>%
-  dplyr::filter(!is.na(Mes_Nome)) %>%
-  dplyr::mutate(
-    # PASSO CRUCIAL: Se o mês estiver em inglês, traduz. Se não, mantém.
-    Mes_Nome_Limpo = dplyr::recode(Mes_Nome, !!!tradutor_meses),
-    # Cria o fator com as tags HTML que você pediu
-    Mes_Bold = factor(paste0("<b>", Mes_Nome_Limpo, "</b>"), 
-                      levels = paste0("<b>", meses_ordem_limpo, "</b>"))
-  )
-
-
-# 4. Esqueleto para o Plotly (Garante que meses sem dados apareçam como 0)
-esqueleto <- expand.grid(
-  Mes_Bold = factor(paste0("<b>", meses_ordem_limpo, "</b>"), 
-                    levels = paste0("<b>", meses_ordem_limpo, "</b>")), 
-  Tipo = c("Entradas", "Saídas"), 
-  stringsAsFactors = FALSE
-)
-
-# 5. Função de Processamento (Agora usando o match perfeito do Mes_Bold)
-
-
-gerar_dados_seguros <- function(df, mod = NULL, stat = NULL) {
-  # 1. Filtros iniciais
-  if (!is.null(mod) && mod != "Todas as Modalidades") { df <- df %>% dplyr::filter(modalidade_processo == mod) }
-  if (!is.null(stat) && stat != "Todos os Status") { df <- df %>% dplyr::filter(status_item == stat) }
-  
-  # 2. Processamento com detalhamento de modalidades no Hover
-  df_res <- df %>%
-    dplyr::group_by(Mes_Bold, Tipo, modalidade_processo) %>%
-    dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
-    dplyr::group_by(Mes_Bold, Tipo) %>%
-    dplyr::mutate(
-      total = sum(n), 
-      txt_h = paste0("• ", modalidade_processo, ": ", n, " (", round((n/total)*100,1), "%)")
-    ) %>%
-    # Agrupa os textos de todas as modalidades de um mesmo mês/tipo
-    dplyr::summarise(
-      Quantidade = max(total), 
-      Hover = paste(txt_h, collapse = "<br>"), 
-      .groups = "drop"
-    ) %>%
-    # 3. Join com o esqueleto para garantir todos os meses na tela
-    dplyr::right_join(esqueleto, by = c("Mes_Bold", "Tipo")) %>%
-    dplyr::mutate(
-      Quantidade = ifelse(is.infinite(Quantidade) | is.na(Quantidade), 0, Quantidade), 
-      Hover = ifelse(is.na(Hover), "Sem processos registrados", Hover)
-    ) %>%
-    dplyr::arrange(Tipo, Mes_Bold)
-  
-  return(df_res)
-}
-
-montar_botoes <- function(lista, tipo) {
-  lapply(lista, function(v) {
-    d <- if(tipo == "mod") gerar_dados_seguros(dados_base_limpa, mod = v) else gerar_dados_seguros(dados_base_limpa, stat = v)
-    de <- d %>% dplyr::filter(Tipo == "Entradas"); ds <- d %>% dplyr::filter(Tipo == "Saídas")
-    t_e <- sum(de$Quantidade); t_s <- sum(ds$Quantidade)
-    list(method = "update", label = v,
-         args = list(list(y = list(de$Quantidade, ds$Quantidade),
-                          text = list(paste0("<b>", de$Quantidade, "</b>"), paste0("<b>", ds$Quantidade, "</b>")),
-                          hovertext = list(de$Hover, ds$Hover),
-                          name = list(paste0("<b>Entradas (Total: ", t_e, ")</b>"), 
-                                      paste0("<b>Saídas (Total: ", t_s, ")</b>")))))
-  })
-}
-
-lista_m <- c("Todas as Modalidades", sort(as.character(unique(dados_base_limpa$modalidade_processo))))
-lista_s <- c("Todos os Status", sort(as.character(unique(dados_base_limpa$status_item))))
-
-df_i <- gerar_dados_seguros(dados_base_limpa)
-df_e_ini <- df_i %>% dplyr::filter(Tipo == "Entradas") 
-df_s_ini <- df_i %>% dplyr::filter(Tipo == "Saídas") 
-
-# --- 4. GRÁFICO FINAL ---
-plotly::plot_ly() %>%
-  plotly::add_bars(x = df_e_ini$Mes_Bold, y = df_e_ini$Quantidade, 
-                   name = paste0("<b>Entradas (Total: ", sum(df_e_ini$Quantidade), ")</b>"),
-                   marker = list(color = cor_entradas),
-                   text = paste0("<b>", df_e_ini$Quantidade, "</b>"),
-                   textposition = 'outside', cliponaxis = FALSE,
-                   textfont = list(family = "Inter, sans-serif", size = tamanho_rotulos, color = cor_rotulos),
-                   hoverinfo = "text", hovertext = df_e_ini$Hover) %>%
-  plotly::add_bars(x = df_s_ini$Mes_Bold, y = df_s_ini$Quantidade, 
-                   name = paste0("<b>Saídas (Total: ", sum(df_s_ini$Quantidade), ")</b>"),
-                   marker = list(color = cor_saidas),
-                   text = paste0("<b>", df_s_ini$Quantidade, "</b>"),
-                   textposition = 'outside', cliponaxis = FALSE,
-                   textfont = list(family = "Inter, sans-serif", size = tamanho_rotulos, color = cor_rotulos),
-                   hoverinfo = "text", hovertext = df_s_ini$Hover) %>%
-  plotly::layout(
-    font = list(family = "Inter, sans-serif"),
-    title = list(
-      # AQUI ESTÃO AS VARIÁVEIS APLICADAS NO TÍTULO E SUBTÍTULO
-      text = paste0("<b style='color:", titulo_cor, "; font-size:", titulo_tamanho, "px'>", titulo_nome, "</b>",
-                    "<br><span style='color:", sub_cor, "; font-size:", sub_tamanho, "px'>", subtitulo_texto, "</span>"),
-      x = 0, 
-      y = 0.98, 
-      xanchor = "left", 
-      xref = "paper"
-    ),
-    # AQUI AS OPÇÕES DO HOVER LABEL (TOTALMENTE EDITÁVEIS)
-    hoverlabel = list(
-      bgcolor = hover_bg_cor,       # Cor de fundo do balão
-      font = list(
-        family = "Inter, sans-serif",       # Fonte técnica para alinhar números
-        size = hover_fonte_tam,     # Tamanho da fonte
-        color = hover_txt_cor       # Cor do texto
-      ),
-      bordercolor = borda_balao_hover,      # Cor da borda do balão (Pode criar uma variável se quiser)
-      align = alinhamento_balao_hover                # Alinhamento do texto dentro do balão
-    ),
-    xaxis = list(
-      title = "",
-      showgrid = FALSE, 
-      tickfont = list(family = "Inter, sans-serif", size = tamanho_eixo_x, color = cor_eixo_x),
-      # Fixamos a posição do eixo para ele não "subir" para dentro das barras
-      fixedrange = TRUE
-    ),
-    
-    yaxis = list(title = "", 
-                 showticklabels = FALSE, 
-                 showgrid = TRUE, 
-                 gridcolor = "#F0F0F0", 
-                 range = list(0, max(df_i$Quantidade) * 1.5)),
-    barmode = 'group',
-    bargap = 0.2,       # Espaço entre os meses
-    bargroupgap = 0.1,  # DISTÂNCIA ENTRE AS BARRAS DO MESMO MÊS (Teste valores entre 0.0 e 0.5)
-    
-    updatemenus = list(
-      list(active = 0, 
-           x = 0, 
-           y = 1.13, 
-           xanchor = "left", 
-           buttons = montar_botoes(lista_m, "mod"),
-           font = list(family = "Inter, sans-serif", size = tamanho_botoes)),
-      list(active = 0, 
-           x = 0.30, 
-           y = 1.13, 
-           xanchor = "left", 
-           buttons = montar_botoes(lista_s, "stat"),
-           font = list(family = "Inter, sans-serif", size = tamanho_botoes)),
-      list(active = 0, x = 0.55, y = 1.13, xanchor = "left",
-             buttons = list(
-               list(method = "update", # Mudança aqui
-                    label = "Gráfico: Barras", 
-                    args = list(
-                      list(type = "bar", textposition = "outside"), 
-                      list(margin = list(t = 160, b = 150, l = 30, r = 30)) # Força a margem aqui
-                    )),
-               list(method = "update", # Mudança aqui
-                    label = "Gráfico: Linhas", 
-                    args = list(
-                      list(type = "scatter", mode = "lines+markers+text", textposition = "top center"),
-                      list(margin = list(t = 160, b = 150, l = 30, r = 30)) # Força a margem aqui
-                    ))
-             ), 
-             font = list(family = "Inter, sans-serif", size = tamanho_botoes))
-      ),
-    legend = list(orientation = 'h', x = 0, xanchor = "left", y = 1.25,
-                  font = list(family = "Inter, sans-serif", size = tamanho_legenda, color = cor_legenda)),
-    margin = list(
-      t = 150,  # Espaço para Título + Subtítulo + Legenda + 3 Botões
-      b = 170,  # Espaço para os Meses (Eixo X) respirares
-      l = 30,   # Respiro na esquerda
-      r = 30    # Respiro na direita
-      ),
-    plot_bgcolor = "white", paper_bgcolor = "white"
-  ) %>%
-  plotly::config(displayModeBar = FALSE, responsive = TRUE)
+# titulo_nome       <- "Gráfico 1: Fluxo Operacional de Processos | Subgerência de - Compras 2025"
+# subtitulo_texto   <- "Comparativo Mensal de Entradas e Saídas"
+# 
+# # Estilo dos Títulos (Sugestão: Titulo sempre > Subtitulo)
+# # titulo_cor        <- "#001d3d"
+# titulo_cor        <- "#03045e"
+# titulo_tamanho    <- 14.5         # Ajustado para destaque (era 10)
+# sub_cor           <- "#000000"
+# sub_tamanho       <- 13         
+# 
+# # Cores das Séries (Contraste alto para facilitar distinção)
+# cor_entradas      <- "#001d3d"  # Profundo e sério
+# # cor_saidas        <- "#ff4d6d"  # Alerta e movimento
+# cor_saidas        <- "#48cae4"  # Alerta e movimento
+# 
+# 
+# # Configuração de Textos Internos
+# tamanho_rotulos   <- 10         # Valores acima das barras/pontos
+# cor_rotulos       <- "#000000"
+# 
+# tamanho_eixo_x    <- 11         # Nome dos meses
+# cor_eixo_x        <- "#000000"
+# 
+# # Componentes de Interatividade
+# tamanho_legenda   <- 12         # Texto de Entradas/Saídas no topo
+# cor_legenda       <- "#000000"         # Texto de Entradas/Saídas no topo
+# 
+# tamanho_botoes    <- 12         # Filtros Dropdown
+# 
+# # Estilo do Hover (Balão de informações detalhadas)
+# hover_bg_cor      <- "#FFFFFF"  # Fundo branco para limpeza visual
+# hover_txt_cor     <- "#000000"  # Texto preto para leitura máxima
+# hover_fonte_tam   <- 12         # Fonte levemente menor (Fira Code)
+# borda_balao_hover <- "#000000"  # Contorno do balão
+# alinhamento_balao_hover <- "left" # Facilita leitura de listas
+# 
+# # ==========================================================
+# # ==========================================================
+# 
+# # 1. Vetor de ordem (Base para o esqueleto e para os níveis do fator)
+# meses_ordem_limpo <- c("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+#                        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro")
+# 
+# # 2. DICIONÁRIO DE TRADUÇÃO (Corrigido para converter Inglês -> Português)
+# tradutor_meses <- c(
+#   "January" = "Janeiro", "February" = "Fevereiro", "March" = "Março", 
+#   "April" = "Abril", "May" = "Maio", "June" = "Junho", 
+#   "July" = "Julho", "August" = "Agosto", "September" = "Setembro", 
+#   "October" = "Outubro", "November" = "Novembro", "December" = "Dezembro"
+# )
+# 
+# # 3. Preparação da Base com Tradução e HTML
+# dados_base_limpa <- bd_principal %>%
+#   dplyr::distinct(processo, .keep_all = TRUE) %>%
+#   dplyr::select(processo, mes_entrada, mes_saida, modalidade_processo, status_item) %>%
+#   # Transforma colunas de entrada/saída em linhas
+#   tidyr::pivot_longer(cols = c(mes_entrada, mes_saida), 
+#                       names_to = "Origem", 
+#                       values_to = "Mes_Nome") %>%
+#   dplyr::mutate(Tipo = dplyr::if_else(Origem == "mes_entrada", "Entradas", "Saídas")) %>%
+#   dplyr::filter(!is.na(Mes_Nome)) %>%
+#   dplyr::mutate(
+#     # PASSO CRUCIAL: Se o mês estiver em inglês, traduz. Se não, mantém.
+#     Mes_Nome_Limpo = dplyr::recode(Mes_Nome, !!!tradutor_meses),
+#     # Cria o fator com as tags HTML que você pediu
+#     Mes_Bold = factor(paste0("<b>", Mes_Nome_Limpo, "</b>"), 
+#                       levels = paste0("<b>", meses_ordem_limpo, "</b>"))
+#   )
+# 
+# 
+# # 4. Esqueleto para o Plotly (Garante que meses sem dados apareçam como 0)
+# esqueleto <- expand.grid(
+#   Mes_Bold = factor(paste0("<b>", meses_ordem_limpo, "</b>"), 
+#                     levels = paste0("<b>", meses_ordem_limpo, "</b>")), 
+#   Tipo = c("Entradas", "Saídas"), 
+#   stringsAsFactors = FALSE
+# )
+# 
+# # 5. Função de Processamento (Agora usando o match perfeito do Mes_Bold)
+# 
+# 
+# gerar_dados_seguros <- function(df, mod = NULL, stat = NULL) {
+#   # 1. Filtros iniciais
+#   if (!is.null(mod) && mod != "Todas as Modalidades") { df <- df %>% dplyr::filter(modalidade_processo == mod) }
+#   if (!is.null(stat) && stat != "Todos os Status") { df <- df %>% dplyr::filter(status_item == stat) }
+#   
+#   # 2. Processamento com detalhamento de modalidades no Hover
+#   df_res <- df %>%
+#     dplyr::group_by(Mes_Bold, Tipo, modalidade_processo) %>%
+#     dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
+#     dplyr::group_by(Mes_Bold, Tipo) %>%
+#     dplyr::mutate(
+#       total = sum(n), 
+#       txt_h = paste0("• ", modalidade_processo, ": ", n, " (", round((n/total)*100,1), "%)")
+#     ) %>%
+#     # Agrupa os textos de todas as modalidades de um mesmo mês/tipo
+#     dplyr::summarise(
+#       Quantidade = max(total), 
+#       Hover = paste(txt_h, collapse = "<br>"), 
+#       .groups = "drop"
+#     ) %>%
+#     # 3. Join com o esqueleto para garantir todos os meses na tela
+#     dplyr::right_join(esqueleto, by = c("Mes_Bold", "Tipo")) %>%
+#     dplyr::mutate(
+#       Quantidade = ifelse(is.infinite(Quantidade) | is.na(Quantidade), 0, Quantidade), 
+#       Hover = ifelse(is.na(Hover), "Sem processos registrados", Hover)
+#     ) %>%
+#     dplyr::arrange(Tipo, Mes_Bold)
+#   
+#   return(df_res)
+# }
+# 
+# montar_botoes <- function(lista, tipo) {
+#   lapply(lista, function(v) {
+#     d <- if(tipo == "mod") gerar_dados_seguros(dados_base_limpa, mod = v) else gerar_dados_seguros(dados_base_limpa, stat = v)
+#     de <- d %>% dplyr::filter(Tipo == "Entradas"); ds <- d %>% dplyr::filter(Tipo == "Saídas")
+#     t_e <- sum(de$Quantidade); t_s <- sum(ds$Quantidade)
+#     list(method = "update", label = v,
+#          args = list(list(y = list(de$Quantidade, ds$Quantidade),
+#                           text = list(paste0("<b>", de$Quantidade, "</b>"), paste0("<b>", ds$Quantidade, "</b>")),
+#                           hovertext = list(de$Hover, ds$Hover),
+#                           name = list(paste0("<b>Entradas (Total: ", t_e, ")</b>"), 
+#                                       paste0("<b>Saídas (Total: ", t_s, ")</b>")))))
+#   })
+# }
+# 
+# lista_m <- c("Todas as Modalidades", sort(as.character(unique(dados_base_limpa$modalidade_processo))))
+# lista_s <- c("Todos os Status", sort(as.character(unique(dados_base_limpa$status_item))))
+# 
+# df_i <- gerar_dados_seguros(dados_base_limpa)
+# df_e_ini <- df_i %>% dplyr::filter(Tipo == "Entradas") 
+# df_s_ini <- df_i %>% dplyr::filter(Tipo == "Saídas") 
+# 
+# # --- 4. GRÁFICO FINAL ---
+# plotly::plot_ly() %>%
+#   plotly::add_bars(x = df_e_ini$Mes_Bold, y = df_e_ini$Quantidade, 
+#                    name = paste0("<b>Entradas (Total: ", sum(df_e_ini$Quantidade), ")</b>"),
+#                    marker = list(color = cor_entradas),
+#                    text = paste0("<b>", df_e_ini$Quantidade, "</b>"),
+#                    textposition = 'outside', cliponaxis = FALSE,
+#                    textfont = list(family = "Inter, sans-serif", size = tamanho_rotulos, color = cor_rotulos),
+#                    hoverinfo = "text", hovertext = df_e_ini$Hover) %>%
+#   plotly::add_bars(x = df_s_ini$Mes_Bold, y = df_s_ini$Quantidade, 
+#                    name = paste0("<b>Saídas (Total: ", sum(df_s_ini$Quantidade), ")</b>"),
+#                    marker = list(color = cor_saidas),
+#                    text = paste0("<b>", df_s_ini$Quantidade, "</b>"),
+#                    textposition = 'outside', cliponaxis = FALSE,
+#                    textfont = list(family = "Inter, sans-serif", size = tamanho_rotulos, color = cor_rotulos),
+#                    hoverinfo = "text", hovertext = df_s_ini$Hover) %>%
+#   plotly::layout(
+#     font = list(family = "Inter, sans-serif"),
+#     title = list(
+#       # AQUI ESTÃO AS VARIÁVEIS APLICADAS NO TÍTULO E SUBTÍTULO
+#       text = paste0("<b style='color:", titulo_cor, "; font-size:", titulo_tamanho, "px'>", titulo_nome, "</b>",
+#                     "<br><span style='color:", sub_cor, "; font-size:", sub_tamanho, "px'>", subtitulo_texto, "</span>"),
+#       x = 0, 
+#       y = 0.98, 
+#       xanchor = "left", 
+#       xref = "paper"
+#     ),
+#     # AQUI AS OPÇÕES DO HOVER LABEL (TOTALMENTE EDITÁVEIS)
+#     hoverlabel = list(
+#       bgcolor = hover_bg_cor,       # Cor de fundo do balão
+#       font = list(
+#         family = "Inter, sans-serif",       # Fonte técnica para alinhar números
+#         size = hover_fonte_tam,     # Tamanho da fonte
+#         color = hover_txt_cor       # Cor do texto
+#       ),
+#       bordercolor = borda_balao_hover,      # Cor da borda do balão (Pode criar uma variável se quiser)
+#       align = alinhamento_balao_hover                # Alinhamento do texto dentro do balão
+#     ),
+#     xaxis = list(
+#       title = "",
+#       showgrid = FALSE, 
+#       tickfont = list(family = "Inter, sans-serif", size = tamanho_eixo_x, color = cor_eixo_x),
+#       # Fixamos a posição do eixo para ele não "subir" para dentro das barras
+#       fixedrange = TRUE
+#     ),
+#     
+#     yaxis = list(title = "", 
+#                  showticklabels = FALSE, 
+#                  showgrid = TRUE, 
+#                  gridcolor = "#F0F0F0", 
+#                  range = list(0, max(df_i$Quantidade) * 1.5)),
+#     barmode = 'group',
+#     bargap = 0.2,       # Espaço entre os meses
+#     bargroupgap = 0.1,  # DISTÂNCIA ENTRE AS BARRAS DO MESMO MÊS (Teste valores entre 0.0 e 0.5)
+#     
+#     updatemenus = list(
+#       list(active = 0, 
+#            x = 0, 
+#            y = 1.13, 
+#            xanchor = "left", 
+#            buttons = montar_botoes(lista_m, "mod"),
+#            font = list(family = "Inter, sans-serif", size = tamanho_botoes)),
+#       list(active = 0, 
+#            x = 0.30, 
+#            y = 1.13, 
+#            xanchor = "left", 
+#            buttons = montar_botoes(lista_s, "stat"),
+#            font = list(family = "Inter, sans-serif", size = tamanho_botoes)),
+#       list(active = 0, x = 0.55, y = 1.13, xanchor = "left",
+#              buttons = list(
+#                list(method = "update", # Mudança aqui
+#                     label = "Gráfico: Barras", 
+#                     args = list(
+#                       list(type = "bar", textposition = "outside"), 
+#                       list(margin = list(t = 160, b = 150, l = 30, r = 30)) # Força a margem aqui
+#                     )),
+#                list(method = "update", # Mudança aqui
+#                     label = "Gráfico: Linhas", 
+#                     args = list(
+#                       list(type = "scatter", mode = "lines+markers+text", textposition = "top center"),
+#                       list(margin = list(t = 160, b = 150, l = 30, r = 30)) # Força a margem aqui
+#                     ))
+#              ), 
+#              font = list(family = "Inter, sans-serif", size = tamanho_botoes))
+#       ),
+#     legend = list(orientation = 'h', x = 0, xanchor = "left", y = 1.25,
+#                   font = list(family = "Inter, sans-serif", size = tamanho_legenda, color = cor_legenda)),
+#     margin = list(
+#       t = 150,  # Espaço para Título + Subtítulo + Legenda + 3 Botões
+#       b = 170,  # Espaço para os Meses (Eixo X) respirares
+#       l = 30,   # Respiro na esquerda
+#       r = 30    # Respiro na direita
+#       ),
+#     plot_bgcolor = "white", paper_bgcolor = "white"
+#   ) %>%
+#   plotly::config(displayModeBar = FALSE, responsive = TRUE)
 
 
 # ==========================================================
@@ -1187,7 +1187,7 @@ plotly::plot_ly() %>%
 
 ### Índices de Produtividade Individual
 
-## Modalidade do Processo | Natureza da Despesa (R$)
+## Modalidades | Natureza da Despesa (R$)
 
 ::: {.panel-tabset}
 
