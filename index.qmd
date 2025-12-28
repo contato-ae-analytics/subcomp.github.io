@@ -265,41 +265,38 @@ tabela_interativa <- function(dados,
 # ==============================================================================
 
 # ==============================================================================
-# FUNÇÃO FINAL CONSOLIDADA (VERSÃO ALEX) - 100% COMENTADA
+# FUNÇÃO FINAL CONSOLIDADA (VERSÃO ALEX) - LIMPA E FUNCIONAL
 # ==============================================================================
 
 tabela_interativa_detalhes <- function(dados, 
-                                       dados_detalhes,       # Base com os itens (ex: 722 itens)
-                                       coluna_chave,         # Coluna de ligação (ex: "processo")
+                                       dados_detalhes,       # Base com os 722 itens
+                                       coluna_chave,         # Chave de ligação (ex: "processo")
                                        titulo_tabela,        # Título do relatório
-                                       coluna_ordenacao = NULL, # Coluna para ordenar Z-A
-                                       ordem_decrescente = TRUE, # Se TRUE, maior para menor
-                                       colunas_detalhes_nomes = NULL, # Nomes amigáveis dos itens
-                                       largura_detalhes_vetor = NULL, # Larguras px dos itens
-                                       tam_fonte_corpo = "11.3px",   # Fonte dados Alex
-                                       tam_fonte_header = "12.2px",  # Fonte cabeçalho Alex
-                                       tam_fonte_titulo = "14.3px",  # Fonte título Alex
-                                       cor_titulo = "#03045e",        # Cor Azul
-                                       cor_primaria = "#000000",      # Cor Preta (Destaque)
-                                       cor_texto_corpo = "#000000",   # Cor Texto
-                                       mostrar_filtro = TRUE,        # Ativa filtros colunas
-                                       pesquisa_geral = TRUE,        # Ativa Search global
-                                       largura_cols_vetor = NULL,    # Larguras tabela pai
-                                       colunas_selecionadas = NULL,  # Mapeamento colunas
-                                       n_pages = 10,                 # Linhas por página
-                                       mostrar_indice = FALSE) {     # Oculta índice R
+                                       coluna_ordenacao = NULL, # Coluna para ordenar
+                                       ordem_decrescente = TRUE, # TRUE = Z-A
+                                       colunas_detalhes_nomes = NULL, # Nomes amigáveis itens
+                                       largura_detalhes_vetor = NULL, # Larguras px itens
+                                       tam_fonte_corpo = "11.3px",   
+                                       tam_fonte_header = "12.2px",  
+                                       tam_fonte_titulo = "14.3px",  
+                                       cor_titulo = "#03045e",        
+                                       cor_primaria = "#000000",      
+                                       cor_texto_corpo = "#000000",   
+                                       mostrar_filtro = TRUE,        
+                                       pesquisa_geral = TRUE,     
+                                       largura_cols_vetor = NULL,  
+                                       colunas_selecionadas = NULL,
+                                       n_pages = 10,
+                                       mostrar_indice = FALSE) {
 
-  # --- 1. GESTÃO DO CONTADOR ---
-  # Se o contador global não existir, inicia com zero
+  # 1. GESTÃO DO CONTADOR (R)
   if (!base::exists("contador_tabelas_alex")) {
     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
   }
   
-  # Cria cópia para processar
   dados_processados <- dados
 
-  # --- 2. ORDENAÇÃO (DPLYR) ---
-  # Ordena antes de renomear para evitar erro de coluna não encontrada
+  # 2. ORDENAÇÃO (R) - Feita antes da renomeação para evitar erro de objeto
   if (!base::is.null(coluna_ordenacao)) {
     if (ordem_decrescente) {
       dados_processados <- dados_processados %>% dplyr::arrange(dplyr::desc(.data[[coluna_ordenacao]]))
@@ -308,63 +305,50 @@ tabela_interativa_detalhes <- function(dados,
     }
   }
 
-  # --- 3. SELEÇÃO E RENOMEAÇÃO ---
-  # Aplica o mapeamento 'minhas_colunas'
+  # 3. SELEÇÃO E RENOMEAÇÃO (R)
   if (!base::is.null(colunas_selecionadas)) {
     dados_processados <- dados_processados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
   }
 
-  # Adiciona a coluna do botão [+] na posição 0
+  # 4. ADIÇÃO DA COLUNA DE EXPANSÃO (R)
   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
   
-  # Incrementa contador e monta título final
+  # 5. CONTADOR E TÍTULO (R)
   base::assign("contador_tabelas_alex", contador_tabelas_alex + 1, envir = .GlobalEnv)
   titulo_final <- base::paste0("Tabela ", contador_tabelas_alex, ": ", titulo_tabela)
 
-  # --- 4. PREPARAÇÃO JSON ---
-  # Converte dados para o navegador
+  # 6. CONVERSÃO PARA JSON (R para JS)
   json_detalhes <- jsonlite::toJSON(dados_detalhes)
   nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
   larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
 
-  # --- 5. DATATABLE (DT) ---
+  # 7. RENDERIZAÇÃO DATATABLE
   tabela <- DT::datatable(
     base::data.frame(dados_processados, check.names = FALSE),
-    escape = FALSE, # Renderiza ícones HTML
+    escape = FALSE, 
     rownames = mostrar_indice,
     extensions = 'Buttons',
     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
     options = base::list(
-      dom = 'Bft p', # Botões, filtro, tabela, paginação
-      buttons = base::list(
-        'copy', 'excel', 
-        base::list(extend = 'pdfHtml5', title = titulo_final, orientation = 'landscape')
-      ),
+      dom = 'Bft p', 
+      buttons = base::list('copy', 'excel', base::list(extend = 'pdfHtml5', title = titulo_final, orientation = 'landscape')),
       pageLength = n_pages,
       searching = pesquisa_geral,
-      ordering = FALSE, # Mantém a ordem do R
+      ordering = FALSE, 
       autoWidth = FALSE,
       scrollX = TRUE,
-      columnDefs = base::list(
-        base::list(targets = 0, className = 'details-control', width = '30px')
-      ),
+      columnDefs = base::list(base::list(targets = 0, className = 'details-control', width = '30px')),
       
-      # --- 6. LÓGICA JAVASCRIPT (CORRIGIDA) ---
+      # INÍCIO DO BLOCO JAVASCRIPT (Sem comentários internos para não sumir a tabela)
       initComplete = DT::JS(
         base::paste0("function(settings, json) {",
-                     # Aplica fontes e cores no container
                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif'});",
-                     # Aplica moldura de 3px no cabeçalho
                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px', 'color': '", cor_primaria, "', 'font-size': '", tam_fonte_header, "'});",
-                     # Aplica borda no rodapé da tabela
                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
                      
-                     # LOOP DE FILTROS: Remove busca da col [+] e personaliza o resto
                      "this.api().columns().every(function(index) {",
                      "   var column = this;",
-                     "   if (index === 0) { ",
-                     "      $(column.filter()).empty(); ", 
-                     "   } else {",
+                     "   if (index === 0) { $(column.filter()).empty(); } else {",
                      "      var title = $(column.header()).text();",
                      "      if (title.trim() !== '') {",
                      "         $('input', column.filter()).attr('placeholder', 'Busca ' + title.trim());",
@@ -373,11 +357,9 @@ tabela_interativa_detalhes <- function(dados,
                      "   }",
                      "});",
 
-                     # VARIÁVEIS JAVASCRIPT
                      "var table = this.api(); var detalhes_data = ", json_detalhes, ";",
                      "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
                      
-                     # EVENTO CLIQUE: Expandir e Travar Negrito
                      "$(this.api().table().body()).on('click', 'td.details-control', function() {",
                      "  var tr = $(this).closest('tr'); var row = table.row(tr);",
                      "  if (row.child.isShown()) {",
@@ -385,12 +367,10 @@ tabela_interativa_detalhes <- function(dados,
                      "    tr.css({'background-color': '', 'font-weight': 'normal'});",
                      "  } else {",
                      "    tr.addClass('shown'); $(this).html('&ominus;');",
-                     "    // TRAVA O NEGRITO AO SELECIONAR (Comentário corrigido para JS)",
                      "    tr.css({'background-color': '#f8f9fa', 'font-weight': 'bold', 'color': '", cor_primaria, "'});",
                      "    var rowData = row.data(); var chave = rowData[", if(mostrar_indice) "2" else "1", "];",
                      "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
                      
-                     # MONTAGEM DA SUBTABELA (DETALHES)
                      "    var html_sub = '<table class=\"subtable_alex\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff; color:#03045e; font-weight:bold;\">';",
                      "    var colKeys = Object.keys(sub_dados[0]);",
                      "    colKeys.forEach((key, index) => {",
@@ -409,7 +389,6 @@ tabela_interativa_detalhes <- function(dados,
                      "  }",
                      "});",
                      
-                     # EVENTO HOVER: Negrito ao passar o mouse (Só na principal)
                      "$(this.api().table().node()).on('mouseenter', 'tr', function() {",
                      "  var tr = $(this);",
                      "  if (!tr.closest('table').hasClass('subtable_alex')) {",
@@ -422,19 +401,13 @@ tabela_interativa_detalhes <- function(dados,
                      "  }",
                      "});",
                      "}")
-      ),
-      language = base::list(paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
-                            emptyTable = "Sem dados", zeroRecords = "Nenhum registro encontrado", search = "Pesquisa Geral:")
+      )
     )
   )
   
-  # RETORNO FINAL
-  return(htmltools::tagList(
-    htmltools::tags$h2(style=base::paste0("color:", cor_titulo, "; font-size:", tam_fonte_titulo), 
-                       htmltools::tags$b(titulo_final)), 
-    tabela
-  ))
+  return(htmltools::tagList(htmltools::tags$h2(style=base::paste0("color:", cor_titulo, "; font-size:", tam_fonte_titulo), htmltools::tags$b(titulo_final)), tabela))
 }
+
 
 
 # ==============================================================================
@@ -1113,7 +1086,7 @@ plotly::plot_ly() %>%
     legend = base::list(orientation = 'h', x = 0, xanchor = "left", y = 1.25,
                         font = base::list(family = "Inter, sans-serif", size = tamanho_legenda, color = cor_legenda)),
     # Ajuste fino das margens do gráfico
-    margin = base::list(t = 150, b = 40, l = 30, r = 30),
+    margin = base::list(t = 150, b = 40, l = 130, r = 30),
     plot_bgcolor = "white", paper_bgcolor = "white"
   ) %>%
   # Configuração de responsividade e ocultação da barra do Plotly
