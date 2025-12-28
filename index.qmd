@@ -258,6 +258,138 @@ tabela_interativa <- function(dados,
   htmltools::tagList(html_titulo, tabela)
 }
 
+
+# ==========================================================
+# --- FUNÇÃO: TABELA INTERATIVA COM DETALHES (CHILD ROWS) ---
+# ==========================================================
+
+tabela_interativa_detalhes <- function(dados, 
+                                       dados_detalhes,       # NOVO: DF com os subitens
+                                       coluna_chave,         # NOVO: Nome da coluna que liga as duas tabelas
+                                       titulo_tabela, 
+                                       tam_fonte_corpo = "13px",   
+                                       tam_fonte_titulo = "20px",  
+                                       tam_fonte_header = "14px",  
+                                       cor_titulo = "#03045e",        
+                                       cor_primaria = "#03045e",      
+                                       cor_texto_corpo = "#333333",   
+                                       mostrar_filtro = TRUE,      
+                                       pesquisa_geral = FALSE,     
+                                       largura_cols_vetor = NULL,  
+                                       colunas_selecionadas = NULL,
+                                       n_pages = 10,
+                                       mostrar_indice = TRUE) {
+
+  # --- SEGURANÇA DO CONTADOR ---
+  if (!base::exists("contador_tabelas_alex")) {
+    base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
+  }
+
+  # --- 1. PREPARAÇÃO DOS DADOS PRINCIPAIS ---
+  dados_processados <- dados
+  if (!base::is.null(colunas_selecionadas)) {
+    dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
+  }
+
+  # --- 2. ADIÇÃO DA COLUNA DE CONTROLE (BOTÃO +) ---
+  # Criamos a coluna vazia no início para o botão de expansão
+  dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
+
+  # --- 3. CONTADOR E TÍTULO ---
+  base::assign("contador_tabelas_alex", contador_tabelas_alex + 1, envir = .GlobalEnv)
+  titulo_final <- base::paste0("Tabela ", contador_tabelas_alex, ": ", titulo_tabela)
+
+  # --- 4. TÍTULO HTML (ESTILO ALEX) ---
+  html_titulo <- htmltools::tags$h2(
+    style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
+                         "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
+    htmltools::tags$b(titulo_final)
+  )
+
+  # --- 5. LÓGICA DE DETALHES (JSON PARA JAVASCRIPT) ---
+  # Transformamos os detalhes em JSON para o navegador processar
+  json_detalhes <- jsonlite::toJSON(dados_detalhes)
+
+  # --- 6. RENDERIZAÇÃO DA TABELA ---
+  tabela <- DT::datatable(
+    base::data.frame(dados_processados, check.names = FALSE),
+    escape = FALSE, # Permite renderizar o ícone HTML &oplus;
+    rownames = mostrar_indice,
+    filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
+    width = "100%", 
+    class = "hover row-border", 
+    options = base::list(
+      dom = 'ft p', 
+      pageLength = n_pages,
+      searching = TRUE, 
+      lengthChange = FALSE,
+      info = FALSE,
+      ordering = FALSE,      
+      autoWidth = FALSE,    
+      scrollX = TRUE,
+      # Define que a primeira coluna (ícone) é pequena e centralizada
+      columnDefs = base::list(
+        base::list(visible = TRUE, targets = 0, className = 'details-control', width = '20px', orderable = FALSE)
+      ),
+      
+      # JAVASCRIPT: LÓGICA DE CLIQUE E EXIBIÇÃO
+      initComplete = DT::JS(
+        base::paste0("function(settings, json) {",
+                     # Estilo do corpo
+                     "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
+                     # Cabeçalho: Estilo Branco/Azul com Moldura Preta do Alex
+                     "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap', 'background-image': 'none !important'});",
+                     "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
+                     "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
+                     
+                     # Estilo Pesquisa Geral
+                     "var searchDiv = $('.dataTables_filter'); searchDiv.css({'text-align': 'left', 'margin-bottom': '15px', 'float': 'none'});",
+                     "searchDiv.find('label').css({'font-weight': 'bold', 'color': '#000000'});",
+                     if(pesquisa_geral) "" else "$('.dataTables_filter').hide();",
+                     
+                     # Lógica de expansão ao clicar
+                     "var table = this.api();",
+                     "var detalhes_data = ", json_detalhes, ";", # Passa os dados extras para o JS
+                     
+                     "$(this.api().table().body()).on('click', 'td.details-control', function() {",
+                     "  var tr = $(this).closest('tr');",
+                     "  var row = table.row(tr);",
+                     "  if (row.child.isShown()) {",
+                     "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
+                     "  } else {",
+                     "    var rowData = row.data();",
+                     "    var chave = rowData[", if(mostrar_indice) "2" else "1", "];", # Ajusta índice da chave conforme rownames
+                     "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
+                     
+                     # Cria a tabela interna de subitens
+                     "    var html_sub = '<table style=\"width:95%; margin-left:5%; border:1px solid #ddd;\"><thead><tr style=\"background:#f9f9f9\">';",
+                     "    for (var key in sub_dados[0]) { html_sub += '<th>' + key + '</th>'; }",
+                     "    html_sub += '</tr></thead><tbody>';",
+                     "    sub_dados.forEach(r => { html_sub += '<tr>'; for (var k in r) { html_sub += '<td>' + r[k] + '</td>'; } html_sub += '</tr>'; });",
+                     "    html_sub += '</tbody></table>';",
+                     
+                     "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
+                     "  }",
+                     "});",
+                     
+                     # Hover customizado Alex
+                     "var tableContainer = $(this.api().table().container());",
+                     "tableContainer.find('tbody').on('mouseenter', 'tr', function() { $(this).css({'color': '", cor_primaria, "', 'font-weight': '600', 'transition': '0.2s'}); }).on('mouseleave', 'tr', function() { $(this).css({'color': '", cor_texto_corpo, "', 'font-weight': 'normal'}); });",
+                     "}")
+      ),
+      language = base::list(
+        paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
+        emptyTable = "Sem dados", zeroRecords = "Nenhum registro encontrado", search = "Pesquisa Geral:"
+      )
+    )
+  )
+
+  # Retorno consolidado
+  htmltools::tagList(html_titulo, tabela)
+}
+
+
+
 # ==============================================================================
 # F. FUNÇÕES DE TRATAMENTO E AUDITORIA
 # ==============================================================================
@@ -1179,6 +1311,111 @@ plotly::plot_ly() %>%
   ) %>%
   # Configuração de responsividade e ocultação da barra do Plotly
   plotly::config(displayModeBar = FALSE, responsive = TRUE)
+
+
+# ==========================================================
+# --- 1. PREPARAÇÃO DA TABELA PRINCIPAL (RESUMO POR PROCESSO) ---
+# ==========================================================
+
+# Criamos um agrupamento para que cada processo ocupe apenas uma linha na visão inicial
+bd_resumo_processos <- bd_principal %>%
+  dplyr::group_by(processo) %>% # Agrupa pelo número do processo
+  dplyr::summarise(
+    # Captura a primeira ocorrência de cada informação fixa do processo
+    modalidade = dplyr::first(modalidade_processo),
+    agente     = dplyr::first(agente),
+    # Soma a quantidade de itens informada na coluna do banco
+    total_itens = base::max(qtd_itens_processo, na.rm = TRUE),
+    # Soma o valor financeiro total de todos os itens do processo
+    v_total_num = base::sum(valor_total, na.rm = TRUE),
+    status     = dplyr::first(status_item),
+    .groups = "drop" # Finaliza o agrupamento
+  ) %>%
+  dplyr::mutate(
+    # Formata o valor numérico para texto com padrão brasileiro R$
+    valor_total_proc = base::paste0("R$ ", base::format(v_total_num, big.mark = ".", decimal.mark = ","))
+  )
+
+# ==========================================================
+# --- 2. PREPARAÇÃO DA TABELA DE DETALHES (ITENS DO PROCESSO) ---
+# ==========================================================
+
+# Esta base contém os 722 itens e será filtrada pelo JavaScript ao clicar no "+"
+bd_detalhes_itens <- bd_principal %>%
+  dplyr::mutate(
+    # Formata o valor unitário e total dos itens para o balão de expansão
+    v_unit_txt = base::paste0("R$ ", base::format(valor_unitario, big.mark = ".", decimal.mark = ",")),
+    v_total_txt = base::paste0("R$ ", base::format(valor_total, big.mark = ".", decimal.mark = ","))
+  ) %>%
+  dplyr::select(
+    # Mantemos a coluna processo como CHAVE para o vínculo entre as tabelas
+    processo, 
+    ID = id, 
+    Descrição = catalogo_descricao, 
+    Fornecedor = fornecedor, 
+    Qtd = qtde, 
+    `V. Unitário` = v_unit_txt, 
+    `Total Item` = v_total_txt
+  )
+
+# ==========================================================
+# --- 3. CONFIGURAÇÃO VISUAL COMPACTA (ESTILO ALEX) ---
+# ==========================================================
+
+# Definição das larguras das colunas (Posição 0 é o botão de expansão)
+minhas_larguras <- base::c(
+  "30px",   # Coluna do botão [+]
+  "150px",  # Processo
+  "100px",  # Modalidade
+  "150px",  # Agente
+  "80px",   # Qtd Itens
+  "140px",  # Valor Total (R$)
+  "100px"   # Status
+)
+
+# Mapeamento de colunas para exibição amigável
+minhas_colunas <- base::c(
+  "Processo"      = "processo",
+  "Modalidade"    = "modalidade",
+  "Agente"        = "agente",
+  "Itens"         = "total_itens",
+  "Valor Total"   = "valor_total_proc",
+  "Status"        = "status"
+)
+
+# ==========================================================
+# --- 4. EXECUÇÃO DA TABELA INTERATIVA COM DETALHES ---
+# ==========================================================
+
+tabela_interativa_detalhes(
+  # Tabela de nível 1 (Processos Únicos)
+  dados = bd_resumo_processos,      
+  # Tabela de nível 2 (Subitens/Detalhes)
+  dados_detalhes = bd_detalhes_itens, 
+  # Coluna comum entre as duas bases para o "match"
+  coluna_chave = "processo",         
+  # Título dinâmico com contador
+  titulo_tabela = "Gestão de Processos e Itens",
+  
+  # Aplicação das fontes compactas do Alex
+  tam_fonte_corpo = "11.3px",
+  tam_fonte_header = "12.2px",
+  tam_fonte_titulo = "14.3px",
+  
+  # Cores oficiais (Azul e Preto) e Layout
+  cor_titulo = "#03045e",
+  cor_primaria = "#000000",
+  cor_texto_corpo = "#000000",
+  
+  # Configurações de exibição
+  largura_cols_vetor = minhas_larguras,
+  colunas_selecionadas = minhas_colunas,
+  mostrar_indice = FALSE, # Oculta o índice para usar o botão [+]
+  n_pages = 10,
+  pesquisa_geral = TRUE # Ativa a busca no topo
+)
+
+
 ```
 
 :::
