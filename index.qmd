@@ -1181,7 +1181,7 @@ minhas_larguras_detalhes <- base::c("100px", "60px", "400px", "200px", "50px", "
 # ==========================================================
 # --- 2. EXECUÇÃO DA TABELA COM USO DE TODOS OS PARÂMETROS ---
 # ==========================================================
-
+# 
 tabela_interativa_detalhes(
   # --- DADOS E VÍNCULO ---
   dados                  = bd_resumo_processos,  # Base de nível 1 (Resumo)
@@ -1190,8 +1190,7 @@ tabela_interativa_detalhes(
   
   # --- TÍTULO E ORDENAÇÃO ---
   titulo_tabela          = "Gestão de Processos e Itens", # Título dinâmico do relatório
-  coluna_ordenacao       = "processo",           # Variável alvo para a ordem inicial
-  
+
   # --- CUSTOMIZAÇÃO DOS DETALHES (USANDO OS VETORES EXTERNOS) ---
   colunas_detalhes_nomes = meus_nomes_detalhes,     # Aplica os nomes amigáveis nos itens
   largura_detalhes_vetor = minhas_larguras_detalhes, # Aplica as larguras fixas nos itens
@@ -1207,7 +1206,7 @@ tabela_interativa_detalhes(
   cor_texto_corpo        = "#000000",            # Preto para o texto padrão das linhas
   
   # --- CONFIGURAÇÕES DE INTERFACE ---
-  mostrar_filtro         = TRUE,                 # Ativa busca por coluna (limpando a col do [+])
+  mostrar_filtro         = FALSE,                 # Ativa busca por coluna (limpando a col do [+])
   pesquisa_geral         = TRUE,                 # Ativa a barra de busca "Search" global
   n_pages                = 10,                   # Registros visíveis por página
   mostrar_indice         = FALSE,                # FALSE para priorizar a coluna do botão [+]

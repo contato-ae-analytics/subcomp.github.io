@@ -8,6 +8,7 @@
 /*  border-radius: 10px;                 /* Cantos arredondados para um visual moderno */
   background: #ffffff;                 /* Fundo branco para garantir contraste com gráficos e tabelas */
   padding: 10px;                       /* Espaçamento interno para o conteúdo não encostar na borda */
+  font-size: 10px;
 /*   box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Sombra suave para o bloco "flutuar" na página */
 /*  margin-bottom: 30px;                 /* Espaço entre este bloco e o próximo elemento */
 }
@@ -16,17 +17,18 @@
 .nav-tabs {
   border-bottom: 1px solid #03045e !important; /* Linha horizontal contínua em Azul Escuro */
   gap: 7px;                            /* Pequeno espaço entre as abas individuais */
+  margin-top: 10px !important;      /* Espaço entre o menu e o conteúdo da aba */
   margin-bottom: 15px !important;      /* Espaço entre o menu e o conteúdo da aba */
 }
 
 /* 3. ESTILO DE TODAS AS ABAS (ESTADO PADRÃO / INATIVO) */
 .nav-tabs .nav-link {
-  color: #444444 !important;           /* Texto em cinza escuro para abas não selecionadas */
-  background-color: #f8f9fa !important; /* Fundo cinza bem claro para diferenciar do fundo branco */
-  border: 1px solid #e9ecef !important; /* Borda leve para cada aba */
+/*  color: #444444 !important;           /* Texto em cinza escuro para abas não selecionadas */
+/*  background-color: #f8f9fa !important; /* Fundo cinza bem claro para diferenciar do fundo branco */
+/*  border: 1px solid #e9ecef !important; /* Borda leve para cada aba */
   border-bottom: none !important;      /* Remove a borda inferior para conectar com a linha azul */
   padding: 10px 20px;                  /* Tamanho interno da aba */
-  font-weight: 500;                    /* Peso da fonte normal/médio */
+  font-weight: 400;                    /* Peso da fonte normal/médio */
   transition: all 0.2s ease-in-out;    /* Transição suave ao passar o mouse ou clicar */
   font-family: 'Inter', sans-serif;    /* Fonte limpa e profissional */
 }
