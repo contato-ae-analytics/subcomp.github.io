@@ -398,11 +398,14 @@ tabela_interativa_detalhes <- function(dados,
                      "  }",
                      "});",
                      
-                     
-                     
-                     # Hover customizado Alex
-                     "var tableContainer = $(this.api().table().container());",
-                     "tableContainer.find('tbody').on('mouseenter', 'tr', function() { $(this).css({'color': '", cor_primaria, "', 'font-weight': '600', 'transition': '0.2s'}); }).on('mouseleave', 'tr', function() { $(this).css({'color': '", cor_texto_corpo, "', 'font-weight': 'normal'}); });",
+                     # --- CORREÇÃO DO HOVER (Lógica para evitar bugs em Child Rows) ---
+                     "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
+                     "  if (!$(this).hasClass('shown') && !$(this).parent().is('thead') && !$(this).closest('table').is('.details-control table')) {",
+                     "    $(this).css({'color': '", cor_primaria, "', 'font-weight': '600', 'transition': '0.2s'});",
+                     "  }",
+                     "}).on('mouseleave', 'tr', function() {",
+                     "  $(this).css({'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
+                     "});",
                      "}")
       ),
       language = base::list(

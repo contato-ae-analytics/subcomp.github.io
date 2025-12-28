@@ -33,10 +33,10 @@
 
 /* 4. ESTILO DA ABA SELECIONADA (ATIVA - CONFORME SOLICITADO PELO ALEX) */
 .nav-tabs .nav-link.active {
-  background-color: #03045e !important; /* Fundo em Azul Escuro para destaque total */
-  color: #ffffff !important;           /* Texto em Branco para leitura sobre o azul */
-  border: 1px solid #03045e !important; /* Borda na mesma cor do fundo */
-  border-bottom: 4px solid #000000 !important; /* Base da aba em PRETO para reforçar a seleção */
+  background-color: #ffffff !important; /* Fundo em Azul Escuro para destaque total */
+  color: #000000 !important;           /* Texto em Branco para leitura sobre o azul */
+  border: 1px solid #ffffff !important; /* Borda na mesma cor do fundo */
+  border-bottom: 3px solid #000000 !important; /* Base da aba em PRETO para reforçar a seleção */
   
   /* DESTAQUE DE FONTE SELECIONADA EM NEGRITO */
   font-weight: 800 !important;         /* Negrito extra (extra-bold) para a aba selecionada */
@@ -46,7 +46,7 @@
 /* 5. EFEITO AO PASSAR O MOUSE (HOVER) NAS ABAS NÃO SELECIONADAS */
 .nav-tabs .nav-link:hover:not(.active) {
   background-color: #e2e6ea !important; /* Escurece levemente o cinza do fundo */
-  color: #03045e !important;           /* Muda o texto para Azul Escuro */
+  color: #000000 !important;           /* Muda o texto para Azul Escuro */
   border-color: #d1d1d1 !important;    /* Realça a borda */
 }
 
@@ -58,14 +58,14 @@
 }
 
 /* 7. ESTILIZAÇÃO DO TÍTULO H2 QUE ANTECEDE AS ABAS */
-h2 {
-  color: #03045e;                      /* Título em Azul Escuro */
-  border-left: 6px solid #000000;      /* Barra lateral em PRETO */
-  padding-left: 15px;                  /* Espaço entre a barra e o texto */
-  font-weight: 700;                    /* Título em Negrito */
-  margin-bottom: 25px;                 /* Espaço abaixo do título */
-  font-size: 1.5rem;                   /* Tamanho de fonte imponente */
-}
+/*h2 {
+/*  color: #03045e;                      /* Título em Azul Escuro */
+/*  border-left: 6px solid #000000;      /* Barra lateral em PRETO */
+/*  padding-left: 15px;                  /* Espaço entre a barra e o texto */
+/*  font-weight: 700;                    /* Título em Negrito */
+/*  margin-bottom: 25px;                 /* Espaço abaixo do título */
+/*  font-size: 1.5rem;                   /* Tamanho de fonte imponente */
+/*}
 
 
 /* css styles */
