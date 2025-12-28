@@ -259,12 +259,176 @@ tabela_interativa <- function(dados,
 }
 
 
+# tabela_interativa_detalhes <- function(dados, 
+#                                        dados_detalhes,       # NOVO: DF com os subitens
+#                                        coluna_chave,         # NOVO: Nome da coluna que liga as duas tabelas
+#                                        titulo_tabela, 
+#                                        colunas_detalhes_nomes = NULL, # NOVO: Nomes amigáveis para os detalhes
+#                                        largura_detalhes_vetor = NULL, # NOVO: Tamanhos das colunas dos detalhes
+#                                        tam_fonte_corpo = "13px",   
+#                                        tam_fonte_titulo = "20px",  
+#                                        tam_fonte_header = "14px",  
+#                                        cor_titulo = "#03045e",        
+#                                        cor_primaria = "#03045e",      
+#                                        cor_texto_corpo = "#333333",   
+#                                        mostrar_filtro = TRUE,      
+#                                        pesquisa_geral = FALSE,     
+#                                        largura_cols_vetor = NULL,  
+#                                        colunas_selecionadas = NULL,
+#                                        n_pages = 10,
+#                                        mostrar_indice = TRUE) {
+#   
+#   # --- SEGURANÇA DO CONTADOR ---
+#   if (!base::exists("contador_tabelas_alex")) {
+#     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
+#   }
+#   
+#   # --- 1. PREPARAÇÃO DOS DADOS PRINCIPAIS ---
+#   dados_processados <- dados
+#   if (!base::is.null(colunas_selecionadas)) {
+#     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
+#   }
+#   
+#   # --- 2. ADIÇÃO DA COLUNA DE CONTROLE (BOTÃO +) ---
+#   # Criamos a coluna vazia no início para o botão de expansão
+#   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
+#   
+#   # --- 3. CONTADOR E TÍTULO ---
+#   base::assign("contador_tabelas_alex", contador_tabelas_alex + 1, envir = .GlobalEnv)
+#   titulo_final <- base::paste0("Tabela ", contador_tabelas_alex, ": ", titulo_tabela)
+#   
+#   # --- 4. TÍTULO HTML (ESTILO ALEX) ---
+#   html_titulo <- htmltools::tags$h2(
+#     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
+#                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
+#     htmltools::tags$b(titulo_final)
+#   )
+#   
+#   
+#   # --- 5. LÓGICA DE DETALHES (JSON PARA JAVASCRIPT) ---
+#   # Transformamos os detalhes em JSON para o navegador processar
+#   json_detalhes <- jsonlite::toJSON(dados_detalhes)
+#   
+# 
+#     # Preparação dos nomes das colunas de detalhes para o JS
+#   nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) {
+#     jsonlite::toJSON(colunas_detalhes_nomes)
+#   } else {
+#     "null"
+#   }
+#   
+#   # Preparação das larguras das colunas de detalhes para o JS
+#   larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) {
+#     jsonlite::toJSON(largura_detalhes_vetor)
+#   } else {
+#     "null"
+#   }
+#   
+#   # --- 6. RENDERIZAÇÃO DA TABELA ---
+#   tabela <- DT::datatable(
+#     base::data.frame(dados_processados, check.names = FALSE),
+#     escape = FALSE, # Permite renderizar o ícone HTML &oplus;
+#     rownames = mostrar_indice,
+#     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
+#     width = "100%", 
+#     class = "hover row-border", 
+#     options = base::list(
+#       dom = 'ft p', 
+#       pageLength = n_pages,
+#       searching = TRUE, 
+#       lengthChange = FALSE,
+#       info = FALSE,
+#       ordering = FALSE,      
+#       autoWidth = FALSE,    
+#       scrollX = TRUE,
+#       # Define que a primeira coluna (ícone) é pequena e centralizada
+#       columnDefs = base::list(
+#         base::list(visible = TRUE, targets = 0, className = 'details-control', width = '20px', orderable = FALSE)
+#       ),
+#       
+#       # JAVASCRIPT: LÓGICA DE CLIQUE E EXIBIÇÃO
+#       initComplete = DT::JS(
+#         base::paste0("function(settings, json) {",
+#                      # Estilo do corpo
+#                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
+#                      # Cabeçalho: Estilo Branco/Azul com Moldura Preta do Alex
+#                      "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap', 'background-image': 'none !important'});",
+#                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
+#                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
+#                      
+#                      # Estilo Pesquisa Geral
+#                      "var searchDiv = $('.dataTables_filter'); searchDiv.css({'text-align': 'left', 'margin-bottom': '15px', 'float': 'none'});",
+#                      "searchDiv.find('label').css({'font-weight': 'bold', 'color': '#000000'});",
+#                      if(pesquisa_geral) "" else "$('.dataTables_filter').hide();",
+#                      
+#                      # Lógica de expansão ao clicar
+#                      "var table = this.api();",
+#                      "var detalhes_data = ", json_detalhes, ";", # Passa os dados extras para o JS
+#                      "var customNomes = ", nomes_detalhes_js, ";",
+#                      "var customLarguras = ", larguras_detalhes_js, ";",
+#                      
+#                      "$(this.api().table().body()).on('click', 'td.details-control', function() {",
+#                      "  var tr = $(this).closest('tr');",
+#                      "  var row = table.row(tr);",
+#                      "  if (row.child.isShown()) {",
+#                      "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
+#                      "  } else {",
+#                      "    var rowData = row.data();",
+#                      "    var chave = rowData[", if(mostrar_indice) "2" else "1", "];", # Ajusta índice da chave conforme rownames
+#                      "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
+#                       
+#                      # Cria a tabela interna de subitens
+#                      # Montagem da Sub-tabela com cabeçalhos e larguras dinâmicas
+#                      "    var html_sub = '<table style=\"width:97%; margin-left:3%; border-collapse: collapse; border: 0px solid #ddd;\"><thead><tr style=\"background:#f9f9f9; color:#03045e; font-weight:bold;\">';",
+#                      "    var colKeys = Object.keys(sub_dados[0]);",
+#                      "    colKeys.forEach((key, index) => {",
+#                      "       var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
+#                      "       var width = (customLarguras && customLarguras[index]) ? 'width:'+customLarguras[index]+';' : '';",
+#                      "       html_sub += '<th style=\"padding:8px; border-bottom:0px solid #000; text-align:left; '+width+'\">' + label + '</th>';",
+#                      "    });",
+#                      "    html_sub += '</tr></thead><tbody>';",
+#                      "    sub_dados.forEach(r => {",
+#                      "       html_sub += '<tr style=\"border-bottom:1px solid #eee;\">';",
+#                      "       colKeys.forEach(k => { html_sub += '<td style=\"padding:8px;\">' + r[k] + '</td>'; });",
+#                      "       html_sub += '</tr>';",
+#                      "    });",
+#                      "    html_sub += '</tbody></table>';",
+#                      
+#                      "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
+#                      "  }",
+#                      "});",
+#                      
+#                      # --- CORREÇÃO DO HOVER (Lógica para evitar bugs em Child Rows) ---
+#                      "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
+#                      "  if (!$(this).hasClass('shown') && !$(this).parent().is('thead') && !$(this).closest('table').is('.details-control table')) {",
+#                      "    $(this).css({'color': '", cor_primaria, "', 'font-weight': '600', 'transition': '0.2s'});",
+#                      "  }",
+#                      "}).on('mouseleave', 'tr', function() {",
+#                      "  $(this).css({'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
+#                      "});",
+#                      "}")
+#       ),
+#       language = base::list(
+#         paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
+#         emptyTable = "Sem dados", zeroRecords = "Nenhum registro encontrado", search = "Pesquisa Geral:"
+#       )
+#     )
+#   )
+#   
+#   # Retorno consolidado
+#   htmltools::tagList(html_titulo, tabela)
+# }
+
+# ==========================================================
+# --- FUNÇÃO: TABELA INTERATIVA COM DESTAQUE PERMANENTE ---
+# ==========================================================
+
 tabela_interativa_detalhes <- function(dados, 
-                                       dados_detalhes,       # NOVO: DF com os subitens
-                                       coluna_chave,         # NOVO: Nome da coluna que liga as duas tabelas
+                                       dados_detalhes,       
+                                       coluna_chave,         
                                        titulo_tabela, 
-                                       colunas_detalhes_nomes = NULL, # NOVO: Nomes amigáveis para os detalhes
-                                       largura_detalhes_vetor = NULL, # NOVO: Tamanhos das colunas dos detalhes
+                                       colunas_detalhes_nomes = NULL, 
+                                       largura_detalhes_vetor = NULL, 
                                        tam_fonte_corpo = "13px",   
                                        tam_fonte_titulo = "20px",  
                                        tam_fonte_header = "14px",  
@@ -277,57 +441,34 @@ tabela_interativa_detalhes <- function(dados,
                                        colunas_selecionadas = NULL,
                                        n_pages = 10,
                                        mostrar_indice = TRUE) {
-  
-  # --- SEGURANÇA DO CONTADOR ---
+
   if (!base::exists("contador_tabelas_alex")) {
     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
   }
-  
-  # --- 1. PREPARAÇÃO DOS DADOS PRINCIPAIS ---
+
   dados_processados <- dados
   if (!base::is.null(colunas_selecionadas)) {
     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
   }
-  
-  # --- 2. ADIÇÃO DA COLUNA DE CONTROLE (BOTÃO +) ---
-  # Criamos a coluna vazia no início para o botão de expansão
+
   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
-  
-  # --- 3. CONTADOR E TÍTULO ---
+
   base::assign("contador_tabelas_alex", contador_tabelas_alex + 1, envir = .GlobalEnv)
   titulo_final <- base::paste0("Tabela ", contador_tabelas_alex, ": ", titulo_tabela)
-  
-  # --- 4. TÍTULO HTML (ESTILO ALEX) ---
+
   html_titulo <- htmltools::tags$h2(
     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
     htmltools::tags$b(titulo_final)
   )
-  
-  
-  # --- 5. LÓGICA DE DETALHES (JSON PARA JAVASCRIPT) ---
-  # Transformamos os detalhes em JSON para o navegador processar
-  json_detalhes <- jsonlite::toJSON(dados_detalhes)
-  
 
-    # Preparação dos nomes das colunas de detalhes para o JS
-  nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) {
-    jsonlite::toJSON(colunas_detalhes_nomes)
-  } else {
-    "null"
-  }
-  
-  # Preparação das larguras das colunas de detalhes para o JS
-  larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) {
-    jsonlite::toJSON(largura_detalhes_vetor)
-  } else {
-    "null"
-  }
-  
-  # --- 6. RENDERIZAÇÃO DA TABELA ---
+  json_detalhes <- jsonlite::toJSON(dados_detalhes)
+  nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
+  larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
+
   tabela <- DT::datatable(
     base::data.frame(dados_processados, check.names = FALSE),
-    escape = FALSE, # Permite renderizar o ícone HTML &oplus;
+    escape = FALSE, 
     rownames = mostrar_indice,
     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
     width = "100%", 
@@ -341,82 +482,69 @@ tabela_interativa_detalhes <- function(dados,
       ordering = FALSE,      
       autoWidth = FALSE,    
       scrollX = TRUE,
-      # Define que a primeira coluna (ícone) é pequena e centralizada
       columnDefs = base::list(
         base::list(visible = TRUE, targets = 0, className = 'details-control', width = '20px', orderable = FALSE)
       ),
       
-      # JAVASCRIPT: LÓGICA DE CLIQUE E EXIBIÇÃO
       initComplete = DT::JS(
         base::paste0("function(settings, json) {",
-                     # Estilo do corpo
+                     # Estilo base
                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
-                     # Cabeçalho: Estilo Branco/Azul com Moldura Preta do Alex
-                     "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap', 'background-image': 'none !important'});",
+                     "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
                      
-                     # Estilo Pesquisa Geral
-                     "var searchDiv = $('.dataTables_filter'); searchDiv.css({'text-align': 'left', 'margin-bottom': '15px', 'float': 'none'});",
-                     "searchDiv.find('label').css({'font-weight': 'bold', 'color': '#000000'});",
-                     if(pesquisa_geral) "" else "$('.dataTables_filter').hide();",
-                     
-                     # Lógica de expansão ao clicar
-                     "var table = this.api();",
-                     "var detalhes_data = ", json_detalhes, ";", # Passa os dados extras para o JS
-                     "var customNomes = ", nomes_detalhes_js, ";",
-                     "var customLarguras = ", larguras_detalhes_js, ";",
+                     # Lógica de expansão com destaque permanente (CSS Inline)
+                     "var table = this.api(); var detalhes_data = ", json_detalhes, ";",
+                     "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
                      
                      "$(this.api().table().body()).on('click', 'td.details-control', function() {",
-                     "  var tr = $(this).closest('tr');",
-                     "  var row = table.row(tr);",
+                     "  var tr = $(this).closest('tr'); var row = table.row(tr);",
                      "  if (row.child.isShown()) {",
                      "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
+                     # REMOVE O DESTAQUE AO FECHAR
+                     "    tr.css({'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
                      "  } else {",
+                     # APLICA O DESTAQUE PERMANENTE AO ABRIR
+                     "    tr.css({'color': '", cor_primaria, "', 'font-weight': '800'});",
                      "    var rowData = row.data();",
-                     "    var chave = rowData[", if(mostrar_indice) "2" else "1", "];", # Ajusta índice da chave conforme rownames
+                     "    var chave = rowData[", if(mostrar_indice) "2" else "1", "];",
                      "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
-                      
-                     # Cria a tabela interna de subitens
-                     # Montagem da Sub-tabela com cabeçalhos e larguras dinâmicas
-                     "    var html_sub = '<table style=\"width:97%; margin-left:3%; border-collapse: collapse; border: 0px solid #ddd;\"><thead><tr style=\"background:#f9f9f9; color:#03045e; font-weight:bold;\">';",
+                     "    var html_sub = '<table class=\"subtable\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#f9f9f9; color:#03045e; font-weight:bold;\">';",
                      "    var colKeys = Object.keys(sub_dados[0]);",
                      "    colKeys.forEach((key, index) => {",
                      "       var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
                      "       var width = (customLarguras && customLarguras[index]) ? 'width:'+customLarguras[index]+';' : '';",
-                     "       html_sub += '<th style=\"padding:4px; border-bottom:0px solid #000; text-align:left; '+width+'\">' + label + '</th>';",
+                     "       html_sub += '<th style=\"padding:4px; border-bottom:1px solid #ddd; text-align:left; '+width+'\">' + label + '</th>';",
                      "    });",
                      "    html_sub += '</tr></thead><tbody>';",
                      "    sub_dados.forEach(r => {",
-                     "       html_sub += '<tr style=\"border-bottom:1px solid #eee;\">';",
+                     "       html_sub += '<tr style=\"border-bottom:1px solid #eee; font-weight:normal !important; color:", cor_texto_corpo, " !important;\">';",
                      "       colKeys.forEach(k => { html_sub += '<td style=\"padding:8px;\">' + r[k] + '</td>'; });",
                      "       html_sub += '</tr>';",
                      "    });",
                      "    html_sub += '</tbody></table>';",
-                     
                      "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
                      "  }",
                      "});",
                      
-                     # --- CORREÇÃO DO HOVER (Lógica para evitar bugs em Child Rows) ---
+                     # HOVER APENAS PARA LINHAS NÃO ABERTAS E APENAS NA TABELA PAI
                      "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
-                     "  if (!$(this).hasClass('shown') && !$(this).parent().is('thead') && !$(this).closest('table').is('.details-control table')) {",
-                     "    $(this).css({'color': '", cor_primaria, "', 'font-weight': '600', 'transition': '0.2s'});",
+                     "  if (!$(this).hasClass('shown') && !$(this).closest('table').hasClass('subtable')) {",
+                     "    $(this).css({'color': '", cor_primaria, "', 'font-weight': '800', 'transition': '0.1s'});",
                      "  }",
                      "}).on('mouseleave', 'tr', function() {",
-                     "  $(this).css({'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
+                     "  if (!$(this).hasClass('shown') && !$(this).closest('table').hasClass('subtable')) {",
+                     "    $(this).css({'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
+                     "  }",
                      "});",
                      "}")
       ),
-      language = base::list(
-        paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
-        emptyTable = "Sem dados", zeroRecords = "Nenhum registro encontrado", search = "Pesquisa Geral:"
-      )
+      language = base::list(paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
+                            emptyTable = "Sem dados", zeroRecords = "Nenhum registro encontrado", search = "Pesquisa Geral:")
     )
   )
-  
-  # Retorno consolidado
-  htmltools::tagList(html_titulo, tabela)
+  return(htmltools::tagList(html_titulo, tabela))
 }
 
 
