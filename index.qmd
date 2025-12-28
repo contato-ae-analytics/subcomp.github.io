@@ -264,104 +264,107 @@ tabela_interativa <- function(dados,
 # OBJETIVO: Tabela hierárquica (Pai/Filho) com destaque fixo e filtros inteligentes
 # ==============================================================================
 
+# ==============================================================================
+# FUNÇÃO FINAL CONSOLIDADA (VERSÃO ALEX) - 100% COMENTADA
+# ==============================================================================
+
 tabela_interativa_detalhes <- function(dados, 
-                                       dados_detalhes,       # Base com os 722 itens (Sub-tabela)
-                                       coluna_chave,         # Nome da coluna que liga as duas bases (ex: "processo")
-                                       titulo_tabela,        # Texto do cabeçalho
-                                       coluna_ordenacao = NULL, # Coluna para o sorteio inicial (Z-A)
-                                       ordem_decrescente = TRUE, # Se TRUE, ordena do maior para o menor
-                                       colunas_detalhes_nomes = NULL, # Vetor com nomes amigáveis para os itens
-                                       largura_detalhes_vetor = NULL, # Vetor com larguras (px) para os itens
-                                       tam_fonte_corpo = "11.3px",   # Fonte compacta Alex
+                                       dados_detalhes,       # Base com os itens (ex: 722 itens)
+                                       coluna_chave,         # Coluna de ligação (ex: "processo")
+                                       titulo_tabela,        # Título do relatório
+                                       coluna_ordenacao = NULL, # Coluna para ordenar Z-A
+                                       ordem_decrescente = TRUE, # Se TRUE, maior para menor
+                                       colunas_detalhes_nomes = NULL, # Nomes amigáveis dos itens
+                                       largura_detalhes_vetor = NULL, # Larguras px dos itens
+                                       tam_fonte_corpo = "11.3px",   # Fonte dados Alex
                                        tam_fonte_header = "12.2px",  # Fonte cabeçalho Alex
                                        tam_fonte_titulo = "14.3px",  # Fonte título Alex
-                                       cor_titulo = "#03045e",        # Azul padrão
-                                       cor_primaria = "#000000",      # Preto para molduras e seleção
-                                       cor_texto_corpo = "#000000",   # Texto padrão
-                                       mostrar_filtro = TRUE,        # Filtros por coluna
-                                       pesquisa_geral = TRUE,        # Barra Search global
-                                       largura_cols_vetor = NULL,    # Larguras da tabela principal
-                                       colunas_selecionadas = NULL,  # Mapeamento de colunas principais
+                                       cor_titulo = "#03045e",        # Cor Azul
+                                       cor_primaria = "#000000",      # Cor Preta (Destaque)
+                                       cor_texto_corpo = "#000000",   # Cor Texto
+                                       mostrar_filtro = TRUE,        # Ativa filtros colunas
+                                       pesquisa_geral = TRUE,        # Ativa Search global
+                                       largura_cols_vetor = NULL,    # Larguras tabela pai
+                                       colunas_selecionadas = NULL,  # Mapeamento colunas
                                        n_pages = 10,                 # Linhas por página
-                                       mostrar_indice = FALSE) {     # Oculta números de linha do R
+                                       mostrar_indice = FALSE) {     # Oculta índice R
 
-  # --- A. CONTROLE DE AMBIENTE ---
-  # Garante que o contador de tabelas persista entre as chamadas no relatório
+  # --- 1. GESTÃO DO CONTADOR ---
+  # Se o contador global não existir, inicia com zero
   if (!base::exists("contador_tabelas_alex")) {
     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
   }
   
-  # --- B. PROCESSAMENTO DOS DADOS (R) ---
+  # Cria cópia para processar
   dados_processados <- dados
-  
-  # Filtra e renomeia as colunas conforme o mapeamento do Alex
-  if (!base::is.null(colunas_selecionadas)) {
-    dados_processados <- dados_processados %>% 
-      dplyr::select(tidyselect::all_of(colunas_selecionadas))
-  }
-  
-  # Aplica a ordenação inicial (ex: Processo do maior para o menor)
+
+  # --- 2. ORDENAÇÃO (DPLYR) ---
+  # Ordena antes de renomear para evitar erro de coluna não encontrada
   if (!base::is.null(coluna_ordenacao)) {
     if (ordem_decrescente) {
-      dados_processados <- dados_processados %>% 
-        dplyr::arrange(dplyr::desc(.data[[coluna_ordenacao]]))
+      dados_processados <- dados_processados %>% dplyr::arrange(dplyr::desc(.data[[coluna_ordenacao]]))
     } else {
-      dados_processados <- dados_processados %>% 
-        dplyr::arrange(.data[[coluna_ordenacao]])
+      dados_processados <- dados_processados %>% dplyr::arrange(.data[[coluna_ordenacao]])
     }
   }
 
-  # Adiciona a coluna vazia na posição 0 para o botão [+] de expansão
+  # --- 3. SELEÇÃO E RENOMEAÇÃO ---
+  # Aplica o mapeamento 'minhas_colunas'
+  if (!base::is.null(colunas_selecionadas)) {
+    dados_processados <- dados_processados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
+  }
+
+  # Adiciona a coluna do botão [+] na posição 0
   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
   
-  # Atualiza o contador de tabelas para o título
+  # Incrementa contador e monta título final
   base::assign("contador_tabelas_alex", contador_tabelas_alex + 1, envir = .GlobalEnv)
   titulo_final <- base::paste0("Tabela ", contador_tabelas_alex, ": ", titulo_tabela)
 
-  # --- C. PREPARAÇÃO PARA O JAVASCRIPT ---
-  # Converte os dataframes e vetores para formato JSON (que o navegador entende)
+  # --- 4. PREPARAÇÃO JSON ---
+  # Converte dados para o navegador
   json_detalhes <- jsonlite::toJSON(dados_detalhes)
   nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
   larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
 
-  # --- D. CONSTRUÇÃO DA INTERFACE (DT) ---
+  # --- 5. DATATABLE (DT) ---
   tabela <- DT::datatable(
     base::data.frame(dados_processados, check.names = FALSE),
-    escape = FALSE,    # Permite símbolos HTML como o &oplus;
+    escape = FALSE, # Renderiza ícones HTML
     rownames = mostrar_indice,
-    extensions = 'Buttons', # Habilita botões de exportação
+    extensions = 'Buttons',
     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
     options = base::list(
-      dom = 'Bft p',   # B: Botões, f: Busca, t: Tabela, p: Paginação
+      dom = 'Bft p', # Botões, filtro, tabela, paginação
       buttons = base::list(
         'copy', 'excel', 
         base::list(extend = 'pdfHtml5', title = titulo_final, orientation = 'landscape')
       ),
       pageLength = n_pages,
       searching = pesquisa_geral,
-      ordering = FALSE, # Mantém a ordem definida no R
+      ordering = FALSE, # Mantém a ordem do R
       autoWidth = FALSE,
       scrollX = TRUE,
-      # Configura a primeira coluna (Botão) para ser pequena e centralizada
       columnDefs = base::list(
         base::list(targets = 0, className = 'details-control', width = '30px')
       ),
       
-      # --- E. LÓGICA JAVASCRIPT CUSTOMIZADA (O "CÉREBRO" DA TABELA) ---
+      # --- 6. LÓGICA JAVASCRIPT (CORRIGIDA) ---
       initComplete = DT::JS(
         base::paste0("function(settings, json) {",
-                     # 1. ESTILIZAÇÃO GERAL (Layout Alex)
+                     # Aplica fontes e cores no container
                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif'});",
-                     "$(this.api().table().header()).find('tr:first-child th').css({",
-                     "  'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000',",
-                     "  'padding': '12px', 'color': '", cor_primaria, "', 'font-size': '", tam_fonte_header, "'",
-                     "});",
+                     # Aplica moldura de 3px no cabeçalho
+                     "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px', 'color': '", cor_primaria, "', 'font-size': '", tam_fonte_header, "'});",
+                     # Aplica borda no rodapé da tabela
                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
                      
-                     # 2. FILTROS INTELIGENTES (Limpa a coluna [+] e coloca placeholders)
+                     # LOOP DE FILTROS: Remove busca da col [+] e personaliza o resto
                      "this.api().columns().every(function(index) {",
                      "   var column = this;",
-                     "   if (index === 0) { $(column.filter()).empty(); } else {",
+                     "   if (index === 0) { ",
+                     "      $(column.filter()).empty(); ", 
+                     "   } else {",
                      "      var title = $(column.header()).text();",
                      "      if (title.trim() !== '') {",
                      "         $('input', column.filter()).attr('placeholder', 'Busca ' + title.trim());",
@@ -370,22 +373,24 @@ tabela_interativa_detalhes <- function(dados,
                      "   }",
                      "});",
 
-                     # 3. LÓGICA DE EXPANSÃO (CLIQUE NO [+])
+                     # VARIÁVEIS JAVASCRIPT
                      "var table = this.api(); var detalhes_data = ", json_detalhes, ";",
                      "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
                      
+                     # EVENTO CLIQUE: Expandir e Travar Negrito
                      "$(this.api().table().body()).on('click', 'td.details-control', function() {",
                      "  var tr = $(this).closest('tr'); var row = table.row(tr);",
                      "  if (row.child.isShown()) {",
                      "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
-                     "    tr.css({'background-color': '', 'font-weight': 'normal', 'color': '", cor_texto_corpo, "'});",
+                     "    tr.css({'background-color': '', 'font-weight': 'normal'});",
                      "  } else {",
                      "    tr.addClass('shown'); $(this).html('&ominus;');",
+                     "    // TRAVA O NEGRITO AO SELECIONAR (Comentário corrigido para JS)",
                      "    tr.css({'background-color': '#f8f9fa', 'font-weight': 'bold', 'color': '", cor_primaria, "'});",
                      "    var rowData = row.data(); var chave = rowData[", if(mostrar_indice) "2" else "1", "];",
                      "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
                      
-                     # Montagem do HTML da Sub-tabela (Detalhes)
+                     # MONTAGEM DA SUBTABELA (DETALHES)
                      "    var html_sub = '<table class=\"subtable_alex\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff; color:#03045e; font-weight:bold;\">';",
                      "    var colKeys = Object.keys(sub_dados[0]);",
                      "    colKeys.forEach((key, index) => {",
@@ -404,7 +409,7 @@ tabela_interativa_detalhes <- function(dados,
                      "  }",
                      "});",
                      
-                     # 4. HOVER DINÂMICO (Somente na tabela principal e linhas não abertas)
+                     # EVENTO HOVER: Negrito ao passar o mouse (Só na principal)
                      "$(this.api().table().node()).on('mouseenter', 'tr', function() {",
                      "  var tr = $(this);",
                      "  if (!tr.closest('table').hasClass('subtable_alex')) {",
@@ -423,148 +428,13 @@ tabela_interativa_detalhes <- function(dados,
     )
   )
   
-  # Retorno HTML: Título + Tabela
+  # RETORNO FINAL
   return(htmltools::tagList(
     htmltools::tags$h2(style=base::paste0("color:", cor_titulo, "; font-size:", tam_fonte_titulo), 
                        htmltools::tags$b(titulo_final)), 
     tabela
   ))
 }
-
-# # ==========================================================
-# # --- FUNÇÃO: TABELA COM FILTROS PERSONALIZADOS (ALEX) ---
-# # ==========================================================
-# 
-# tabela_interativa_detalhes <- function(dados, 
-#                                        dados_detalhes,       
-#                                        coluna_chave,         
-#                                        titulo_tabela, 
-#                                        coluna_ordenacao = NULL, 
-#                                        ordem_decrescente = TRUE, 
-#                                        colunas_detalhes_nomes = NULL, 
-#                                        largura_detalhes_vetor = NULL, 
-#                                        tam_fonte_corpo = "11.3px",   
-#                                        tam_fonte_header = "12.2px",  
-#                                        tam_fonte_titulo = "14.3px",  
-#                                        cor_titulo = "#03045e",        
-#                                        cor_primaria = "#03045e",      
-#                                        cor_texto_corpo = "#333333",   
-#                                        mostrar_filtro = TRUE,      
-#                                        pesquisa_geral = TRUE,     
-#                                        largura_cols_vetor = NULL,  
-#                                        colunas_selecionadas = NULL,
-#                                        n_pages = 10,
-#                                        mostrar_indice = FALSE) {
-# 
-#   if (!base::exists("contador_tabelas_alex")) {
-#     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
-#   }
-#   
-#   # --- 1. PREPARAÇÃO E ORDENAÇÃO ---
-#   dados_processados <- dados
-#   if (!base::is.null(colunas_selecionadas)) {
-#     dados_processados <- dados_processados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
-#   }
-#   
-#   if (!base::is.null(coluna_ordenacao)) {
-#     if (ordem_decrescente) {
-#       dados_processados <- dados_processados %>% dplyr::arrange(dplyr::desc(.data[[coluna_ordenacao]]))
-#     } else {
-#       dados_processados <- dados_processados %>% dplyr::arrange(.data[[coluna_ordenacao]])
-#     }
-#   }
-# 
-#   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
-#   base::assign("contador_tabelas_alex", contador_tabelas_alex + 1, envir = .GlobalEnv)
-#   titulo_final <- base::paste0("Tabela ", contador_tabelas_alex, ": ", titulo_tabela)
-# 
-#   # --- 2. PREPARAÇÃO JSON ---
-#   json_detalhes <- jsonlite::toJSON(dados_detalhes)
-#   nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
-# 
-#   # --- 3. DATATABLE ---
-#   tabela <- DT::datatable(
-#     base::data.frame(dados_processados, check.names = FALSE),
-#     escape = FALSE, 
-#     rownames = mostrar_indice,
-#     extensions = 'Buttons',
-#     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
-#     options = base::list(
-#       dom = 'Bft p',
-#       buttons = base::list('copy', 'excel', base::list(extend = 'pdfHtml5', title = titulo_final, orientation = 'landscape')),
-#       pageLength = n_pages,
-#       searching = pesquisa_geral,
-#       ordering = FALSE,
-#       initComplete = DT::JS(
-#         base::paste0("function(settings, json) {",
-#                      # Estilo Geral
-#                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif'});",
-#                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px', 'color': '", cor_primaria, "'});",
-#                      
-#                      # --- AJUSTE: REMOVE FILTRO DA PRIMEIRA COLUNA E PERSONALIZA OS DEMAIS ---
-#                      "this.api().columns().every(function(index) {",
-#                      "   var column = this;",
-#                      "   if (index === 0) {", 
-#                      "      $(column.filter()).empty();", # Mata o filtro da coluna do botão [+]
-#                      "   } else {",
-#                      "      var title = $(column.header()).text();",
-#                      "      if (title.trim() !== '') {",
-#                      "         $('input', column.filter()).attr('placeholder', 'Busca ' + title.trim());",
-#                      "         $('input', column.filter()).css({'font-size': '10px', 'width': '100%'});",
-#                      "      }",
-#                      "   }",
-#                      "});",
-# 
-#                      # Lógica de Clique e Hover
-#                      "var table = this.api(); var detalhes_data = ", json_detalhes, ";",
-#                      "var customNomes = ", nomes_detalhes_js, ";",
-#                      
-#                      "$(this.api().table().body()).on('click', 'td.details-control', function() {",
-#                      "  var tr = $(this).closest('tr'); var row = table.row(tr);",
-#                      "  if (row.child.isShown()) {",
-#                      "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
-#                      "    tr.css({'background-color': '', 'font-weight': 'normal'});",
-#                      "  } else {",
-#                      "    tr.addClass('shown'); $(this).html('&ominus;');",
-#                      "    tr.css({'background-color': '#f8f9fa', 'font-weight': 'bold'});",
-#                      "    var rowData = row.data(); var chave = rowData[", if(mostrar_indice) "2" else "1", "];",
-#                      "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
-#                      "    var html_sub = '<table class=\"subtable_alex\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff; color:#03045e; font-weight:bold;\">';",
-#                      "    var colKeys = Object.keys(sub_dados[0]);",
-#                      "    colKeys.forEach((key, index) => {",
-#                      "       var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
-#                      "       html_sub += '<th style=\"padding:6px; border-bottom:1px solid #ddd; text-align:left;\">' + label + '</th>';",
-#                      "    });",
-#                      "    html_sub += '</tr></thead><tbody>';",
-#                      "    sub_dados.forEach(r => {",
-#                      "       html_sub += '<tr>';",
-#                      "       colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; background-color: transparent !important; font-weight: normal !important;\">' + r[k] + '</td>'; });",
-#                      "       html_sub += '</tr>';",
-#                      "    });",
-#                      "    html_sub += '</tbody></table>';",
-#                      "    row.child(html_sub).show();",
-#                      "  }",
-#                      "});",
-#                      
-#                      "$(this.api().table().node()).on('mouseenter', 'tr', function() {",
-#                      "  var tr = $(this);",
-#                      "  if (!tr.closest('table').hasClass('subtable_alex')) {",
-#                      "    tr.css({'font-weight': 'bold', 'background-color': '#f1f1f1'});",
-#                      "  }",
-#                      "}).on('mouseleave', 'tr', function() {",
-#                      "  var tr = $(this);",
-#                      "  if (!tr.closest('table').hasClass('subtable_alex') && !tr.hasClass('shown')) {",
-#                      "    tr.css({'font-weight': 'normal', 'background-color': ''});",
-#                      "  }",
-#                      "});",
-#                      "}")
-#       )
-#     )
-#   )
-#   
-#   return(htmltools::tagList(htmltools::tags$h2(style=base::paste0("color:", cor_titulo), htmltools::tags$b(titulo_final)), tabela))
-# }
-
 
 
 # ==============================================================================
@@ -1012,246 +882,6 @@ bd_principal <- bd_principal %>%
 #| out-width: "100%"
 #| fig-height: 7
 
-# ==========================================================
-# --- ÁREA DE PERSONALIZAÇÃO (PAINEL DE CONTROLE) ---
-# ==========================================================
-
-# Textos Principais
-# titulo_nome       <- "Gráfico 1: Fluxo Operacional de Processos | Subgerência de - Compras 2025"
-# subtitulo_texto   <- "Comparativo Mensal de Entradas e Saídas"
-# 
-# # Estilo dos Títulos (Sugestão: Titulo sempre > Subtitulo)
-# # titulo_cor        <- "#001d3d"
-# titulo_cor        <- "#03045e"
-# titulo_tamanho    <- 14.5         # Ajustado para destaque (era 10)
-# sub_cor           <- "#000000"
-# sub_tamanho       <- 13         
-# 
-# # Cores das Séries (Contraste alto para facilitar distinção)
-# cor_entradas      <- "#001d3d"  # Profundo e sério
-# # cor_saidas        <- "#ff4d6d"  # Alerta e movimento
-# cor_saidas        <- "#48cae4"  # Alerta e movimento
-# 
-# 
-# # Configuração de Textos Internos
-# tamanho_rotulos   <- 10         # Valores acima das barras/pontos
-# cor_rotulos       <- "#000000"
-# 
-# tamanho_eixo_x    <- 11         # Nome dos meses
-# cor_eixo_x        <- "#000000"
-# 
-# # Componentes de Interatividade
-# tamanho_legenda   <- 12         # Texto de Entradas/Saídas no topo
-# cor_legenda       <- "#000000"         # Texto de Entradas/Saídas no topo
-# 
-# tamanho_botoes    <- 12         # Filtros Dropdown
-# 
-# # Estilo do Hover (Balão de informações detalhadas)
-# hover_bg_cor      <- "#FFFFFF"  # Fundo branco para limpeza visual
-# hover_txt_cor     <- "#000000"  # Texto preto para leitura máxima
-# hover_fonte_tam   <- 12         # Fonte levemente menor (Fira Code)
-# borda_balao_hover <- "#000000"  # Contorno do balão
-# alinhamento_balao_hover <- "left" # Facilita leitura de listas
-# 
-# # ==========================================================
-# # ==========================================================
-# 
-# # 1. Vetor de ordem (Base para o esqueleto e para os níveis do fator)
-# meses_ordem_limpo <- c("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
-#                        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro")
-# 
-# # 2. DICIONÁRIO DE TRADUÇÃO (Corrigido para converter Inglês -> Português)
-# tradutor_meses <- c(
-#   "January" = "Janeiro", "February" = "Fevereiro", "March" = "Março", 
-#   "April" = "Abril", "May" = "Maio", "June" = "Junho", 
-#   "July" = "Julho", "August" = "Agosto", "September" = "Setembro", 
-#   "October" = "Outubro", "November" = "Novembro", "December" = "Dezembro"
-# )
-# 
-# # 3. Preparação da Base com Tradução e HTML
-# dados_base_limpa <- bd_principal %>%
-#   dplyr::distinct(processo, .keep_all = TRUE) %>%
-#   dplyr::select(processo, mes_entrada, mes_saida, modalidade_processo, status_item) %>%
-#   # Transforma colunas de entrada/saída em linhas
-#   tidyr::pivot_longer(cols = c(mes_entrada, mes_saida), 
-#                       names_to = "Origem", 
-#                       values_to = "Mes_Nome") %>%
-#   dplyr::mutate(Tipo = dplyr::if_else(Origem == "mes_entrada", "Entradas", "Saídas")) %>%
-#   dplyr::filter(!is.na(Mes_Nome)) %>%
-#   dplyr::mutate(
-#     # PASSO CRUCIAL: Se o mês estiver em inglês, traduz. Se não, mantém.
-#     Mes_Nome_Limpo = dplyr::recode(Mes_Nome, !!!tradutor_meses),
-#     # Cria o fator com as tags HTML que você pediu
-#     Mes_Bold = factor(paste0("<b>", Mes_Nome_Limpo, "</b>"), 
-#                       levels = paste0("<b>", meses_ordem_limpo, "</b>"))
-#   )
-# 
-# 
-# # 4. Esqueleto para o Plotly (Garante que meses sem dados apareçam como 0)
-# esqueleto <- expand.grid(
-#   Mes_Bold = factor(paste0("<b>", meses_ordem_limpo, "</b>"), 
-#                     levels = paste0("<b>", meses_ordem_limpo, "</b>")), 
-#   Tipo = c("Entradas", "Saídas"), 
-#   stringsAsFactors = FALSE
-# )
-# 
-# # 5. Função de Processamento (Agora usando o match perfeito do Mes_Bold)
-# 
-# 
-# gerar_dados_seguros <- function(df, mod = NULL, stat = NULL) {
-#   # 1. Filtros iniciais
-#   if (!is.null(mod) && mod != "Todas as Modalidades") { df <- df %>% dplyr::filter(modalidade_processo == mod) }
-#   if (!is.null(stat) && stat != "Todos os Status") { df <- df %>% dplyr::filter(status_item == stat) }
-#   
-#   # 2. Processamento com detalhamento de modalidades no Hover
-#   df_res <- df %>%
-#     dplyr::group_by(Mes_Bold, Tipo, modalidade_processo) %>%
-#     dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
-#     dplyr::group_by(Mes_Bold, Tipo) %>%
-#     dplyr::mutate(
-#       total = sum(n), 
-#       txt_h = paste0("• ", modalidade_processo, ": ", n, " (", round((n/total)*100,1), "%)")
-#     ) %>%
-#     # Agrupa os textos de todas as modalidades de um mesmo mês/tipo
-#     dplyr::summarise(
-#       Quantidade = max(total), 
-#       Hover = paste(txt_h, collapse = "<br>"), 
-#       .groups = "drop"
-#     ) %>%
-#     # 3. Join com o esqueleto para garantir todos os meses na tela
-#     dplyr::right_join(esqueleto, by = c("Mes_Bold", "Tipo")) %>%
-#     dplyr::mutate(
-#       Quantidade = ifelse(is.infinite(Quantidade) | is.na(Quantidade), 0, Quantidade), 
-#       Hover = ifelse(is.na(Hover), "Sem processos registrados", Hover)
-#     ) %>%
-#     dplyr::arrange(Tipo, Mes_Bold)
-#   
-#   return(df_res)
-# }
-# 
-# montar_botoes <- function(lista, tipo) {
-#   lapply(lista, function(v) {
-#     d <- if(tipo == "mod") gerar_dados_seguros(dados_base_limpa, mod = v) else gerar_dados_seguros(dados_base_limpa, stat = v)
-#     de <- d %>% dplyr::filter(Tipo == "Entradas"); ds <- d %>% dplyr::filter(Tipo == "Saídas")
-#     t_e <- sum(de$Quantidade); t_s <- sum(ds$Quantidade)
-#     list(method = "update", label = v,
-#          args = list(list(y = list(de$Quantidade, ds$Quantidade),
-#                           text = list(paste0("<b>", de$Quantidade, "</b>"), paste0("<b>", ds$Quantidade, "</b>")),
-#                           hovertext = list(de$Hover, ds$Hover),
-#                           name = list(paste0("<b>Entradas (Total: ", t_e, ")</b>"), 
-#                                       paste0("<b>Saídas (Total: ", t_s, ")</b>")))))
-#   })
-# }
-# 
-# lista_m <- c("Todas as Modalidades", sort(as.character(unique(dados_base_limpa$modalidade_processo))))
-# lista_s <- c("Todos os Status", sort(as.character(unique(dados_base_limpa$status_item))))
-# 
-# df_i <- gerar_dados_seguros(dados_base_limpa)
-# df_e_ini <- df_i %>% dplyr::filter(Tipo == "Entradas") 
-# df_s_ini <- df_i %>% dplyr::filter(Tipo == "Saídas") 
-# 
-# # --- 4. GRÁFICO FINAL ---
-# plotly::plot_ly() %>%
-#   plotly::add_bars(x = df_e_ini$Mes_Bold, y = df_e_ini$Quantidade, 
-#                    name = paste0("<b>Entradas (Total: ", sum(df_e_ini$Quantidade), ")</b>"),
-#                    marker = list(color = cor_entradas),
-#                    text = paste0("<b>", df_e_ini$Quantidade, "</b>"),
-#                    textposition = 'outside', cliponaxis = FALSE,
-#                    textfont = list(family = "Inter, sans-serif", size = tamanho_rotulos, color = cor_rotulos),
-#                    hoverinfo = "text", hovertext = df_e_ini$Hover) %>%
-#   plotly::add_bars(x = df_s_ini$Mes_Bold, y = df_s_ini$Quantidade, 
-#                    name = paste0("<b>Saídas (Total: ", sum(df_s_ini$Quantidade), ")</b>"),
-#                    marker = list(color = cor_saidas),
-#                    text = paste0("<b>", df_s_ini$Quantidade, "</b>"),
-#                    textposition = 'outside', cliponaxis = FALSE,
-#                    textfont = list(family = "Inter, sans-serif", size = tamanho_rotulos, color = cor_rotulos),
-#                    hoverinfo = "text", hovertext = df_s_ini$Hover) %>%
-#   plotly::layout(
-#     font = list(family = "Inter, sans-serif"),
-#     title = list(
-#       # AQUI ESTÃO AS VARIÁVEIS APLICADAS NO TÍTULO E SUBTÍTULO
-#       text = paste0("<b style='color:", titulo_cor, "; font-size:", titulo_tamanho, "px'>", titulo_nome, "</b>",
-#                     "<br><span style='color:", sub_cor, "; font-size:", sub_tamanho, "px'>", subtitulo_texto, "</span>"),
-#       x = 0, 
-#       y = 0.98, 
-#       xanchor = "left", 
-#       xref = "paper"
-#     ),
-#     # AQUI AS OPÇÕES DO HOVER LABEL (TOTALMENTE EDITÁVEIS)
-#     hoverlabel = list(
-#       bgcolor = hover_bg_cor,       # Cor de fundo do balão
-#       font = list(
-#         family = "Inter, sans-serif",       # Fonte técnica para alinhar números
-#         size = hover_fonte_tam,     # Tamanho da fonte
-#         color = hover_txt_cor       # Cor do texto
-#       ),
-#       bordercolor = borda_balao_hover,      # Cor da borda do balão (Pode criar uma variável se quiser)
-#       align = alinhamento_balao_hover                # Alinhamento do texto dentro do balão
-#     ),
-#     xaxis = list(
-#       title = "",
-#       showgrid = FALSE, 
-#       tickfont = list(family = "Inter, sans-serif", size = tamanho_eixo_x, color = cor_eixo_x),
-#       # Fixamos a posição do eixo para ele não "subir" para dentro das barras
-#       fixedrange = TRUE
-#     ),
-#     
-#     yaxis = list(title = "", 
-#                  showticklabels = FALSE, 
-#                  showgrid = TRUE, 
-#                  gridcolor = "#F0F0F0", 
-#                  range = list(0, max(df_i$Quantidade) * 1.5)),
-#     barmode = 'group',
-#     bargap = 0.2,       # Espaço entre os meses
-#     bargroupgap = 0.1,  # DISTÂNCIA ENTRE AS BARRAS DO MESMO MÊS (Teste valores entre 0.0 e 0.5)
-#     
-#     updatemenus = list(
-#       list(active = 0, 
-#            x = 0, 
-#            y = 1.13, 
-#            xanchor = "left", 
-#            buttons = montar_botoes(lista_m, "mod"),
-#            font = list(family = "Inter, sans-serif", size = tamanho_botoes)),
-#       list(active = 0, 
-#            x = 0.30, 
-#            y = 1.13, 
-#            xanchor = "left", 
-#            buttons = montar_botoes(lista_s, "stat"),
-#            font = list(family = "Inter, sans-serif", size = tamanho_botoes)),
-#       list(active = 0, x = 0.55, y = 1.13, xanchor = "left",
-#              buttons = list(
-#                list(method = "update", # Mudança aqui
-#                     label = "Gráfico: Barras", 
-#                     args = list(
-#                       list(type = "bar", textposition = "outside"), 
-#                       list(margin = list(t = 160, b = 150, l = 30, r = 30)) # Força a margem aqui
-#                     )),
-#                list(method = "update", # Mudança aqui
-#                     label = "Gráfico: Linhas", 
-#                     args = list(
-#                       list(type = "scatter", mode = "lines+markers+text", textposition = "top center"),
-#                       list(margin = list(t = 160, b = 150, l = 30, r = 30)) # Força a margem aqui
-#                     ))
-#              ), 
-#              font = list(family = "Inter, sans-serif", size = tamanho_botoes))
-#       ),
-#     legend = list(orientation = 'h', x = 0, xanchor = "left", y = 1.25,
-#                   font = list(family = "Inter, sans-serif", size = tamanho_legenda, color = cor_legenda)),
-#     margin = list(
-#       t = 150,  # Espaço para Título + Subtítulo + Legenda + 3 Botões
-#       b = 170,  # Espaço para os Meses (Eixo X) respirares
-#       l = 30,   # Respiro na esquerda
-#       r = 30    # Respiro na direita
-#       ),
-#     plot_bgcolor = "white", paper_bgcolor = "white"
-#   ) %>%
-#   plotly::config(displayModeBar = FALSE, responsive = TRUE)
-
-
-# ==========================================================
-# --- ÁREA DE PERSONALIZAÇÃO (PAINEL DE CONTROLE) ---
-# ==========================================================
-
 # Define o título principal que identifica a subgerência e o ano
 titulo_nome        <- "Gráfico 1: Fluxo Operacional de Processos | Subgerência de - Compras 2025"
 # Define o texto do subtítulo descritivo do fluxo
@@ -1483,7 +1113,7 @@ plotly::plot_ly() %>%
     legend = base::list(orientation = 'h', x = 0, xanchor = "left", y = 1.25,
                         font = base::list(family = "Inter, sans-serif", size = tamanho_legenda, color = cor_legenda)),
     # Ajuste fino das margens do gráfico
-    margin = base::list(t = 150, b = 170, l = 30, r = 30),
+    margin = base::list(t = 150, b = 40, l = 30, r = 30),
     plot_bgcolor = "white", paper_bgcolor = "white"
   ) %>%
   # Configuração de responsividade e ocultação da barra do Plotly
