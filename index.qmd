@@ -1,7 +1,7 @@
 ---
 title: "Relatório Analítico Subgerência de Compras | SUBCOMP"
 subtitle: "Fundação Hospitalar Alfredo da Matta (FUHAM)"
-# author: "Subcomp"
+author: "Alexssandro Silva | ΛΣ Consultoria"
 # date: "`r format(Sys.Date(), '%d de %B de 2025')`"
 # Tags para ajudar no filtro da página principal
 # description: "Análise Exploratória e Modelagem Preditiva de Dados de Compras"
@@ -227,7 +227,7 @@ tabela_interativa <- function(dados,
                       # Efeito Hover Alex: Negrito apenas na tabela principal
                       "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
                       "  if (!$(this).closest('table').hasClass('subtable')) {",
-                      "    $(this).css({'background-color': '#f1f1f1', 'color': '#000000', 'font-weight': 'bold'});",
+                      "    $(this).css({'background-color': '#ffffff', 'color': '#000000', 'font-weight': 'bold'});",
                       "  }",
                       "}).on('mouseleave', 'tr', function() {",
                       "  if (!$(this).closest('table').hasClass('subtable')) {",
@@ -691,7 +691,7 @@ bd_catalogo <- gsheet::gsheet2tbl(
 ```
 
 
-### Sobre os dados
+### Repositório de Dados e Central de Downloads
 
 ```{r}
 
@@ -758,93 +758,95 @@ gerar_central_cards <- function(df) {
     )
   })
 
-  # Título da Seção (Estilo Alex)
-  titulo_sec <- htmltools::tags$h2(
-    style = "color: #03045e; font-size: 20px; font-weight: bold; margin-bottom: 20px; border-bottom: 3px solid #000000; padding-bottom: 10px;",
-    htmltools::tags$b("Repositório de Dados e Central de Downloads")
-  )
+  # # Título da Seção (Estilo Alex)
+  # titulo_sec <- htmltools::tags$h2(
+  #   style = "color: #03045e; font-size: 12px; font-weight: bold; margin-bottom: 20px; border-bottom: 3px solid #000000; padding-bottom: 10px;",
+  #   htmltools::tags$b("Repositório de Dados e Central de Downloads")
+  # )
 
   # Retorna o conjunto final
-  htmltools::tagList(estilo_css, titulo_sec, htmltools::tags$div(class = "container-cards", lista_cards))
+  # htmltools::tagList(estilo_css, titulo_sec, htmltools::tags$div(class = "container-cards", lista_cards))
+  htmltools::tagList(estilo_css, htmltools::tags$div(class = "container-cards", lista_cards))
+
 }
 
 # 3. EXIBIR A CENTRAL
 gerar_central_cards(dados_cards)
 
 
-# ==========================================================
-# CENTRAL DE DOWNLOADS E ACESSO - VERSÃO INTEGRAL COMENTADA
-# ==========================================================
-
-# Inicia a criação do dataframe com os dados, descrições e links originais Alex
-bd_central_downloads <- base::data.frame(
-  # Define o nome amigável de cada banco de dados
-  "id_planilha" = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
-  # Define a descrição técnica de cada base
-  "descricao"   = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", "Detalhamento Financeiro vinculado aos processos", "Dicionário para tradução de códigos contábeis", "Identificação da origem do capital", "Classificação detalhada do objeto de gasto", "Tabela mestra de padronização de itens do Estado"),
-  # Define as URLs reais das planilhas que você enviou
-  "url"         = base::c(
-    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826", # Link Processos
-    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695", # Link Itens
-    "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687", # Link Natureza
-    "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696", # Link Fonte
-    "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856", # Link Elemento
-    "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131"  # Link Catálogo
-  ),
-  # Garante que as strings não virem fatores
-  stringsAsFactors = FALSE
-)
-
-# --- GERAÇÃO DO BOTÃO ACESSAR (ABRE A PLANILHA NO NAVEGADOR) ---
-bd_central_downloads$acessar <- base::apply(bd_central_downloads, 1, function(x) {
-  # Retorna link HTML estilizado na cor azul marinho oficial Alex
-  base::paste0("<a href='", x['url'], "' target='_blank' style='background-color:#03045e; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>ACESSAR</a>")
-})
-
-# --- GERAÇÃO DO BOTÃO DOWNLOAD (BAIXA O EXCEL AUTOMATICAMENTE) ---
-bd_central_downloads$download <- base::apply(bd_central_downloads, 1, function(x) {
-  # Transforma o link de edição em link de exportação direta para Excel (.xlsx)
-  url_download <- base::gsub("/edit.*", "/export?format=xlsx", x['url'])
-  # Retorna link HTML com cor preta para diferenciar do botão de acesso
-  base::paste0("<a href='", url_download, "' target='_blank' style='background-color:#333333; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>DOWNLOAD</a>")
-})
-
-# Define os vetores de mapeamento para as colunas que você quer exibir
-minhas_colunas_down <- base::c(
-  "Banco de Dados" = "id_planilha", 
-  "Descrição"      = "descricao", 
-  "Acesso Online"  = "acessar", 
-  "Baixar Arquivo" = "download"
-)
-
-# Define larguras fixas para acomodar os dois botões lateralmente
-minhas_larguras_down <- base::c("300px", "350px", "90px", "90px")
-
-# Executa a renderização da tabela com seus padrões de fonte e cores
-tabela_interativa(
-  # Passa o dataframe com as duas colunas de botões criadas
-  dados = bd_central_downloads,
-  # Define o título do repositório
-  titulo_tabela = "Central de Downloads e Repositório de Dados",
-  # Aplica suas fontes compactas Alex
-  tam_fonte_corpo  = "11.3px",
-  tam_fonte_header = "12.2px",
-  tam_fonte_titulo = "14.3px",
-  # Aplica suas cores oficiais
-  cor_titulo       = "#03045e",
-  cor_primaria     = "#000000",
-  cor_texto_corpo  = "#000000",
-  # Mantém visual limpo sem filtros individuais
-  mostrar_filtro   = FALSE,
-  # Mantém busca global ativa na ESQUERDA
-  pesquisa_geral   = FALSE,
-  # Aplica vetores de configuração definidos acima
-  largura_cols_vetor   = minhas_larguras_down,
-  colunas_selecionadas = minhas_colunas_down,
-  # Mostra 6 linhas por página e oculta o índice lateral
-  n_pages = 6,
-  mostrar_indice = FALSE
-)
+# # ==========================================================
+# # CENTRAL DE DOWNLOADS E ACESSO - VERSÃO INTEGRAL COMENTADA
+# # ==========================================================
+# 
+# # Inicia a criação do dataframe com os dados, descrições e links originais Alex
+# bd_central_downloads <- base::data.frame(
+#   # Define o nome amigável de cada banco de dados
+#   "id_planilha" = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
+#   # Define a descrição técnica de cada base
+#   "descricao"   = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", "Detalhamento Financeiro vinculado aos processos", "Dicionário para tradução de códigos contábeis", "Identificação da origem do capital", "Classificação detalhada do objeto de gasto", "Tabela mestra de padronização de itens do Estado"),
+#   # Define as URLs reais das planilhas que você enviou
+#   "url"         = base::c(
+#     "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826", # Link Processos
+#     "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695", # Link Itens
+#     "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687", # Link Natureza
+#     "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696", # Link Fonte
+#     "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856", # Link Elemento
+#     "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131"  # Link Catálogo
+#   ),
+#   # Garante que as strings não virem fatores
+#   stringsAsFactors = FALSE
+# )
+# 
+# # --- GERAÇÃO DO BOTÃO ACESSAR (ABRE A PLANILHA NO NAVEGADOR) ---
+# bd_central_downloads$acessar <- base::apply(bd_central_downloads, 1, function(x) {
+#   # Retorna link HTML estilizado na cor azul marinho oficial Alex
+#   base::paste0("<a href='", x['url'], "' target='_blank' style='background-color:#03045e; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>ACESSAR</a>")
+# })
+# 
+# # --- GERAÇÃO DO BOTÃO DOWNLOAD (BAIXA O EXCEL AUTOMATICAMENTE) ---
+# bd_central_downloads$download <- base::apply(bd_central_downloads, 1, function(x) {
+#   # Transforma o link de edição em link de exportação direta para Excel (.xlsx)
+#   url_download <- base::gsub("/edit.*", "/export?format=xlsx", x['url'])
+#   # Retorna link HTML com cor preta para diferenciar do botão de acesso
+#   base::paste0("<a href='", url_download, "' target='_blank' style='background-color:#333333; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>DOWNLOAD</a>")
+# })
+# 
+# # Define os vetores de mapeamento para as colunas que você quer exibir
+# minhas_colunas_down <- base::c(
+#   "Banco de Dados" = "id_planilha", 
+#   "Descrição"      = "descricao", 
+#   "Acesso Online"  = "acessar", 
+#   "Baixar Arquivo" = "download"
+# )
+# 
+# # Define larguras fixas para acomodar os dois botões lateralmente
+# minhas_larguras_down <- base::c("300px", "350px", "90px", "90px")
+# 
+# # Executa a renderização da tabela com seus padrões de fonte e cores
+# tabela_interativa(
+#   # Passa o dataframe com as duas colunas de botões criadas
+#   dados = bd_central_downloads,
+#   # Define o título do repositório
+#   titulo_tabela = "Central de Downloads e Repositório de Dados",
+#   # Aplica suas fontes compactas Alex
+#   tam_fonte_corpo  = "11.3px",
+#   tam_fonte_header = "12.2px",
+#   tam_fonte_titulo = "14.3px",
+#   # Aplica suas cores oficiais
+#   cor_titulo       = "#03045e",
+#   cor_primaria     = "#000000",
+#   cor_texto_corpo  = "#000000",
+#   # Mantém visual limpo sem filtros individuais
+#   mostrar_filtro   = FALSE,
+#   # Mantém busca global ativa na ESQUERDA
+#   pesquisa_geral   = FALSE,
+#   # Aplica vetores de configuração definidos acima
+#   largura_cols_vetor   = minhas_larguras_down,
+#   colunas_selecionadas = minhas_colunas_down,
+#   # Mostra 6 linhas por página e oculta o índice lateral
+#   n_pages = 6,
+#   mostrar_indice = FALSE
+# )
 ```
 
 
