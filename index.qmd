@@ -1,12 +1,12 @@
 ---
-title: "Relatório Analítico Subgerência de Compras 2025"
+title: "Relatório Analítico Subgerência de Compras | SUBCOMP"
 subtitle: "Fundação Hospitalar Alfredo da Matta (FUHAM)"
 # author: "Subcomp"
 # date: "`r format(Sys.Date(), '%d de %B de 2025')`"
 # Tags para ajudar no filtro da página principal
 # description: "Análise Exploratória e Modelagem Preditiva de Dados de Compras"
 # categories: ["Análise Exploratória de Dados"]
-# date: last-modified
+date: last-modified
 # Configuração de Idioma e tradução
 # lang: pt
 # format: 
@@ -152,6 +152,9 @@ if(!require("dplyr")) install.packages("dplyr", quiet = TRUE) ; library("dplyr")
 # ==============================================================================
 # E. FUNÇÕES DE APRESENTAÇÃO - VERSÃO FINAL ALEX (CORRIGIDA)
 # ==============================================================================
+# ==============================================================================
+# E. FUNÇÕES DE APRESENTAÇÃO - VERSÃO FINAL ALEX (SEM ERROS)
+# ==============================================================================
 
 tabela_interativa <- function(dados, 
                               titulo_tabela, 
@@ -177,13 +180,12 @@ tabela_interativa <- function(dados,
     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
   }
 
-  n_colunas_reais <- base::ncol(dados_processados)
+  n_col_reais <- base::ncol(dados_processados)
   lista_columnDefs <- base::list(base::list(width = '30px', targets = 0))
   
   if (!base::is.null(largura_cols_vetor)) {
     for (i in base::seq_along(largura_cols_vetor)) {
-      # CORREÇÃO DO ERRO '7': O alvo não pode exceder o número de colunas
-      if ((i - 1) < n_colunas_reais) {
+      if ((i - 1) < n_col_reais) {
          lista_columnDefs[[base::length(lista_columnDefs) + 1]] <- base::list(
            width = largura_cols_vetor[i], 
            targets = i - 1
@@ -192,8 +194,9 @@ tabela_interativa <- function(dados,
     }
   }
 
-  base::assign("contador_tabelas_alex", base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1, envir = .GlobalEnv)
-  titulo_final <- base::paste0("Tabela ", base::get("contador_tabelas_alex", envir = .GlobalEnv), ": ", titulo_tabela)
+  novo_cont <- base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1
+  base::assign("contador_tabelas_alex", novo_cont, envir = .GlobalEnv)
+  titulo_final <- base::paste0("Tabela ", novo_cont, ": ", titulo_tabela)
 
   html_titulo <- htmltools::tags$h2(
     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
@@ -203,12 +206,13 @@ tabela_interativa <- function(dados,
 
   tabela <- DT::datatable(
     base::data.frame(dados_processados, check.names = FALSE),
+    escape = FALSE, # GARANTE QUE O BOTÃO DE DOWNLOAD APAREÇA
     rownames = mostrar_indice,
     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
     width = "100%", 
     class = "hover row-border", 
     options = base::list(
-      dom = 'ft p', # PESQUISA NA ESQUERDA (f na frente do t)
+      dom = 'ft p', # PESQUISA NA ESQUERDA
       pageLength = n_pages,
       searching = TRUE, 
       lengthChange = FALSE,
@@ -226,7 +230,7 @@ tabela_interativa <- function(dados,
                      
                      # SEU HOVER: Negrito + Cinza + Texto Preto
                      "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
-                     "  $(this).css({'background-color': '#f1f1f1', 'color': '#000000', 'font-weight': 'bold', 'transition': '0.1s'});",
+                     "  $(this).css({'background-color': '#f1f1f1', 'color': '#000000', 'font-weight': 'bold'});",
                      "}).on('mouseleave', 'tr', function() {",
                      "  $(this).css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
                      "});",
@@ -268,10 +272,11 @@ tabela_interativa_detalhes <- function(dados,
   }
 
   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
-  n_colunas_reais <- base::ncol(dados_processados)
+  n_col_reais <- base::ncol(dados_processados)
 
-  base::assign("contador_tabelas_alex", base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1, envir = .GlobalEnv)
-  titulo_final <- base::paste0("Tabela ", base::get("contador_tabelas_alex", envir = .GlobalEnv), ": ", titulo_tabela)
+  novo_cont <- base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1
+  base::assign("contador_tabelas_alex", novo_cont, envir = .GlobalEnv)
+  titulo_final <- base::paste0("Tabela ", novo_cont, ": ", titulo_tabela)
 
   html_titulo <- htmltools::tags$h2(
     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
@@ -289,7 +294,7 @@ tabela_interativa_detalhes <- function(dados,
   
   if (!base::is.null(largura_cols_vetor)) {
     for (i in 1:base::length(largura_cols_vetor)) {
-      if (i < n_colunas_reais) { # CORREÇÃO ERRO '7'
+      if (i < n_col_reais) {
         lista_column_defs[[base::length(lista_column_defs) + 1]] <- base::list(targets = i, width = largura_cols_vetor[i])
       }
     }
@@ -320,10 +325,8 @@ tabela_interativa_detalhes <- function(dados,
                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
                      
-                     "var table = this.api();",
-                     "var detalhes_data = ", json_detalhes_js, ";",
-                     "var customNomes = ", nomes_detalhes_js, ";",
-                     "var customLarguras = ", larguras_detalhes_js, ";",
+                     "var table = this.api(); var detalhes_data = ", json_detalhes_js, ";",
+                     "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
                      
                      "$(this.api().table().body()).on('click', 'td.details-control', function() {",
                      "  var tr = $(this).closest('tr'); var row = table.row(tr);",
@@ -347,7 +350,7 @@ tabela_interativa_detalhes <- function(dados,
                      "       html_sub += '</tr></thead><tbody>';",
                      "       sub_dados.forEach(r => {",
                      "          html_sub += '<tr style=\"border-bottom:1px solid #f1f1f1;\">';",
-                     "          colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; background-color: transparent !important;\">' + (r[k] || '') + '</td>'; });",
+                     "          colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; background-color: transparent !important;\">' + r[k] + '</td>'; });",
                      "          html_sub += '</tr>';",
                      "       });",
                      "    } else { html_sub += '<tr><td>Nenhum detalhe disponível</td></tr>'; }",
@@ -356,11 +359,11 @@ tabela_interativa_detalhes <- function(dados,
                      "  }",
                      "});",
 
-                     # SEU HOVER PROTEGIDO: Só na tabela principal, nunca nos detalhes
+                     # HOVER PROTEGIDO: Só na principal
                      "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
                      "  var tr = $(this);",
                      "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable')) {",
-                     "    tr.css({'background-color': '#f1f1f1', 'color': '#000000', 'font-weight': 'bold', 'transition': '0.1s'});",
+                     "    tr.css({'background-color': '#f1f1f1', 'color': '#000000', 'font-weight': 'bold'});",
                      "  }",
                      "}).on('mouseleave', 'tr', function() {",
                      "  var tr = $(this);",
@@ -376,8 +379,6 @@ tabela_interativa_detalhes <- function(dados,
   )
   return(htmltools::tagList(html_titulo, tabela))
 }
-
-
 # ==============================================================================
 # F. FUNÇÕES DE TRATAMENTO E AUDITORIA
 # ==============================================================================
@@ -684,16 +685,13 @@ bd_catalogo <- gsheet::gsheet2tbl(
 
 ```{r}
 
-# ==========================================================
-# 1. PREPARAÇÃO DA BASE DE DADOS PARA DOWNLOAD
-# ==========================================================
-
+# --- PREPARAÇÃO DOS DADOS ---
 bd_central_downloads <- base::data.frame(
   "id_planilha" = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
   "descricao"   = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", "Detalhamento Financeiro vinculado aos processos", "Dicionário para tradução de códigos contábeis", "Identificação da origem do capital", "Classificação detalhada do objeto de gasto", "Tabela mestra de padronização de itens do Estado"),
   "url"         = base::c(
     "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826",
-    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826", # Itens
+    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695",
     "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687",
     "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696",
     "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856",
@@ -702,37 +700,33 @@ bd_central_downloads <- base::data.frame(
   stringsAsFactors = FALSE
 )
 
-# Criando o botão de acesso (HTML) - Adicionamos display: inline-block para garantir o formato
+# Criando o botão HTML (Style Alex)
 bd_central_downloads$botao <- base::apply(bd_central_downloads, 1, function(x) {
-  base::paste0("<a href='", x['url'], "' target='_blank' style='background-color:#03045e; color:white; padding:6px 14px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>PLANILHA</a>")
+  base::paste0("<a href='", x['url'], "' target='_blank' style='background-color:#03045e; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>PLANILHA</a>")
 })
 
-# --- VETORES DE CONFIGURAÇÃO ---
-minhas_colunas_down <- base::c("Banco de Dados" = "id_planilha", "Descrição do Conteúdo" = "descricao", "Acesso Direto" = "botao")
+# Vetores
+minhas_colunas_down <- base::c("Banco de Dados" = "id_planilha", "Descrição" = "descricao", "Acesso" = "botao")
 minhas_larguras_down <- base::c("180px", "450px", "120px")
 
-# ==========================================================
-# 2. EXECUÇÃO DA TABELA (COM CORREÇÃO DE ESCAPE)
-# ==========================================================
+# Execução
+tabela_interativa(
+  dados = bd_central_downloads,
+  titulo_tabela = "Central de Downloads",
+  tam_fonte_corpo = "11.3px",
+  tam_fonte_header = "12.2px",
+  tam_fonte_titulo = "14.3px",
+  cor_titulo = "#03045e",
+  cor_primaria = "#000000",
+  cor_texto_corpo = "#000000",
+  mostrar_filtro = FALSE,
+  pesquisa_geral = TRUE,
+  largura_cols_vetor = minhas_larguras_down,
+  colunas_selecionadas = minhas_colunas_down,
+  n_pages = 6,
+  mostrar_indice = FALSE
+)
 
-# Chamamos a função, mas precisamos garantir que o DT não 'limpe' o HTML
-# Para isso, vamos passar o parâmetro escape = FALSE direto na chamada se sua função permitir, 
-# ou ajustar a função interna.
-
-tabela_interativa <- function(dados, 
-                              titulo_tabela, 
-                              # ... outros argumentos ...
-                              mostrar_indice = TRUE) {
-  # ... (resto do seu código inicial) ...
-
-  tabela <- DT::datatable(
-    base::data.frame(dados_processados, check.names = FALSE),
-    escape = FALSE,  # <--- ESSA É A CHAVE PARA O BOTÃO APARECER
-    rownames = mostrar_indice,
-    # ... (resto das suas opções) ...
-  )
-  return(htmltools::tagList(html_titulo, tabela))
-}
 ```
 
 
@@ -1113,7 +1107,7 @@ plotly::plot_ly() %>%
     legend = base::list(orientation = 'h', x = 0, xanchor = "left", y = 1.25,
                         font = base::list(family = "Inter, sans-serif", size = tamanho_legenda, color = cor_legenda)),
     # Ajuste fino das margens do gráfico
-    margin = base::list(t = 150, b = 100, l = 10, r = 10),
+    margin = base::list(t = 150, b = 90, l = 0, r = 0),
     plot_bgcolor = "white", paper_bgcolor = "white"
   ) %>%
   # Configuração de responsividade e ocultação da barra do Plotly
