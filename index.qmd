@@ -1,12 +1,12 @@
 ---
 title: "Relatório Analítico Subgerência de Compras 2025"
 subtitle: "Fundação Hospitalar Alfredo da Matta (FUHAM)"
-author: "Subcomp"
+# author: "Subcomp"
 # date: "`r format(Sys.Date(), '%d de %B de 2025')`"
 # Tags para ajudar no filtro da página principal
 # description: "Análise Exploratória e Modelagem Preditiva de Dados de Compras"
 # categories: ["Análise Exploratória de Dados"]
-date: last-modified
+# date: last-modified
 # Configuração de Idioma e tradução
 # lang: pt
 # format: 
@@ -26,10 +26,8 @@ page-layout: full
 title-block-banner: true
 ---
 
-<br>
-
-::: {style="border-top: 2px solid #003366;"}
-:::
+<!-- ::: {style="border-top: 2px solid #003366;"} -->
+<!-- ::: -->
 
 <br>
 
@@ -219,43 +217,63 @@ tabela_interativa <- function(dados,
       
       initComplete = DT::JS(
         base::paste0("function(settings, json) {",
-                     # Estilo do corpo
+                     # Estilo base
                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
-                     
-                     # Cabeçalho: Usa a 'cor_primaria'
-                     "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap', 'background-image': 'none !important'});",
-                     
-                     # MOLDURA PRETA (Topo e Baixo do Header)
+                     "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
-                     
-                     # Linha Preta de fechamento final
                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
                      
-                     # ESTILO DA PESQUISA GERAL
-                     "var searchDiv = $('.dataTables_filter');",
-                     "searchDiv.css({'text-align': 'left', 'margin-bottom': '15px', 'float': 'none'});",
-                     "searchDiv.find('label').css({'font-weight': 'bold', 'color': '#000000'});",
+                     # Lógica de expansão com destaque ELEGANTE
+                     "var table = this.api(); var detalhes_data = ", json_detalhes, ";",
+                     "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", largura_detalhes_js, ";",
                      
-                     if(pesquisa_geral) "" else "$('.dataTables_filter').hide();",
+                     "$(this.api().table().body()).on('click', 'td.details-control', function() {",
+                     "  var tr = $(this).closest('tr'); var row = table.row(tr);",
+                     "  if (row.child.isShown()) {",
+                     "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
+                     # VOLTA AO NORMAL
+                     "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal', 'border-left': 'none'});",
+                     "  } else {",
+                     # DESTAQUE REFINADO (Fundo claro + Negrito moderado + Borda lateral)
+                     "    tr.css({'background-color': '#f8f9fa', 'color': '", cor_primaria, "', 'font-weight': '600', 'border-left': '4px solid ", cor_primaria, "'});",
+                     "    var rowData = row.data();",
+                     "    var chave = rowData[", if(mostrar_indice) "2" else "1", "];",
+                     "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
+                     "    var html_sub = '<table class=\"subtable\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff; color:#03045e; font-weight:bold;\">';",
+                     "    var colKeys = Object.keys(sub_dados[0]);",
+                     "    colKeys.forEach((key, index) => {",
+                     "       var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
+                     "       var width = (customLarguras && customLarguras[index]) ? 'width:'+customLarguras[index]+';' : '';",
+                     "       html_sub += '<th style=\"padding:6px; border-bottom:1px solid #ddd; text-align:left; '+width+'\">' + label + '</th>';",
+                     "    });",
+                     "    html_sub += '</tr></thead><tbody>';",
+                     "    sub_dados.forEach(r => {",
+                     "       html_sub += '<tr style=\"border-bottom:1px solid #f1f1f1; color:#333 !important;\">';",
+                     "       colKeys.forEach(k => { html_sub += '<td style=\"padding:6px;\">' + r[k] + '</td>'; });",
+                     "       html_sub += '</tr>';",
+                     "    });",
+                     "    html_sub += '</tbody></table>';",
+                     "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
+                     "  }",
+                     "});",
                      
-                     # HOVER: Usa a 'cor_primaria'
-                     "var tableContainer = $(this.api().table().container());",
-                     "tableContainer.find('tbody').on('mouseenter', 'tr', function() { $(this).css({'color': '", cor_primaria, "', 'font-weight': '600', 'transition': '0.2s'}); }).on('mouseleave', 'tr', function() { $(this).css({'color': '", cor_texto_corpo, "', 'font-weight': 'normal'}); });",
-                     
-                     "$(this.api().table().header()).removeClass('sorting sorting_asc sorting_desc');",
+                     # HOVER DISCRETO
+                     "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
+                     "  if (!$(this).hasClass('shown') && !$(this).closest('table').hasClass('subtable')) {",
+                     "    $(this).css({'background-color': '#f1f1f1', 'transition': '0.1s'});",
+                     "  }",
+                     "}).on('mouseleave', 'tr', function() {",
+                     "  if (!$(this).hasClass('shown') && !$(this).closest('table').hasClass('subtable')) {",
+                     "    $(this).css({'background-color': ''});",
+                     "  }",
+                     "});",
                      "}")
       ),
-      language = base::list(
-        paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
-        emptyTable = "Sem dados",
-        zeroRecords = "Nenhum registro encontrado",
-        search = "Pesquisa Geral:"
-      )
+      language = base::list(paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
+                            emptyTable = "Sem dados", zeroRecords = "Nenhum registro encontrado", search = "Pesquisa Geral:")
     )
   )
-
-  # Retorno consolidado
-  htmltools::tagList(html_titulo, tabela)
+  return(htmltools::tagList(html_titulo, tabela))
 }
 
 # ==============================================================================
@@ -1089,7 +1107,7 @@ plotly::plot_ly() %>%
     legend = base::list(orientation = 'h', x = 0, xanchor = "left", y = 1.25,
                         font = base::list(family = "Inter, sans-serif", size = tamanho_legenda, color = cor_legenda)),
     # Ajuste fino das margens do gráfico
-    margin = base::list(t = 150, b = 40, l = 230, r = 30),
+    margin = base::list(t = 150, b = 130, l = 30, r = 30),
     plot_bgcolor = "white", paper_bgcolor = "white"
   ) %>%
   # Configuração de responsividade e ocultação da barra do Plotly
