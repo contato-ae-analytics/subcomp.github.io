@@ -525,7 +525,7 @@ O setor atua de forma estratégica na coordenação e execução de compras e co
 
 <!-- Importação das bases de dados -->
 
-::: {style="font-size: 0.9em; text-align: justify; margin-top: 25px; margin-bottom: 25px; "}
+::: {style="font-size: 0.9em; text-align: justify; margin-top: 25px; margin-bottom: 25px; padding: 20px 20px;"}
 
 
 ```{r}
@@ -1189,7 +1189,7 @@ plotly::plot_ly() %>%
     title = base::list(
       text = base::paste0("<b style='color:", titulo_cor, "; font-size:", titulo_tamanho, "px'>", titulo_nome, "</b>",
                           "<br><span style='color:", sub_cor, "; font-size:", sub_tamanho, "px'>", subtitulo_texto, "</span>"),
-      x = 0, y = 1, xanchor = "left", xref = "paper"
+      x = 0, y = 0.80, xanchor = "left", xref = "paper"
     ),
     # Aplica o estilo do Hover Label definido pelo Alex
     hoverlabel = base::list(
@@ -1221,7 +1221,7 @@ plotly::plot_ly() %>%
                  buttons = montar_botoes(lista_m),
                  font = base::list(family = "Inter, sans-serif", size = tamanho_botoes)),
       # Menu de Tipo de Gráfico (Dropdown na posição 0.30)
-      base::list(active = 0, x = 0, y = 1.13, xanchor = "left",
+      base::list(active = 0, x = 0.20, y = 1.13, xanchor = "left",
                  buttons = base::list(
                    base::list(method = "update", label = "Gráfico: Barras", 
                               args = base::list(base::list(type = "bar", textposition = "outside"), 
@@ -1235,7 +1235,7 @@ plotly::plot_ly() %>%
     legend = base::list(orientation = 'h', x = 0, xanchor = "left", y = 1.25,
                         font = base::list(family = "Inter, sans-serif", size = tamanho_legenda, color = cor_legenda)),
     # Ajuste fino das margens do gráfico
-    margin = base::list(t = 150, b = 30, l = 0, r = 0),
+    margin = base::list(t = 150, b = 40, l = 0, r = 0),
     plot_bgcolor = "white", paper_bgcolor = "white"
   ) %>%
   # Configuração de responsividade e ocultação da barra do Plotly
@@ -1246,139 +1246,151 @@ plotly::plot_ly() %>%
 # --- 1. PREPARAÇÃO DA TABELA PRINCIPAL (RESUMO POR PROCESSO) ---
 # ==========================================================
 
-# Criamos um agrupamento para que cada processo ocupe apenas uma linha na visão inicial
+# ==========================================================
+# --- 1. PREPARAÇÃO DA TABELA PRINCIPAL (RESUMO POR PROCESSO) ---
+# ==========================================================
+
 bd_resumo_processos <- bd_principal %>%
-  dplyr::group_by(processo) %>% # Agrupa pelo número do processo
+  dplyr::group_by(processo) %>% 
   dplyr::summarise(
-    # Captura a primeira ocorrência de cada informação fixa do processo
-    modalidade = dplyr::first(modalidade_processo),
-    agente     = dplyr::first(agente),
-    # Soma a quantidade de itens informada na coluna do banco
-    total_itens = base::max(qtd_itens_processo, na.rm = TRUE),
-    # Soma o valor financeiro total de todos os itens do processo
-    v_total_num = base::sum(valor_total, na.rm = TRUE),
-    status     = dplyr::first(status_item),
-    .groups = "drop" # Finaliza o agrupamento
+    modalidade   = dplyr::first(modalidade_processo),
+    agente       = dplyr::first(agente),
+    total_itens  = base::max(qtd_itens_processo, na.rm = TRUE),
+    v_total_num  = base::sum(valor_total, na.rm = TRUE),
+    
+    # CRITÉRIO ALEX: O maior tempo entre os itens define o processo
+    dias_uteis   = base::max(dias_uteis, na.rm = TRUE),
+    
+    # Mês de entrada e o mês de saída do item mais lento
+    mes_entrada  = dplyr::first(mes_entrada),
+    mes_saida    = dplyr::last(base::sort(mes_saida)),
+    
+    # Eficiência média (Já arredondado sem multiplicar, conforme solicitado)
+    pct_empenho  = base::mean(pct_empenho, na.rm = TRUE),
+    .groups = "drop"
   ) %>%
   dplyr::mutate(
-    # Formata o valor numérico para texto com padrão brasileiro R$
-    valor_total_proc = base::paste0("R$ ", base::format(v_total_num, big.mark = ".", decimal.mark = ","))
+    valor_total_proc = base::paste0("R$ ", base::format(v_total_num, big.mark = ".", decimal.mark = ",")),
+    # Ajuste do round: apenas formatação de texto com símbolo %
+    pct_empenho      = base::paste0(base::round(pct_empenho, 1), "%")
   )
 
 # ==========================================================
 # --- 2. PREPARAÇÃO DA TABELA DE DETALHES (ITENS DO PROCESSO) ---
 # ==========================================================
 
-# Esta base contém os 722 itens e será filtrada pelo JavaScript ao clicar no "+"
 bd_detalhes_itens <- bd_principal %>%
   dplyr::mutate(
-    # Formata o valor unitário e total dos itens para o balão de expansão
-    v_unit_txt = base::paste0("R$ ", base::format(valor_unitario, big.mark = ".", decimal.mark = ",")),
+    v_unit_txt  = base::paste0("R$ ", base::format(valor_unitario, big.mark = ".", decimal.mark = ",")),
     v_total_txt = base::paste0("R$ ", base::format(valor_total, big.mark = ".", decimal.mark = ","))
   ) %>%
   dplyr::select(
-    # Mantemos a coluna processo como CHAVE para o vínculo entre as tabelas
     processo, 
-    ID = id, 
-    Descrição = catalogo_descricao, 
-    Fornecedor = fornecedor, 
-    Qtd = qtde, 
-    `V. Unitário` = v_unit_txt, 
-    `Total Item` = v_total_txt
+    id, 
+    catalogo_descricao, 
+    fornecedor, 
+    qtde, 
+    v_unit_txt, 
+    v_total_txt,
+    status_item,
+    dias_uteis # Adicionado dias úteis por item conforme solicitado
   )
 
-
-
 # ==========================================================
-# CONFIGURAÇÃO DE FONTES E CORES (VISUAL COMPACTO ALEX)
-# ==========================================================
-tam_fonte_corpo = "11.3px"
-tam_fonte_titulo = "14.3px"
-tam_fonte_header = "12.2px"
-cor_titulo = "#03045e"
-cor_primaria = "#000000"
-cor_texto_corpo = "#000000"
-
-
-# ==========================================================
-# 1. VETORES DE CONFIGURAÇÃO: PROCESSOS (PAI E FILHO)
+# 3. VETORES DE CONFIGURAÇÃO (NOMES E LARGURAS)
 # ==========================================================
 
 # --- TABELA PRINCIPAL (PAI) ---
 minhas_colunas <- base::c(
-  "Processo"    = "processo",
-  "Modalidade"  = "modalidade",
-  "Agente"      = "agente",
-  "Itens"       = "total_itens",
-  "Valor Total" = "valor_total_proc",
-  "Status"      = "status"
+  "Nº Processo"       = "processo",
+  "Modalidade"        = "modalidade",
+  "Qtd. Itens"        = "total_itens",
+  "Mês Entrada"       = "mes_entrada",
+  "Mês Saída"         = "mes_saida",
+  "Valor Total (R$)"  = "valor_total_proc",
+  "Tempo (Dias)"      = "dias_uteis",
+  "Eficiência (%)"    = "pct_empenho"
 )
 
-# Larguras da Tabela Pai (Botão [+] + as 6 colunas acima)
-minhas_larguras <- base::c("30px", "150px", "100px", "150px", "80px", "140px", "100px")
+minhas_larguras <- base::c("30px", 
+                           "120px", 
+                           "60px", 
+                           "40px", 
+                           "40px", 
+                           "40px", 
+                           "170px", 
+                           "70px", 
+                           "70px")
 
 # --- SUB-TABELA DE DETALHES (FILHA) ---
+# Adicionado "Tempo Item" ao final do vetor
 meus_nomes_detalhes <- base::c(
-  "Processo", 
   "ID Item", 
-  "Descrição do Material/Serviço", 
-  "Fornecedor Vencedor", 
-  "Qtd", 
+  "Descrição Material/Serviço", 
+  "Fornecedor", 
+  "Qtd",
   "Valor Unitário", 
-  "Valor Total Item"
+  "Valor Total Item",
+  "Situação",
+  "Tempo Item"
 )
 
-# Larguras da Sub-tabela
-minhas_larguras_detalhes <- base::c("100px", "60px", "400px", "200px", "50px", "100px", "100px")
+# Ajuste nas larguras dos detalhes para acomodar a nova coluna
+minhas_larguras_detalhes <- base::c("60px", 
+                                    "350px", 
+                                    "200px", 
+                                    "50px", 
+                                    "110px", 
+                                    "110px", 
+                                    "100px", 
+                                    "70px")
 
 # ==========================================================
-# 2. EXECUÇÃO: TABELA PROCESSOS (Função com Detalhes)
+# 4. EXECUÇÃO DO RELATÓRIO
 # ==========================================================
+
 tabela_interativa_detalhes(
   dados                  = bd_resumo_processos,
-  dados_detalhes         = bd_detalhes_itens,
+  dados_detalhes          = bd_detalhes_itens,
   coluna_chave           = "processo",
-  titulo_tabela          = "Gestão de Processos e Itens",
+  titulo_tabela          = "Detalhamento de Processos",
   
-  # Estilo Alex (Usando as variáveis globais de fonte/cor)
-  tam_fonte_corpo        = tam_fonte_corpo,
-  tam_fonte_header       = tam_fonte_header,
-  tam_fonte_titulo       = tam_fonte_titulo,
-  cor_titulo             = cor_titulo,
-  cor_primaria           = cor_primaria,
-  cor_texto_corpo        = cor_texto_corpo,
+  tam_fonte_corpo        = "11.3px",
+  tam_fonte_header       = "12.2px",
+  tam_fonte_titulo       = "14.3px",
+  cor_titulo             = "#03045e",
+  cor_primaria           = "#000000",
+  cor_texto_corpo        = "#000000",
   
-  # Aplicação dos vetores definidos acima
+  colunas_selecionadas   = minhas_colunas,
+  largura_cols_vetor      = minhas_larguras,
   colunas_detalhes_nomes = meus_nomes_detalhes,
   largura_detalhes_vetor = minhas_larguras_detalhes,
-  largura_cols_vetor     = minhas_larguras,
-  colunas_selecionadas   = minhas_colunas,
   
-  mostrar_filtro         = FALSE,
-  pesquisa_geral         = TRUE,
+  mostrar_filtro          = FALSE,
+  pesquisa_geral          = TRUE, 
   n_pages                = 10,
-  mostrar_indice         = FALSE
+  mostrar_indice          = FALSE
 )
-
 ```
 
 :::
 
 ### Índices de Produtividade Setorial
 
-::: {style="font-size: 0.9em; text-align: justify; margin-top: 15px; margin-bottom: 20px; "}
+::: {style="font-size: 0.9em; text-align: justify; margin-top: 25px; margin-bottom: 25px; "}
 
 :::
 
 ### Índices de Produtividade Individual
 
-::: {style="font-size: 0.9em; text-align: justify; margin-top: 15px; margin-bottom: 20px; "}
+::: {style="font-size: 0.9em; text-align: justify; margin-top: 25px; margin-bottom: 25px; "}
 
 :::
 
 ## Modalidades | Natureza da Despesa (R$)
 
-::: {style="font-size: 0.9em; text-align: justify; margin-top: 15px; margin-bottom: 20px; "}
+::: {style="font-size: 0.9em; text-align: justify; margin-top: 25px; margin-bottom: 25px; "}
 
 ::: {.panel-tabset}
 
@@ -1414,7 +1426,7 @@ Conteúdo da modalidade RDL
 
 ## Catálogo E-compras e Fluxo de Itens
 
-::: {style="font-size: 0.9em; text-align: justify; margin-top: 15px; margin-bottom: 20px; "}
+::: {style="font-size: 0.9em; text-align: justify; margin-top: 25px; margin-bottom: 25px; "}
 
 
 ```{r}
