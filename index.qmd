@@ -1932,25 +1932,18 @@ tabela_interativa_detalhes(
 ## Setor
 
 ```{r}
-# ==========================================================
-# FUNÇÃO SETORIAL - VERSÃO FINAL COM HOVER ORGANIZADO
-# ==========================================================
 gerar_dashboard_setor <- function(bd_principal,
-                                  # Tamanhos do Centro
-                                  tam_titulo_graf  = 20,
+                                  tam_titulo_graf  = 0,
                                   tam_centro_cab   = 12,
                                   tam_centro_dest  = 10,
                                   tam_centro_corpo = 10,
-                                  # Tamanhos do Hover (Baloes)
                                   tam_hover_header = 14,
                                   tam_hover_dest   = 14,
                                   tam_hover_corpo  = 12,
-                                  # Fatias e Cores
                                   tam_fatias       = 11,
                                   cor_eficiencia   = "#0b132b",
                                   cor_titulo       = "#081c15") {
   
-  # --- BLOCO DE CONFIGURAÇÃO INTERNO ---
   fonte_padrao    <- "Inter, sans-serif"
   cores_fatias    <- c('#74c69d', '#40916c', '#6fffe9', '#5bc0be', '#3a506b', '#1c2541', '#0b132b', '#081c15', '#000000')
   cor_empenhado   <- "#008000"
@@ -1970,15 +1963,19 @@ gerar_dashboard_setor <- function(bd_principal,
       valor_empenhado  = base::sum(base::ifelse(status_item == "Empenhado" | !base::is.na(nota_de_empenho), valor_total, 0), na.rm = TRUE),
       .groups = "drop"
     ) %>%
-    dplyr::mutate(situacao_proc = base::ifelse(itens_empenhados == total_itens_proc, "Resolvido", "Pendente"))
+    dplyr::mutate(situacao_proc = base::ifelse(itens_empenhados >= total_itens_proc, "Resolvido", "Pendente"))
   
-  # --- 2. AGRUPAMENTO POR MODALIDADE (HOVER RESTAURADO) ---
+  # --- 2. AGRUPAMENTO POR MODALIDADE ---
   df_modalidade <- df_proc_unico %>%
     dplyr::group_by(modalidade) %>%
     dplyr::summarise(
-      n_processos = dplyr::n(), n_resolvidos = base::sum(situacao_proc == "Resolvido"),
-      n_pendentes = base::sum(situacao_proc == "Pendente"), valor_total_mod = base::sum(valor_processo),
-      valor_emp_mod = base::sum(valor_empenhado), tempo_medio_mod = base::mean(tempo_processo, na.rm = TRUE), .groups = "drop"
+      n_processos = dplyr::n(), 
+      n_resolvidos = base::sum(situacao_proc == "Resolvido"),
+      n_pendentes = base::sum(situacao_proc == "Pendente"), 
+      valor_total_mod = base::sum(valor_processo, na.rm = TRUE),
+      valor_emp_mod = base::sum(valor_empenhado, na.rm = TRUE), 
+      tempo_medio_mod = base::mean(tempo_processo, na.rm = TRUE), 
+      .groups = "drop"
     ) %>%
     dplyr::mutate(
       p_res = base::sprintf("%.2f", (n_resolvidos / n_processos) * 100),
@@ -1987,10 +1984,10 @@ gerar_dashboard_setor <- function(bd_principal,
       v_emp_txt   = base::paste0("R$ ", base::format(valor_emp_mod, big.mark = ".", decimal.mark = ",")),
       v_pen_txt   = base::paste0("R$ ", base::format(valor_total_mod - valor_emp_mod, big.mark = ".", decimal.mark = ",")),
       
-      label_grafico = base::paste0(modalidade, "<br>", n_processos, " proc. (", 
-                                   base::sprintf("%.1f", (n_processos / base::sum(n_processos)) * 100), "%)"),
+      label_grafico = base::paste0("<b>", modalidade, "</b><br>", 
+                                   n_processos, " processos<br>", 
+                                   base::sprintf("%.1f", (n_processos / base::sum(n_processos)) * 100), "%"),
       
-      # HOVER ORGANIZADO COM SEÇÕES (RESTAURADO)
       hover_txt = base::paste0("<span style='color:black; font-family:", fonte_padrao, "; font-size:", tam_hover_corpo, "px;'>",
                                "<b style='font-size:", tam_hover_header, "px;'>MODALIDADE: ", modalidade, "</b><br>",
                                "<span style='color:#bdc3c7'>──────────────────────────</span><br>",
@@ -2003,15 +2000,15 @@ gerar_dashboard_setor <- function(bd_principal,
                                "• Resolvidos: ", n_resolvidos, " (", p_res, "%)<br>",
                                "• Pendentes: ", n_pendentes, " (", p_pen, "%)<br>",
                                "<span style='color:#bdc3c7'>──────────────────────────</span><br>",
-                               "<b>APORTE FINANCEIRO</b><br>",
+                               "<b>VALOR FINANCEIRO</b><br>",
                                "💰 <b>Total:</b> ", v_total_txt, "<br>",
                                "✅ <b>Empenhado:</b> ", v_emp_txt, "<br>",
                                "❌ <b>Pendente:</b> ", v_pen_txt, "</span>")
     )
   
-  # --- 3. MÉTRICAS DO CENTRO ---
-  total_p <- base::nrow(df_proc_unico); total_v <- base::sum(df_proc_unico$valor_processo)
-  res_n <- base::sum(df_proc_unico$situacao_proc == "Resolvido"); res_v <- base::sum(df_proc_unico$valor_empenhado)
+  # --- 3. MÉTRICAS DO CENTRO (RESTAURADAS) ---
+  total_p <- base::nrow(df_proc_unico); total_v <- base::sum(df_proc_unico$valor_processo, na.rm = TRUE)
+  res_n <- base::sum(df_proc_unico$situacao_proc == "Resolvido"); res_v <- base::sum(df_proc_unico$valor_empenhado, na.rm = TRUE)
   res_p <- base::sprintf("%.2f", (res_n / total_p) * 100); pen_n <- total_p - res_n
   pen_v <- total_v - res_v; pen_p <- base::sprintf("%.2f", (pen_n / total_p) * 100)
   eficiencia_global <- base::sprintf("%.2f", (res_n / total_p) * 100)
@@ -2045,18 +2042,18 @@ gerar_dashboard_setor <- function(bd_principal,
                   textinfo = 'text', text = ~label_grafico, hoverinfo = 'text', hovertext = ~hover_txt,
                   marker = base::list(colors = cores_fatias, line = base::list(color = '#FFFFFF', width = 3))) %>%
     plotly::layout(
-      title = base::list(text = "<b>Análise de Gestão: Consolidado Setorial</b>", 
+      margin = base::list(t = 80, b = 80, l = 80, r = 80), 
+      title = base::list(text = "", 
                          font = base::list(family = fonte_padrao, size = tam_titulo_graf, color = cor_titulo)),
       font = base::list(family = fonte_padrao, size = tam_fatias),
       showlegend = FALSE,
       hoverlabel = base::list(bgcolor = "white", bordercolor = "black", align = "left", 
+                              namelength = -1,
                               font = base::list(family = fonte_padrao, color = "black")),
       annotations = base::list(text = texto_centro, showarrow = FALSE)
     ) %>%
-  # Configuração de responsividade e ocultação da barra do Plotly
-  plotly::config(displayModeBar = FALSE, responsive = TRUE)
+    plotly::config(displayModeBar = FALSE, responsive = TRUE)
 }
-
 
 gerar_dashboard_setor(
   bd_principal, 
@@ -2362,7 +2359,7 @@ largura_col <- base::c(
   "80px",  # Eficiência
   "90px", # Pendentes
   "350px", # Valor Pendente (ESPAÇO GRANDE)
-  "140px"   # Ciclo
+  "160px"   # Ciclo
 )
 
 # Alinhamento Pai (11 valores) - Tudo à esquerda
@@ -2393,7 +2390,7 @@ largura_det <- base::c(
   # "65px", # Itens Pendentes
   "310px", # Valor (MUITO ESPAÇO)
   "120px",  # Ciclo
-  "60px",  # Média
+  "80px",  # Média
   "130px", # Avaliação
   "70px"  # Eficiência
 )
