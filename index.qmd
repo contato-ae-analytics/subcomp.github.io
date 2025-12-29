@@ -2239,12 +2239,12 @@ bd_filho_agentes <- status_por_processo %>%
 nomes_col <- base::c(
   "Modalidade"               = "mod_proc",
   "Nº<br>Processos"          = "n_processos",
-  "Aporte<br>Consolidado"    = "aporte_total",
+  "Valor<br>Consolidado"    = "aporte_total",
   "Processos<br>Finalizados" = "n_resolvidos",
-  "Aporte<br>Resolvido"         = "aporte_resolvido",
+  "Valor<br>Resolvido"         = "aporte_resolvido",
   "Eficiência<br>(%)"           = "p_resolvido_txt",
   "Processos<br>Pendentes"   = "n_pendentes",
-  "Aporte<br>Pendente"          = "aporte_pendente",
+  "Valor<br>Pendente"          = "aporte_pendente",
   "Ciclo<br>Médio"              = "ciclo_txt"
 )
 
@@ -2274,7 +2274,7 @@ nomes_det <- base::c(
   "Pendentes", 
   # "Itens<br>Resolvidos", 
   # "Itens<br>Pendentes", 
-  "Aporte<br>(Gestão)", 
+  "Valor", 
   "Ciclo", 
   "Média", 
   "Avaliação", 
@@ -2282,10 +2282,10 @@ nomes_det <- base::c(
 )
 
 # Ajuste nas larguras dos detalhes para acomodar a nova coluna
-largura_det <- base::c("170px", 
-                       "40px", 
-                       "40px", 
-                       "40px", 
+largura_det <- base::c("200px", 
+                       "50px", 
+                       "50px", 
+                       "50px", 
                        # "80px", 
                        # "80px", 
                        "270px", 
