@@ -1668,12 +1668,12 @@ minhas_colunas <- base::c(
   "Mês Saída"         = "mes_saida",
   "Valor Total (R$)"  = "valor_total_proc",
   "Tempo (Dias)"      = "dias_uteis",
-  "Eficiência (%)"    = "pct_empenho"
+  "(%) Empenho"    = "pct_empenho"
 )
 
 minhas_larguras <- base::c("30px", 
                            "140px", 
-                           "60px", 
+                           "90px", 
                            "70",
                            "40px", 
                            "40px", 
@@ -1713,7 +1713,7 @@ tabela_interativa_detalhes(
   dados                  = bd_resumo_processos,
   dados_detalhes          = bd_detalhes_itens,
   coluna_chave           = "processo",
-  titulo_tabela          = "Monitoramento Consolidado de Processos e Itens",
+  titulo_tabela          = "Detalhamento de Processos",
   
   tam_fonte_corpo        = tam_fonte_corpo,
   tam_fonte_header       = tam_fonte_header,
