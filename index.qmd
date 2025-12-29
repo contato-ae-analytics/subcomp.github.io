@@ -873,294 +873,293 @@ bd_catalogo <- gsheet::gsheet2tbl(
 ```{r}
 
 # 1. PREPARAÇÃO DOS DADOS (Seus links e descrições originais)
-dados_cards <- base::data.frame(
-  titulo    = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
-  descricao = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", 
-                      "Detalhamento Financeiro vinculado aos processos", 
-                      "Dicionário para tradução de códigos contábeis", 
-                      "Identificação da origem do capital", 
-                      "Classificação detalhada do objeto de gasto", 
-                      "Tabela mestra de padronização de itens do Estado"),
-  url       = base::c(
-    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826",
-    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695",
-    "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687",
-    "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696",
-    "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856",
-    "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131"
-  ),
-  stringsAsFactors = FALSE
-)
-
-# 2. FUNÇÃO PARA GERAR A VITRINE (CSS + HTML)
-gerar_central_cards <- function(df) {
-  
-  # Estilização CSS integrada (Respeitando seu estilo: bordas finas e cores sóbrias)
-  estilo_css <- htmltools::tags$style(htmltools::HTML("
-    .container-cards { display: flex; flex-wrap: wrap; gap: 20px; justify-content: flex-start; font-family: Arial, sans-serif; }
-    .card-alex { 
-      width: 280px; border: 1px solid #ddd; border-top: 5px solid #03045e; 
-      border-radius: 8px; padding: 15px; background: #ffffff;
-      box-shadow: 2px 2px 10px rgba(0,0,0,0.05); transition: 0.3s;
-      display: flex; flex-direction: column; justify-content: space-between;
-    }
-    .card-alex:hover { transform: translateY(-5px); box-shadow: 5px 5px 15px rgba(0,0,0,0.1); border-color: #03045e; }
-    .card-titulo { color: #03045e; font-size: 16px; font-weight: bold; margin-bottom: 8px; }
-    .card-desc { color: #555; font-size: 12.5px; height: 45px; margin-bottom: 15px; line-height: 1.4; }
-    .btn-container { display: flex; gap: 8px; }
-    .btn-alex { 
-      flex: 1; text-align: center; padding: 8px; text-decoration: none; 
-      font-size: 10px; font-weight: bold; border-radius: 4px; color: white;
-      transition: 0.2s;
-    }
-    .btn-acesso { background-color: #03045e; }
-    .btn-acesso:hover { background-color: #000000; }
-    .btn-down { background-color: #333333; }
-    .btn-down:hover { background-color: #000000; }
-  "))
-
-  # Criação dos cards individuais
-  lista_cards <- base::apply(df, 1, function(x) {
-    url_download <- base::gsub("/edit.*", "/export?format=xlsx", x['url'])
-    
-    htmltools::tags$div(class = "card-alex",
-      htmltools::tags$div(
-        htmltools::tags$div(class = "card-titulo", x['titulo']),
-        htmltools::tags$div(class = "card-desc", x['descricao'])
-      ),
-      htmltools::tags$div(class = "btn-container",
-        htmltools::tags$a(href = x['url'], target = "_blank", class = "btn-alex btn-acesso", "ACESSAR"),
-        htmltools::tags$a(href = url_download, target = "_blank", class = "btn-alex btn-down", "DOWNLOAD")
-      )
-    )
-  })
-
-  # # Título da Seção (Estilo Alex)
-  # titulo_sec <- htmltools::tags$h2(
-  #   style = "color: #03045e; font-size: 12px; font-weight: bold; margin-bottom: 20px; border-bottom: 3px solid #000000; padding-bottom: 10px;",
-  #   htmltools::tags$b("Repositório de Dados e Central de Downloads")
-  # )
-
-  # Retorna o conjunto final
-  # htmltools::tagList(estilo_css, titulo_sec, htmltools::tags$div(class = "container-cards", lista_cards))
-  htmltools::tagList(estilo_css, htmltools::tags$div(class = "container-cards", lista_cards))
-
-}
-
-# 3. EXIBIR A CENTRAL
-gerar_central_cards(dados_cards)
-
-# 1. PREPARAÇÃO DOS DADOS
-dados_cards <- base::data.frame(
-  titulo    = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
-  descricao = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", 
-                      "Detalhamento Financeiro vinculado aos processos", 
-                      "Dicionário para tradução de códigos contábeis", 
-                      "Identificação da origem do capital", 
-                      "Classificação detalhada do objeto de gasto", 
-                      "Tabela mestra de padronização de itens do Estado"),
-  url       = base::c(
-    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826",
-    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695",
-    "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687",
-    "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696",
-    "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856",
-    "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131"
-  ),
-  stringsAsFactors = FALSE
-)
-
-# 2. FUNÇÃO PARA GERAR A VITRINE
-gerar_central_cards <- function(df) {
-  
-  estilo_css <- htmltools::tags$style(htmltools::HTML("
-    /* Container com margem superior para o card não cortar ao subir */
-    .container-cards { 
-      display: flex; 
-      flex-wrap: wrap; 
-      gap: 25px; 
-      justify-content: flex-start; 
-      padding-top: 15px; 
-      padding-bottom: 20px;
-      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    }
-    
-    .card-alex { 
-      flex: 1 1 280px;
-      max-width: 320px;
-      border: 1px solid #e0e0e0; 
-      border-top: 4px solid #03045e; 
-      border-radius: 6px; 
-      padding: 20px; 
-      background: #ffffff;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.04); 
-      transition: all 0.3s cubic-bezier(.25,.8,.25,1);
-      display: flex; 
-      flex-direction: column; 
-      justify-content: space-between;
-      position: relative;
-    }
-    
-    /* Efeito de elevação suave */
-    .card-alex:hover { 
-      transform: translateY(-8px); 
-      box-shadow: 0 10px 20px rgba(0,0,0,0.08); 
-      border-color: #03045e; 
-    }
-    
-    .card-titulo { 
-      color: #03045e; 
-      font-size: 15px; 
-      font-weight: 700; 
-      margin-bottom: 10px; 
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-    
-    .card-desc { 
-      color: #666; 
-      font-size: 12px; 
-      min-height: 40px; 
-      margin-bottom: 20px; 
-      line-height: 1.5; 
-    }
-    
-    .btn-container { 
-      display: flex; 
-      gap: 10px; 
-    }
-    
-    .btn-alex { 
-      flex: 1; 
-      text-align: center; 
-      padding: 9px 5px; 
-      text-decoration: none; 
-      font-size: 11px; 
-      font-weight: 600; 
-      border-radius: 4px; 
-      transition: 0.2s;
-      border: 1px solid transparent;
-    }
-    
-    /* Botão Acessar: Azul Sóbrio */
-    .btn-acesso { 
-      background-color: #03045e; 
-      color: white; 
-    }
-    .btn-acesso:hover { 
-      background-color: #000835; 
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    
-    /* Botão Download: Outline Cinza Profissional */
-    .btn-down { 
-      background-color: #f8f9fa; 
-      color: #333; 
-      border: 1px solid #ccc;
-    }
-    .btn-down:hover { 
-      background-color: #333; 
-      color: white; 
-      border-color: #333;
-    }
-  "))
-
-  lista_cards <- base::apply(df, 1, function(x) {
-    url_download <- base::gsub("/edit.*", "/export?format=xlsx", x['url'])
-    
-    htmltools::tags$div(class = "card-alex",
-      htmltools::tags$div(
-        htmltools::tags$div(class = "card-titulo", x['titulo']),
-        htmltools::tags$div(class = "card-desc", x['descricao'])
-      ),
-      htmltools::tags$div(class = "btn-container",
-        htmltools::tags$a(href = x['url'], target = "_blank", class = "btn-alex btn-acesso", "ACESSAR"),
-        htmltools::tags$a(href = url_download, target = "_blank", class = "btn-alex btn-down", "DOWNLOAD")
-      )
-    )
-  })
-
-  htmltools::tagList(estilo_css, htmltools::tags$div(class = "container-cards", lista_cards))
-}
-
-# 3. EXIBIR A CENTRAL
-gerar_central_cards(dados_cards)
-
-
-
-# # ==========================================================
-# # CENTRAL DE DOWNLOADS E ACESSO - VERSÃO INTEGRAL COMENTADA
-# # ==========================================================
-# 
-# # Inicia a criação do dataframe com os dados, descrições e links originais Alex
-# bd_central_downloads <- base::data.frame(
-#   # Define o nome amigável de cada banco de dados
-#   "id_planilha" = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
-#   # Define a descrição técnica de cada base
-#   "descricao"   = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", "Detalhamento Financeiro vinculado aos processos", "Dicionário para tradução de códigos contábeis", "Identificação da origem do capital", "Classificação detalhada do objeto de gasto", "Tabela mestra de padronização de itens do Estado"),
-#   # Define as URLs reais das planilhas que você enviou
-#   "url"         = base::c(
-#     "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826", # Link Processos
-#     "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695", # Link Itens
-#     "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687", # Link Natureza
-#     "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696", # Link Fonte
-#     "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856", # Link Elemento
-#     "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131"  # Link Catálogo
+# dados_cards <- base::data.frame(
+#   titulo    = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
+#   descricao = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", 
+#                       "Detalhamento Financeiro vinculado aos processos", 
+#                       "Dicionário para tradução de códigos contábeis", 
+#                       "Identificação da origem do capital", 
+#                       "Classificação detalhada do objeto de gasto", 
+#                       "Tabela mestra de padronização de itens do Estado"),
+#   url       = base::c(
+#     "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826",
+#     "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695",
+#     "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687",
+#     "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696",
+#     "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856",
+#     "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131"
 #   ),
-#   # Garante que as strings não virem fatores
 #   stringsAsFactors = FALSE
 # )
 # 
-# # --- GERAÇÃO DO BOTÃO ACESSAR (ABRE A PLANILHA NO NAVEGADOR) ---
-# bd_central_downloads$acessar <- base::apply(bd_central_downloads, 1, function(x) {
-#   # Retorna link HTML estilizado na cor azul marinho oficial Alex
-#   base::paste0("<a href='", x['url'], "' target='_blank' style='background-color:#03045e; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>ACESSAR</a>")
-# })
+# # 2. FUNÇÃO PARA GERAR A VITRINE (CSS + HTML)
+# gerar_central_cards <- function(df) {
+#   
+#   # Estilização CSS integrada (Respeitando seu estilo: bordas finas e cores sóbrias)
+#   estilo_css <- htmltools::tags$style(htmltools::HTML("
+#     .container-cards { display: flex; flex-wrap: wrap; gap: 20px; justify-content: flex-start; font-family: Arial, sans-serif; }
+#     .card-alex { 
+#       width: 280px; border: 1px solid #ddd; border-top: 5px solid #03045e; 
+#       border-radius: 8px; padding: 15px; background: #ffffff;
+#       box-shadow: 2px 2px 10px rgba(0,0,0,0.05); transition: 0.3s;
+#       display: flex; flex-direction: column; justify-content: space-between;
+#     }
+#     .card-alex:hover { transform: translateY(-5px); box-shadow: 5px 5px 15px rgba(0,0,0,0.1); border-color: #03045e; }
+#     .card-titulo { color: #03045e; font-size: 16px; font-weight: bold; margin-bottom: 8px; }
+#     .card-desc { color: #555; font-size: 12.5px; height: 45px; margin-bottom: 15px; line-height: 1.4; }
+#     .btn-container { display: flex; gap: 8px; }
+#     .btn-alex { 
+#       flex: 1; text-align: center; padding: 8px; text-decoration: none; 
+#       font-size: 10px; font-weight: bold; border-radius: 4px; color: white;
+#       transition: 0.2s;
+#     }
+#     .btn-acesso { background-color: #03045e; }
+#     .btn-acesso:hover { background-color: #000000; }
+#     .btn-down { background-color: #333333; }
+#     .btn-down:hover { background-color: #000000; }
+#   "))
 # 
-# # --- GERAÇÃO DO BOTÃO DOWNLOAD (BAIXA O EXCEL AUTOMATICAMENTE) ---
-# bd_central_downloads$download <- base::apply(bd_central_downloads, 1, function(x) {
-#   # Transforma o link de edição em link de exportação direta para Excel (.xlsx)
-#   url_download <- base::gsub("/edit.*", "/export?format=xlsx", x['url'])
-#   # Retorna link HTML com cor preta para diferenciar do botão de acesso
-#   base::paste0("<a href='", url_download, "' target='_blank' style='background-color:#333333; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>DOWNLOAD</a>")
-# })
+#   # Criação dos cards individuais
+#   lista_cards <- base::apply(df, 1, function(x) {
+#     url_download <- base::gsub("/edit.*", "/export?format=xlsx", x['url'])
+#     
+#     htmltools::tags$div(class = "card-alex",
+#       htmltools::tags$div(
+#         htmltools::tags$div(class = "card-titulo", x['titulo']),
+#         htmltools::tags$div(class = "card-desc", x['descricao'])
+#       ),
+#       htmltools::tags$div(class = "btn-container",
+#         htmltools::tags$a(href = x['url'], target = "_blank", class = "btn-alex btn-acesso", "ACESSAR"),
+#         htmltools::tags$a(href = url_download, target = "_blank", class = "btn-alex btn-down", "DOWNLOAD")
+#       )
+#     )
+#   })
 # 
-# # Define os vetores de mapeamento para as colunas que você quer exibir
-# minhas_colunas_down <- base::c(
-#   "Banco de Dados" = "id_planilha", 
-#   "Descrição"      = "descricao", 
-#   "Acesso Online"  = "acessar", 
-#   "Baixar Arquivo" = "download"
+#   # # Título da Seção (Estilo Alex)
+#   # titulo_sec <- htmltools::tags$h2(
+#   #   style = "color: #03045e; font-size: 12px; font-weight: bold; margin-bottom: 20px; border-bottom: 3px solid #000000; padding-bottom: 10px;",
+#   #   htmltools::tags$b("Repositório de Dados e Central de Downloads")
+#   # )
+# 
+#   # Retorna o conjunto final
+#   # htmltools::tagList(estilo_css, titulo_sec, htmltools::tags$div(class = "container-cards", lista_cards))
+#   htmltools::tagList(estilo_css, htmltools::tags$div(class = "container-cards", lista_cards))
+# 
+# }
+# 
+# # 3. EXIBIR A CENTRAL
+# gerar_central_cards(dados_cards)
+# 
+# # 1. PREPARAÇÃO DOS DADOS
+# dados_cards <- base::data.frame(
+#   titulo    = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
+#   descricao = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", 
+#                       "Detalhamento Financeiro vinculado aos processos", 
+#                       "Dicionário para tradução de códigos contábeis", 
+#                       "Identificação da origem do capital", 
+#                       "Classificação detalhada do objeto de gasto", 
+#                       "Tabela mestra de padronização de itens do Estado"),
+#   url       = base::c(
+#     "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826",
+#     "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695",
+#     "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687",
+#     "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696",
+#     "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856",
+#     "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131"
+#   ),
+#   stringsAsFactors = FALSE
 # )
 # 
-# # Define larguras fixas para acomodar os dois botões lateralmente
-# minhas_larguras_down <- base::c("300px", "350px", "90px", "90px")
+# # 2. FUNÇÃO PARA GERAR A VITRINE
+# gerar_central_cards <- function(df) {
+#   
+#   estilo_css <- htmltools::tags$style(htmltools::HTML("
+#     /* Container com margem superior para o card não cortar ao subir */
+#     .container-cards { 
+#       display: flex; 
+#       flex-wrap: wrap; 
+#       gap: 25px; 
+#       justify-content: flex-start; 
+#       padding-top: 15px; 
+#       padding-bottom: 20px;
+#       font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+#     }
+#     
+#     .card-alex { 
+#       flex: 1 1 280px;
+#       max-width: 320px;
+#       border: 1px solid #e0e0e0; 
+#       border-top: 4px solid #03045e; 
+#       border-radius: 6px; 
+#       padding: 20px; 
+#       background: #ffffff;
+#       box-shadow: 0 2px 4px rgba(0,0,0,0.04); 
+#       transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+#       display: flex; 
+#       flex-direction: column; 
+#       justify-content: space-between;
+#       position: relative;
+#     }
+#     
+#     /* Efeito de elevação suave */
+#     .card-alex:hover { 
+#       transform: translateY(-8px); 
+#       box-shadow: 0 10px 20px rgba(0,0,0,0.08); 
+#       border-color: #03045e; 
+#     }
+#     
+#     .card-titulo { 
+#       color: #03045e; 
+#       font-size: 15px; 
+#       font-weight: 700; 
+#       margin-bottom: 10px; 
+#       letter-spacing: 0.5px;
+#       text-transform: uppercase;
+#     }
+#     
+#     .card-desc { 
+#       color: #666; 
+#       font-size: 12px; 
+#       min-height: 40px; 
+#       margin-bottom: 20px; 
+#       line-height: 1.5; 
+#     }
+#     
+#     .btn-container { 
+#       display: flex; 
+#       gap: 10px; 
+#     }
+#     
+#     .btn-alex { 
+#       flex: 1; 
+#       text-align: center; 
+#       padding: 9px 5px; 
+#       text-decoration: none; 
+#       font-size: 11px; 
+#       font-weight: 600; 
+#       border-radius: 4px; 
+#       transition: 0.2s;
+#       border: 1px solid transparent;
+#     }
+#     
+#     /* Botão Acessar: Azul Sóbrio */
+#     .btn-acesso { 
+#       background-color: #03045e; 
+#       color: white; 
+#     }
+#     .btn-acesso:hover { 
+#       background-color: #000835; 
+#       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+#     }
+#     
+#     /* Botão Download: Outline Cinza Profissional */
+#     .btn-down { 
+#       background-color: #f8f9fa; 
+#       color: #333; 
+#       border: 1px solid #ccc;
+#     }
+#     .btn-down:hover { 
+#       background-color: #333; 
+#       color: white; 
+#       border-color: #333;
+#     }
+#   "))
 # 
-# # Executa a renderização da tabela com seus padrões de fonte e cores
-# tabela_interativa(
-#   # Passa o dataframe com as duas colunas de botões criadas
-#   dados = bd_central_downloads,
-#   # Define o título do repositório
-#   titulo_tabela = "Central de Downloads e Repositório de Dados",
-#   # Aplica suas fontes compactas Alex
-#   tam_fonte_corpo  = "11.3px",
-#   tam_fonte_header = "12.2px",
-#   tam_fonte_titulo = "14.3px",
-#   # Aplica suas cores oficiais
-#   cor_titulo       = "#03045e",
-#   cor_primaria     = "#000000",
-#   cor_texto_corpo  = "#000000",
-#   # Mantém visual limpo sem filtros individuais
-#   mostrar_filtro   = FALSE,
-#   # Mantém busca global ativa na ESQUERDA
-#   pesquisa_geral   = FALSE,
-#   # Aplica vetores de configuração definidos acima
-#   largura_cols_vetor   = minhas_larguras_down,
-#   colunas_selecionadas = minhas_colunas_down,
-#   # Mostra 6 linhas por página e oculta o índice lateral
-#   n_pages = 6,
-#   mostrar_indice = FALSE
-# )
+#   lista_cards <- base::apply(df, 1, function(x) {
+#     url_download <- base::gsub("/edit.*", "/export?format=xlsx", x['url'])
+#     
+#     htmltools::tags$div(class = "card-alex",
+#       htmltools::tags$div(
+#         htmltools::tags$div(class = "card-titulo", x['titulo']),
+#         htmltools::tags$div(class = "card-desc", x['descricao'])
+#       ),
+#       htmltools::tags$div(class = "btn-container",
+#         htmltools::tags$a(href = x['url'], target = "_blank", class = "btn-alex btn-acesso", "ACESSAR"),
+#         htmltools::tags$a(href = url_download, target = "_blank", class = "btn-alex btn-down", "DOWNLOAD")
+#       )
+#     )
+#   })
+# 
+#   htmltools::tagList(estilo_css, htmltools::tags$div(class = "container-cards", lista_cards))
+# }
+# 
+# # 3. EXIBIR A CENTRAL
+# gerar_central_cards(dados_cards)
+
+
+# ==========================================================
+# CENTRAL DE DOWNLOADS E ACESSO - VERSÃO INTEGRAL COMENTADA
+# ==========================================================
+
+# Inicia a criação do dataframe com os dados, descrições e links originais Alex
+bd_central_downloads <- base::data.frame(
+  # Define o nome amigável de cada banco de dados
+  "id_planilha" = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
+  # Define a descrição técnica de cada base
+  "descricao"   = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", "Detalhamento Financeiro vinculado aos processos", "Dicionário para tradução de códigos contábeis", "Identificação da origem do capital", "Classificação detalhada do objeto de gasto", "Tabela mestra de padronização de itens do Estado"),
+  # Define as URLs reais das planilhas que você enviou
+  "url"         = base::c(
+    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826", # Link Processos
+    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695", # Link Itens
+    "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687", # Link Natureza
+    "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696", # Link Fonte
+    "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856", # Link Elemento
+    "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131"  # Link Catálogo
+  ),
+  # Garante que as strings não virem fatores
+  stringsAsFactors = FALSE
+)
+
+# --- GERAÇÃO DO BOTÃO ACESSAR (ABRE A PLANILHA NO NAVEGADOR) ---
+bd_central_downloads$acessar <- base::apply(bd_central_downloads, 1, function(x) {
+  # Retorna link HTML estilizado na cor azul marinho oficial Alex
+  base::paste0("<a href='", x['url'], "' target='_blank' style='background-color:#03045e; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>ACESSAR</a>")
+})
+
+# --- GERAÇÃO DO BOTÃO DOWNLOAD (BAIXA O EXCEL AUTOMATICAMENTE) ---
+bd_central_downloads$download <- base::apply(bd_central_downloads, 1, function(x) {
+  # Transforma o link de edição em link de exportação direta para Excel (.xlsx)
+  url_download <- base::gsub("/edit.*", "/export?format=xlsx", x['url'])
+  # Retorna link HTML com cor preta para diferenciar do botão de acesso
+  base::paste0("<a href='", url_download, "' target='_blank' style='background-color:#333333; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>DOWNLOAD</a>")
+})
+
+# Define os vetores de mapeamento para as colunas que você quer exibir
+minhas_colunas_down <- base::c(
+  "Banco de Dados" = "id_planilha",
+  "Descrição"      = "descricao",
+  "Acesso Online"  = "acessar",
+  "Baixar Arquivo" = "download"
+)
+
+# Define larguras fixas para acomodar os dois botões lateralmente
+minhas_larguras_down <- base::c("300px", "350px", "90px", "90px")
+
+# Executa a renderização da tabela com seus padrões de fonte e cores
+tabela_interativa(
+  # Passa o dataframe com as duas colunas de botões criadas
+  dados = bd_central_downloads,
+  # Define o título do repositório
+  titulo_tabela = "Central de Downloads e Repositório de Dados",
+  # Aplica suas fontes compactas Alex
+  tam_fonte_corpo  = "11.3px",
+  tam_fonte_header = "12.2px",
+  tam_fonte_titulo = "14.3px",
+  # Aplica suas cores oficiais
+  cor_titulo       = "#03045e",
+  cor_primaria     = "#000000",
+  cor_texto_corpo  = "#000000",
+  # Mantém visual limpo sem filtros individuais
+  mostrar_filtro   = FALSE,
+  # Mantém busca global ativa na ESQUERDA
+  pesquisa_geral   = FALSE,
+  # Aplica vetores de configuração definidos acima
+  largura_cols_vetor   = minhas_larguras_down,
+  colunas_selecionadas = minhas_colunas_down,
+  # Mostra 6 linhas por página e oculta o índice lateral
+  n_pages = 6,
+  mostrar_indice = FALSE
+)
 ```
 
 
@@ -1678,7 +1677,7 @@ minhas_larguras <- base::c("30px",
                            "40px", 
                            "40px", 
                            "40px", 
-                           "200px", 
+                           "220px", 
                            "100px", 
                            "60px")
 
@@ -2144,6 +2143,138 @@ gerar_dashboard_setor(
   tam_fatias       = 10,        # Nomes das modalidades nas fatias do gráfico
   cor_eficiencia   = "#000080", # Azul Marinho para a Eficiência
   cor_titulo       = "#000000"  # Preto absoluto para o título
+)
+
+# ==========================================================
+# 1. PRÉ-PROCESSAMENTO: STATUS POR PROCESSO
+# ==========================================================
+status_por_processo <- bd_principal %>%
+  dplyr::group_by(processo) %>%
+  dplyr::summarise(
+    proc_resolvido = base::all(status_item == "Empenhado" | !base::is.na(nota_de_empenho)),
+    valor_do_proc  = base::sum(valor_total, na.rm = TRUE),
+    qtd_itens_proc = dplyr::n(),
+    itens_res_proc = base::sum(status_item == "Empenhado" | !base::is.na(nota_de_empenho), na.rm = TRUE),
+    itens_pen_proc = base::sum(status_item != "Empenhado" & base::is.na(nota_de_empenho), na.rm = TRUE),
+    tempo_do_proc  = base::mean(dias_uteis, na.rm = TRUE),
+    agente_proc    = dplyr::first(agente),
+    mod_proc       = dplyr::first(modalidade_processo),
+    .groups = "drop"
+  ) %>%
+  dplyr::filter(!base::is.na(mod_proc), tempo_do_proc > 0)
+
+# ==========================================================
+# 2. BANCO PAI: CONSOLIDADO POR MODALIDADE (MÉDIAS DE REFERÊNCIA)
+# ==========================================================
+bd_pai_modalidade <- status_por_processo %>%
+  dplyr::group_by(mod_proc) %>%
+  dplyr::summarise(
+    n_processos      = dplyr::n(),
+    v_total_mod      = base::sum(valor_do_proc, na.rm = TRUE),
+    n_resolvidos     = base::sum(proc_resolvido == TRUE),
+    n_pendentes      = base::sum(proc_resolvido == FALSE),
+    itens_res_total  = base::sum(itens_res_proc),
+    itens_pen_total  = base::sum(itens_pen_proc),
+    v_resolvido      = base::sum(base::ifelse(proc_resolvido == TRUE, valor_do_proc, 0)),
+    v_pendente       = base::sum(base::ifelse(proc_resolvido == FALSE, valor_do_proc, 0)),
+    # Esta é a Média do Setor que será a base da comparação
+    ciclo_medio_mod  = base::mean(tempo_do_proc, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  dplyr::mutate(
+    p_resolvido      = (n_resolvidos / n_processos) * 100,
+    p_pendente       = (n_pendentes / n_processos) * 100,
+    aporte_total     = base::paste0("R$ ", base::format(v_total_mod, big.mark = ".", decimal.mark = ",")),
+    aporte_resolvido = base::paste0("R$ ", base::format(v_resolvido, big.mark = ".", decimal.mark = ",")),
+    aporte_pendente  = base::paste0("R$ ", base::format(v_pendente, big.mark = ".", decimal.mark = ",")),
+    p_resolvido_txt  = base::paste0(base::round(p_resolvido, 1), "%"),
+    p_pendente_txt   = base::paste0(base::round(p_pendente, 1), "%"),
+    ciclo_txt        = base::paste0(base::round(ciclo_medio_mod, 1), " dias")
+  ) %>%
+  dplyr::arrange(dplyr::desc(p_resolvido))
+
+# ==========================================================
+# 3. BANCO FILHO: PERFORMANCE E COMPARAÇÃO POR AGENTE
+# ==========================================================
+bd_filho_agentes <- status_por_processo %>%
+  dplyr::mutate(agente_proc = base::ifelse(base::is.na(agente_proc), "Não Identificado", base::as.character(agente_proc))) %>%
+  dplyr::group_by(mod_proc, agente_proc) %>%
+  dplyr::summarise(
+    total_proc_ag   = dplyr::n(),
+    res_ag          = base::sum(proc_resolvido == TRUE),
+    pen_ag          = base::sum(proc_resolvido == FALSE),
+    itens_ag_res    = base::sum(itens_res_proc),
+    itens_ag_pen    = base::sum(itens_pen_proc),
+    v_gestao_ag     = base::sum(valor_do_proc, na.rm = TRUE),
+    # Média Individual do Agente nesta modalidade
+    tempo_ag_num    = base::mean(tempo_do_proc, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  # Trazemos a média da modalidade para dentro do banco do agente para comparar
+  dplyr::left_join(bd_pai_modalidade %>% dplyr::select(mod_proc, ciclo_medio_mod), by = "mod_proc") %>%
+  dplyr::group_by(mod_proc) %>%
+  dplyr::mutate(
+    p_efic_ag     = (res_ag / total_proc_ag) * 100,
+    rank_prod     = base::rank(base::interaction(-p_efic_ag, -total_proc_ag, tempo_ag_num), ties.method = "min"),
+    
+    # --- CÁLCULO DA ESCALA LIKERT ---
+    # Razão entre o tempo do Daniel e a média da modalidade dele
+    razao_tempo   = tempo_ag_num / ciclo_medio_mod,
+    
+    avaliacao_txt = dplyr::case_when(
+      razao_tempo <= 0.7 ~ "Muito Superior",
+      razao_tempo <= 0.9 ~ "Superior",
+      razao_tempo <= 1.1 ~ "Regular",
+      razao_tempo <= 1.4 ~ "Inferior",
+      TRUE               ~ "Muito Inferior" # Corrigido: TRUE sem prefixo
+    ),
+    
+    agente_rank   = base::paste0(rank_prod, "º - ", agente_proc),
+    aporte_gestao = base::paste0("R$ ", base::format(v_gestao_ag, big.mark = ".", decimal.mark = ",")),
+    eficiencia_ag = base::paste0(base::round(p_efic_ag, 1), "%"),
+    ciclo_ag_txt  = base::paste0(base::round(tempo_ag_num, 1), " dias"),
+    media_setor   = base::paste0(base::round(ciclo_medio_mod, 1), " dias")
+  ) %>%
+  dplyr::ungroup() %>%
+  dplyr::select(mod_proc, agente_rank, total_proc_ag, res_ag, pen_ag, itens_ag_res, itens_ag_pen, aporte_gestao, ciclo_ag_txt, media_setor, avaliacao_txt, eficiencia_ag)
+
+# ==========================================================
+# 4. CONFIGURAÇÃO DE COLUNAS
+# ==========================================================
+minhas_colunas <- base::c(
+  "Modalidade"         = "mod_proc",
+  "Processos"          = "n_processos",
+  "Aporte Consolidado" = "aporte_total",
+  "Res. (Proc)"        = "n_resolvidos",
+  "Res. (Itens)"       = "itens_res_total",
+  "Aporte Resolvido"   = "aporte_resolvido",
+  "Eficiência (%)"     = "p_resolvido_txt",
+  "Pend. (Proc)"       = "n_pendentes",
+  "Pend. (Itens)"      = "itens_pen_total",
+  "Aporte Pendente"    = "aporte_pendente",
+  "Ciclo Médio"        = "ciclo_txt"
+)
+
+meus_nomes_detalhes <- base::c(
+  "Agente (Rank)", "Proc. Totais", "Resolvidos", "Pendentes", 
+  "Itens Resolvidos", "Itens Pendentes", "Aporte em Gestão", 
+  "Ciclo do Agente", "Média da Modalidade", "Avaliação (Likert)", "Eficiência Individual"
+)
+
+# ==========================================================
+# 5. EXECUÇÃO
+# ==========================================================
+tabela_interativa_detalhes(
+  dados                  = bd_pai_modalidade,
+  dados_detalhes         = bd_filho_agentes,
+  coluna_chave           = "mod_proc",
+  titulo_tabela          = "Dashboard de Alta Performance: Gestão por Processos e Aportes",
+  colunas_selecionadas   = minhas_colunas,
+  colunas_detalhes_nomes = meus_nomes_detalhes,
+  pesquisa_geral         = TRUE,
+  mostrar_filtro         = FALSE,
+  mostrar_indice         = FALSE,
+  cor_primaria           = "#03045e"
 )
 
 ```
