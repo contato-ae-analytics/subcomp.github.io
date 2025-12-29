@@ -1157,7 +1157,7 @@ minhas_colunas_down <- base::c(
 )
 
 # Larguras: Banco de dados com maior espaço (dominante)
-minhas_larguras_down <- base::c("800px", "350px", "90px", "90px")
+minhas_larguras_down <- base::c("600px", "350px", "90px", "90px")
 
 # Alinhamentos: Banco e Descrição Justificados | Botões Centralizados
 meu_alin_header_down <- base::c("left", "left", "center", "center")
@@ -1171,7 +1171,7 @@ tabela_interativa(
   tam_fonte_header     = "12.2px",
   tam_fonte_titulo     = "14.3px",
   cor_titulo           = "#03045e",
-  cor_primaria         = "#03045e",
+  cor_primaria         = "#000000",
   cor_texto_corpo      = "#000000",
   mostrar_filtro       = FALSE,
   pesquisa_geral       = FALSE,
@@ -1739,18 +1739,18 @@ minhas_colunas <- base::c(
 
 minhas_larguras <- base::c("30px", 
                            "130px", 
-                           "100px", 
-                           "140",
+                           "90px", 
+                           "150",
                            "60px", 
                            "60px", 
                            "60px", 
-                           "270px", 
+                           "290px", 
                            "80px", 
                            "70px")
 
 alinhamento_1 <- c("center","center","center",
                    "center","center","center",
-                   "center","center","center")
+                   "left","center","center")
 
 # --- SUB-TABELA DE DETALHES (FILHA) ---
 # Adicionado "Tempo Item" ao final do vetor
@@ -1943,7 +1943,9 @@ gerar_dashboard_setor <- function(bd_principal,
       hoverlabel = base::list(bgcolor = "white", bordercolor = "black", align = "left", 
                               font = base::list(family = fonte_padrao, color = "black")),
       annotations = base::list(text = texto_centro, showarrow = FALSE)
-    )
+    ) %>%
+  # Configuração de responsividade e ocultação da barra do Plotly
+  plotly::config(displayModeBar = FALSE, responsive = TRUE)
 }
 
 
@@ -2240,24 +2242,28 @@ nomes_col <- base::c(
   "Aporte<br>Consolidado"    = "aporte_total",
   "Processos<br>Finalizados" = "n_resolvidos",
   "Aporte<br>Resolvido"         = "aporte_resolvido",
-  "Eficiência (%)"           = "p_resolvido_txt",
+  "Eficiência<br>(%)"           = "p_resolvido_txt",
   "Processos<br>Pendentes"   = "n_pendentes",
   "Aporte<br>Pendente"          = "aporte_pendente",
   "Ciclo<br>Médio"              = "ciclo_txt"
 )
 
 largura_col <- base::c("30px",
-                       "130px", 
+                       "110px", 
                        "90px", 
-                       "130px",
-                       "60px", 
-                       "130px", 
+                       "180px",
                        "50px", 
-                       "60px", 
-                       "130px", 
-                       "60px")
+                       "180px", 
+                       "50px", 
+                       "50px", 
+                       "180px", 
+                       "50px")
 
 alinhamento_col <- base::c(
+  "center","center","center","center","center","center","center","center","center"
+)
+
+alinhamento_det <- base::c(
   "center","center","center","center","center","center","center","center","center"
 )
 
@@ -2276,20 +2282,17 @@ nomes_det <- base::c(
 )
 
 # Ajuste nas larguras dos detalhes para acomodar a nova coluna
-largura_det <- base::c("130px", 
+largura_det <- base::c("160px", 
                        "40px", 
                        "40px", 
                        "40px", 
-                       "100px", 
-                       "100px", 
-                       "260px", 
+                       "80px", 
+                       "80px", 
+                       "270px", 
                        "80px",
                        "100px",
                        "90px",
                        "100px")
-
-alinhamento_det <- base::c(
-  "center","center","center","center","center","center","left","center","center","center","center")
 
 # ==========================================================
 # 5. EXECUÇÃO
