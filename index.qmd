@@ -1883,7 +1883,7 @@ minhas_larguras <- base::c("120px", "100px", "200px", "70px", "70px", "70px", "3
 alin_esquerda <- base::rep("left", 9)
 
 # Tudo à esquerda! (Vetor de 9 posições)
-alinhamento_det <- base::rep("center","justify","center","center","left","left","center","center")
+alinhamento_det <- base::c("center","justify","center","center","left","left","center","center")
 
 # --- CONFIGURAÇÃO FILHO (8 colunas) ---
 meus_nomes_detalhes <- base::c("ID Item", "Descrição Material / Serviço", "Fornecedor", "Qtd", "Valor Unitário", "Valor Total", "Situação", "Dias")
