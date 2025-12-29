@@ -1730,27 +1730,32 @@ minhas_colunas <- base::c(
   "Modalidade"        = "modalidade",
   "Agente"            = "agente",
   "Qtd. Itens"        = "total_itens",
-  "Mês<br>(Entrada)"       = "mes_entrada",
-  "Mês<br>(Saída)"         = "mes_saida",
+  "Mês<br>(Entrada)"  = "mes_entrada",
+  "Mês<br>(Saída)"    = "mes_saida",
   "Valor Total (R$)"  = "valor_total_proc",
-  "Tempo<br>(Dias)"      = "dias_uteis",
-  "(%) Empenho"       = "pct_empenho"
+  "Tempo<br>(Dias)"   = "dias_uteis",
+  "Empenho<br>(%) "       = "pct_empenho"
 )
 
 minhas_larguras <- base::c("30px", 
                            "130px", 
                            "80px", 
-                           "220px",
+                           "300px",
                            "60px", 
                            "60px", 
                            "60px", 
-                           "420px", 
+                           "500px", 
                            "60px", 
                            "60px")
 
 alinhamento_1 <- c("center","center","center",
                    "center","center","center",
+                   "center","center","center")
+
+alinhamento_2 <- c("left","left","left",
+                   "center","center","center",
                    "left","center","center")
+
 
 # --- SUB-TABELA DE DETALHES (FILHA) ---
 # Adicionado "Tempo Item" ao final do vetor
@@ -1764,10 +1769,6 @@ meus_nomes_detalhes <- base::c(
   "Situação",
   "Tempo (Dias)"
 )
-
-alinhamento_2 <- c("center","justify","center",
-                   "center","center","center",
-                   "center","center")
 
 # Ajuste nas larguras dos detalhes para acomodar a nova coluna
 minhas_larguras_detalhes <- base::c("60px", 
@@ -1970,7 +1971,10 @@ gerar_dashboard_setor(
 )
 ```
 
-## Daniel
+## Rodrigo Ferreira Andrade
+## Daniel Andrade
+## José Victor
+## Fernanda Viana
 
 ```{r}
 #| label: Daniel
@@ -2112,27 +2116,6 @@ gerar_dashboard_agente <- function(agente_alvo, bd_principal) {
 gerar_dashboard_agente("Daniel", bd_principal)
 
 ```
-
-
-
-
-## ARP - ATA
-Conteúdo da modalidade ARP - ATA
-
-## CAE
-Conteúdo da modalidade CAE
-
-## DLE
-Conteúdo da modalidade DLE
-
-## INEX
-Conteúdo da modalidade INEX
-
-## PE
-Conteúdo da modalidade PE
-
-## RDL
-Conteúdo da modalidade RDL
 
 :::
 
