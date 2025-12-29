@@ -2362,7 +2362,7 @@ largura_col <- base::c(
   "80px",  # Eficiência
   "90px", # Pendentes
   "350px", # Valor Pendente (ESPAÇO GRANDE)
-  "80px"   # Ciclo
+  "110px"   # Ciclo
 )
 
 # Alinhamento Pai (11 valores) - Tudo à esquerda
@@ -2371,11 +2371,11 @@ alinhamento_col <- base::rep("left", 9)
 # --- DETALHES (FILHO): 11 colunas ---
 nomes_det <- base::c(
   "Agente<br>(Rank)", 
-  "Processos", 
-  "Empenhados", 
-  "Pendentes", 
-  "Itens<br>Emp.", # Nome alterado aqui também
-  "Itens<br>Pen.", 
+  "Qtd. Processos", 
+  "Processos<br>Empenhados", 
+  "Processos<br>Pendentes", 
+  "Itens<br>Empenhados", # Nome alterado aqui também
+  "Itens<br>Pendentes", 
   "Valor", 
   "Ciclo", 
   "Média", 
@@ -2386,14 +2386,14 @@ nomes_det <- base::c(
 # Larguras Filho (11 valores): Destaque no Valor Financeiro
 largura_det <- base::c(
   "250px", # Agente
-  "70px",  # Processos
-  "70px",  # Finalizados
-  "70px",  # Pendentes
-  "70px", # Itens Empenhados
-  "70px", # Itens Pendentes
-  "320px", # Valor (MUITO ESPAÇO)
-  "90px",  # Ciclo
-  "90px",  # Média
+  "65px",  # Processos
+  "65px",  # Finalizados
+  "65px",  # Pendentes
+  "65px", # Itens Empenhados
+  "65px", # Itens Pendentes
+  "310px", # Valor (MUITO ESPAÇO)
+  "120px",  # Ciclo
+  "10px",  # Média
   "130px", # Avaliação
   "80px"  # Eficiência
 )
