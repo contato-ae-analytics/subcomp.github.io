@@ -7,7 +7,7 @@
 /*  border: 1px solid #d1d1d1;           /* Borda cinza clara para definir o limite do bloco */
 /*  border-radius: 10px;                 /* Cantos arredondados para um visual moderno */
   background: #ffffff;                 /* Fundo branco para garantir contraste com gráficos e tabelas */
-  padding: 50px;                       /* Espaçamento interno para o conteúdo não encostar na borda */
+  padding: 10px;                       /* Espaçamento interno para o conteúdo não encostar na borda */
   font-size: 11px;
 /*   box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Sombra suave para o bloco "flutuar" na página */
 /*  margin-bottom: 30px;                 /* Espaço entre este bloco e o próximo elemento */
@@ -54,7 +54,7 @@
 
 /* 6. CONTEÚDO DENTRO DOS PAINÉIS */
 .tab-content {
-  padding: 20px 10px;                  /* Espaço interno para os gráficos e textos */
+  padding: 50px;                  /* Espaço interno para os gráficos e textos */
   color: #000000;                      /* Cor do texto principal em PRETO */
   font-family: 'Inter', sans-serif;    /* Mantém a fonte padronizada */
 }
