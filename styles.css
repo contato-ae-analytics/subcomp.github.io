@@ -7,8 +7,8 @@
 /*  border: 1px solid #d1d1d1;           /* Borda cinza clara para definir o limite do bloco */
 /*  border-radius: 10px;                 /* Cantos arredondados para um visual moderno */
   background: #ffffff;                 /* Fundo branco para garantir contraste com gráficos e tabelas */
-  padding: 10px;                       /* Espaçamento interno para o conteúdo não encostar na borda */
-  font-size: 10px;
+  padding: 50px;                       /* Espaçamento interno para o conteúdo não encostar na borda */
+  font-size: 11px;
 /*   box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Sombra suave para o bloco "flutuar" na página */
 /*  margin-bottom: 30px;                 /* Espaço entre este bloco e o próximo elemento */
 }
