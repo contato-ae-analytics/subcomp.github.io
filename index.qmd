@@ -2247,7 +2247,7 @@ status_por_processo <- bd_principal %>%
     mod_proc       = dplyr::first(modalidade_processo),
     .groups = "drop"
   ) %>%
-  dplyr::filter(!base::is.na(mod_proc), tempo_do_proc > 0)
+  dplyr::filter(!base::is.na(mod_proc), tempo_do_proc >= 0)
 
 # ==========================================================
 # 2. BANCO PAI: CONSOLIDADO POR MODALIDADE (MÉDIAS DE REFERÊNCIA)
@@ -2354,7 +2354,7 @@ nomes_col <- base::c(
 
 # Larguras Pai (11 valores): Foco total em DINHEIRO e TEXTO
 largura_col <- base::c(
-  "180px", # Modalidade
+  "160px", # Modalidade
   "80px",  # Nº Processos
   "350px", # Valor Consolidado (ESPAÇO GRANDE)
   "90px", # Finalizados
@@ -2362,7 +2362,7 @@ largura_col <- base::c(
   "80px",  # Eficiência
   "90px", # Pendentes
   "350px", # Valor Pendente (ESPAÇO GRANDE)
-  "110px"   # Ciclo
+  "130px"   # Ciclo
 )
 
 # Alinhamento Pai (11 valores) - Tudo à esquerda
@@ -2399,8 +2399,8 @@ largura_det <- base::c(
 )
 
 # Alinhamento Filho (11 valores) - Tudo à esquerda
-# alinhamento_det_filho <- base::rep("left", 11)
-alinhamento_det_filho <- c("left","center","center","center","center","center","left","center","center","center","center")
+alinhamento_det_filho <- base::rep("left", 11)
+# alinhamento_det_filho <- c("left","center","center","center","center","center","left","center","center","center","center")
 
 # ==========================================================
 # 5. EXECUÇÃO
