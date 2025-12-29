@@ -1734,27 +1734,27 @@ minhas_colunas <- base::c(
   "Mês<br>(Saída)"    = "mes_saida",
   "Valor Total (R$)"  = "valor_total_proc",
   "Tempo<br>(Dias)"   = "dias_uteis",
-  "Empenho<br>(%) "       = "pct_empenho"
+  "Empenho (%) "       = "pct_empenho"
 )
 
 minhas_larguras <- base::c("30px", 
                            "130px", 
                            "80px", 
-                           "300px",
-                           "60px", 
-                           "60px", 
-                           "60px", 
-                           "500px", 
-                           "60px", 
-                           "60px")
+                           "400px",
+                           "50px", 
+                           "50px", 
+                           "50px", 
+                           "600px", 
+                           "50px", 
+                           "50px")
 
-alinhamento_1 <- c("center","center","center",
-                   "center","center","center",
-                   "center","center","center")
+alinhamento_1 <- c("left","left","left",
+                   "left","left","left",
+                   "left","left","left")
 
 alinhamento_2 <- c("left","left","left",
-                   "center","center","center",
-                   "left","center","center")
+                   "left","left","left",
+                   "left","left","left")
 
 
 # --- SUB-TABELA DE DETALHES (FILHA) ---
@@ -1772,7 +1772,7 @@ meus_nomes_detalhes <- base::c(
 
 # Ajuste nas larguras dos detalhes para acomodar a nova coluna
 minhas_larguras_detalhes <- base::c("60px", 
-                                    "400px", 
+                                    "450px", 
                                     "210px", 
                                     "60px", 
                                     "130px", 
@@ -2151,8 +2151,8 @@ bd_pai_modalidade <- status_por_processo %>%
     v_total_mod      = base::sum(valor_do_proc, na.rm = TRUE),
     n_resolvidos     = base::sum(proc_resolvido == TRUE),
     n_pendentes      = base::sum(proc_resolvido == FALSE),
-    itens_res_total  = base::sum(itens_res_proc),
-    itens_pen_total  = base::sum(itens_pen_proc),
+    # itens_res_total  = base::sum(itens_res_proc),
+    # itens_pen_total  = base::sum(itens_pen_proc),
     v_resolvido      = base::sum(base::ifelse(proc_resolvido == TRUE, valor_do_proc, 0)),
     v_pendente       = base::sum(base::ifelse(proc_resolvido == FALSE, valor_do_proc, 0)),
     # Esta é a Média do Setor que será a base da comparação
@@ -2181,8 +2181,8 @@ bd_filho_agentes <- status_por_processo %>%
     total_proc_ag   = dplyr::n(),
     res_ag          = base::sum(proc_resolvido == TRUE),
     pen_ag          = base::sum(proc_resolvido == FALSE),
-    itens_ag_res    = base::sum(itens_res_proc),
-    itens_ag_pen    = base::sum(itens_pen_proc),
+    # itens_ag_res    = base::sum(itens_res_proc),
+    # itens_ag_pen    = base::sum(itens_pen_proc),
     v_gestao_ag     = base::sum(valor_do_proc, na.rm = TRUE),
     # Média Individual do Agente nesta modalidade
     tempo_ag_num    = base::mean(tempo_do_proc, na.rm = TRUE),
@@ -2214,20 +2214,31 @@ bd_filho_agentes <- status_por_processo %>%
     media_setor   = base::paste0(base::round(ciclo_medio_mod, 1), " dias")
   ) %>%
   dplyr::ungroup() %>%
-  dplyr::select(mod_proc, agente_rank, total_proc_ag, res_ag, pen_ag, itens_ag_res, itens_ag_pen, aporte_gestao, ciclo_ag_txt, media_setor, avaliacao_txt, eficiencia_ag)
+  dplyr::select(mod_proc, 
+                agente_rank, 
+                total_proc_ag, 
+                res_ag, 
+                pen_ag, 
+                # itens_ag_res, 
+                # itens_ag_pen, 
+                aporte_gestao, 
+                ciclo_ag_txt, 
+                media_setor, 
+                avaliacao_txt, 
+                eficiencia_ag)
 
 # ==========================================================
 # 4. CONFIGURAÇÃO DE COLUNAS
 # ==========================================================
 nomes_col <- base::c(
-  "Modalidade"               = "mod_proc",
-  "Nº<br>Processos"          = "n_processos",
-  "Valor<br>Consolidado"    = "aporte_total",
-  "Processos<br>Finalizados" = "n_resolvidos",
-  "Valor<br>Empenhado"         = "aporte_resolvido",
+  "Modalidade"                  = "mod_proc",
+  "Nº<br>Processos"             = "n_processos",
+  "Valor<br>Consolidado"        = "aporte_total",
+  "Processos<br>Finalizados"    = "n_resolvidos",
+  "Valor<br>Empenhado"          = "aporte_resolvido",
   "Eficiência<br>(%)"           = "p_resolvido_txt",
-  "Processos<br>Pendentes"   = "n_pendentes",
-  "Valor<br>Pendente"          = "aporte_pendente",
+  "Processos<br>Pendentes"      = "n_pendentes",
+  "Valor<br>Pendente"           = "aporte_pendente",
   "Ciclo<br>Médio"              = "ciclo_txt"
 )
 
@@ -2394,30 +2405,6 @@ a1 <- base::c("center", "center", "center", "center", "center", "center")
 # Alinhamento: Descrição justificada para leitura, o restante centralizado
 a2 <- base::c("center", "justify", "center", "center", "center", "center")
 
-
-# ==========================================================
-# EXECUÇÃO: TABELA CATÁLOGO (Função Simples)
-# ==========================================================
-tabela_interativa(
-  dados = bd_catalogo,
-  titulo_tabela = "Catálogo E-Compras",
-  
-  # Configurações de visual enviadas
-  tam_fonte_corpo   = tam_fonte_corpo,
-  tam_fonte_titulo  = tam_fonte_titulo,
-  tam_fonte_header  = tam_fonte_header,
-  cor_titulo        = cor_titulo,
-  cor_primaria      = cor_primaria,
-  cor_texto_corpo   = cor_texto_corpo,
-  
-  # Controle e Layout
-  mostrar_filtro    = FALSE,
-  pesquisa_geral    = TRUE,
-  largura_cols_vetor   = minhas_larguras_catalogo,
-  colunas_selecionadas = minhas_colunas_catalogo,
-  n_pages = 6,
-  mostrar_indice = FALSE
-)
 
 # ==========================================================
 # EXECUÇÃO: TABELA CATÁLOGO (Função Simples)
