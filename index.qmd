@@ -950,6 +950,143 @@ gerar_central_cards <- function(df) {
 # 3. EXIBIR A CENTRAL
 gerar_central_cards(dados_cards)
 
+# 1. PREPARAÇÃO DOS DADOS
+dados_cards <- base::data.frame(
+  titulo    = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
+  descricao = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", 
+                      "Detalhamento Financeiro vinculado aos processos", 
+                      "Dicionário para tradução de códigos contábeis", 
+                      "Identificação da origem do capital", 
+                      "Classificação detalhada do objeto de gasto", 
+                      "Tabela mestra de padronização de itens do Estado"),
+  url       = base::c(
+    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826",
+    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695",
+    "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687",
+    "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696",
+    "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856",
+    "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131"
+  ),
+  stringsAsFactors = FALSE
+)
+
+# 2. FUNÇÃO PARA GERAR A VITRINE
+gerar_central_cards <- function(df) {
+  
+  estilo_css <- htmltools::tags$style(htmltools::HTML("
+    /* Container com margem superior para o card não cortar ao subir */
+    .container-cards { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 25px; 
+      justify-content: flex-start; 
+      padding-top: 15px; 
+      padding-bottom: 20px;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    .card-alex { 
+      flex: 1 1 280px;
+      max-width: 320px;
+      border: 1px solid #e0e0e0; 
+      border-top: 4px solid #03045e; 
+      border-radius: 6px; 
+      padding: 20px; 
+      background: #ffffff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04); 
+      transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+      display: flex; 
+      flex-direction: column; 
+      justify-content: space-between;
+      position: relative;
+    }
+    
+    /* Efeito de elevação suave */
+    .card-alex:hover { 
+      transform: translateY(-8px); 
+      box-shadow: 0 10px 20px rgba(0,0,0,0.08); 
+      border-color: #03045e; 
+    }
+    
+    .card-titulo { 
+      color: #03045e; 
+      font-size: 15px; 
+      font-weight: 700; 
+      margin-bottom: 10px; 
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    
+    .card-desc { 
+      color: #666; 
+      font-size: 12px; 
+      min-height: 40px; 
+      margin-bottom: 20px; 
+      line-height: 1.5; 
+    }
+    
+    .btn-container { 
+      display: flex; 
+      gap: 10px; 
+    }
+    
+    .btn-alex { 
+      flex: 1; 
+      text-align: center; 
+      padding: 9px 5px; 
+      text-decoration: none; 
+      font-size: 11px; 
+      font-weight: 600; 
+      border-radius: 4px; 
+      transition: 0.2s;
+      border: 1px solid transparent;
+    }
+    
+    /* Botão Acessar: Azul Sóbrio */
+    .btn-acesso { 
+      background-color: #03045e; 
+      color: white; 
+    }
+    .btn-acesso:hover { 
+      background-color: #000835; 
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* Botão Download: Outline Cinza Profissional */
+    .btn-down { 
+      background-color: #f8f9fa; 
+      color: #333; 
+      border: 1px solid #ccc;
+    }
+    .btn-down:hover { 
+      background-color: #333; 
+      color: white; 
+      border-color: #333;
+    }
+  "))
+
+  lista_cards <- base::apply(df, 1, function(x) {
+    url_download <- base::gsub("/edit.*", "/export?format=xlsx", x['url'])
+    
+    htmltools::tags$div(class = "card-alex",
+      htmltools::tags$div(
+        htmltools::tags$div(class = "card-titulo", x['titulo']),
+        htmltools::tags$div(class = "card-desc", x['descricao'])
+      ),
+      htmltools::tags$div(class = "btn-container",
+        htmltools::tags$a(href = x['url'], target = "_blank", class = "btn-alex btn-acesso", "ACESSAR"),
+        htmltools::tags$a(href = url_download, target = "_blank", class = "btn-alex btn-down", "DOWNLOAD")
+      )
+    )
+  })
+
+  htmltools::tagList(estilo_css, htmltools::tags$div(class = "container-cards", lista_cards))
+}
+
+# 3. EXIBIR A CENTRAL
+gerar_central_cards(dados_cards)
+
+
 
 # # ==========================================================
 # # CENTRAL DE DOWNLOADS E ACESSO - VERSÃO INTEGRAL COMENTADA
