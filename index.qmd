@@ -142,6 +142,108 @@ if(!require("dplyr")) install.packages("dplyr", quiet = TRUE) ; library("dplyr")
 # ==============================================================================
 # E. FUNÇÕES DE APRESENTAÇÃO
 # ==============================================================================
+# 
+# tabela_interativa <- function(dados, 
+#                                titulo_tabela, 
+#                                tam_fonte_corpo = "13px",   
+#                                tam_fonte_titulo = "20px",  
+#                                tam_fonte_header = "14px",  
+#                                cor_titulo = "#03045e",     
+#                                cor_primaria = "#03045e",   
+#                                cor_texto_corpo = "#333333",
+#                                mostrar_filtro = TRUE,      
+#                                pesquisa_geral = FALSE,     
+#                                largura_cols_vetor = NULL,  
+#                                colunas_selecionadas = NULL,
+#                                n_pages = 10,               
+#                                mostrar_indice = TRUE) { 
+# 
+#   # Inicializa o contador global para numerar as tabelas automaticamente
+#   if (!base::exists("contador_tabelas_alex")) {
+#     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
+#   }
+# 
+#   # Processa a seleção de colunas se o usuário forneceu o vetor
+#   dados_processados <- dados
+#   if (!base::is.null(colunas_selecionadas)) {
+#     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
+#   }
+# 
+#   # Prevenção de Erro '7': Verifica o número de colunas antes de aplicar larguras
+#   n_colunas_dados <- base::ncol(dados_processados)
+#   lista_columnDefs <- base::list(base::list(width = '30px', targets = 0))
+#   
+#   if (!base::is.null(largura_cols_vetor)) {
+#     for (i in base::seq_along(largura_cols_vetor)) {
+#       if ((i - 1) < n_colunas_dados) {
+#           lista_columnDefs[[base::length(lista_columnDefs) + 1]] <- base::list(
+#             width = largura_cols_vetor[i], 
+#             targets = i - 1
+#           )
+#       }
+#     }
+#   }
+# 
+#   # Incrementa o contador para o título
+#   base::assign("contador_tabelas_alex", base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1, envir = .GlobalEnv)
+#   titulo_final <- base::paste0("Tabela ", base::get("contador_tabelas_alex", envir = .GlobalEnv), ": ", titulo_tabela)
+# 
+#   # Renderiza o título H2 com seu estilo original
+#   html_titulo <- htmltools::tags$h2(
+#     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
+#                           "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
+#     htmltools::tags$b(titulo_final)
+#   )
+# 
+#   # Criação da DT
+#   tabela <- DT::datatable(
+#     base::data.frame(dados_processados, check.names = FALSE),
+#     escape = FALSE, 
+#     rownames = mostrar_indice,
+#     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
+#     width = "100%", 
+#     class = "hover row-border", 
+#     options = base::list(
+#       # CORREÇÃO AQUI: Dinâmico conforme sua escolha
+#       dom = if(pesquisa_geral) 'ft p' else 't p',
+#       pageLength = n_pages,
+#       searching = TRUE, 
+#       lengthChange = FALSE,
+#       info = FALSE,
+#       ordering = FALSE,      
+#       autoWidth = FALSE,    
+#       scrollX = TRUE,       
+#       columnDefs = lista_columnDefs,
+#       initComplete = DT::JS(
+#         base::paste0("function(settings, json) {",
+#                       # Alinhamento à esquerda, Negrito e Margens da Barra de Pesquisa
+#                       "$(this.api().table().container()).find('.dataTables_filter').css({",
+#                       "  'float': 'left', 'text-align': 'left', 'font-weight': 'bold',",
+#                       "  'margin-top': '15px', 'margin-bottom': '15px'",
+#                       "});",
+#                       # Estilo do corpo e cabeçalho (Seu estilo original de 3px e fundo branco)
+#                       "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
+#                       "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
+#                       "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
+#                       "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
+#                       # Efeito Hover Alex: Negrito apenas na tabela principal
+#                       "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
+#                       "  if (!$(this).closest('table').hasClass('subtable')) {",
+#                       "    $(this).css({'background-color': '#ffffff', 'color': '#000000', 'font-weight': 'bold'});",
+#                       "  }",
+#                       "}).on('mouseleave', 'tr', function() {",
+#                       "  if (!$(this).closest('table').hasClass('subtable')) {",
+#                       "    $(this).css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
+#                       "  }",
+#                       "});",
+#                       "}")
+#       ),
+#       language = base::list(paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
+#                             emptyTable = "Sem dados", zeroRecords = "Nenhum registro encontrado", search = "Pesquisa Geral:")
+#     )
+#   )
+#   return(htmltools::tagList(html_titulo, tabela))
+# }
 
 tabela_interativa <- function(dados, 
                                titulo_tabela, 
@@ -155,6 +257,8 @@ tabela_interativa <- function(dados,
                                pesquisa_geral = FALSE,     
                                largura_cols_vetor = NULL,  
                                colunas_selecionadas = NULL,
+                               alinhamento_header_vetor = NULL, # Adicionado
+                               alinhamento_corpo_vetor = NULL,  # Adicionado
                                n_pages = 10,               
                                mostrar_indice = TRUE) { 
 
@@ -169,31 +273,46 @@ tabela_interativa <- function(dados,
     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
   }
 
-  # Prevenção de Erro '7': Verifica o número de colunas antes de aplicar larguras
   n_colunas_dados <- base::ncol(dados_processados)
-  lista_columnDefs <- base::list(base::list(width = '30px', targets = 0))
   
-  if (!base::is.null(largura_cols_vetor)) {
-    for (i in base::seq_along(largura_cols_vetor)) {
-      if ((i - 1) < n_colunas_dados) {
-          lista_columnDefs[[base::length(lista_columnDefs) + 1]] <- base::list(
-            width = largura_cols_vetor[i], 
-            targets = i - 1
-          )
-      }
+  # --- LOGICA DE COLUMN DEFS (LARGURAS E ALINHAMENTO DO CORPO) ---
+  lista_columnDefs <- base::list()
+  
+  # Se mostrar índice, a coluna 0 é o índice, senão os dados começam no 0
+  offset <- if(mostrar_indice) 1 else 0
+
+  for (i in 1:n_colunas_dados) {
+    target_idx <- (i - 1) + offset
+    
+    # Define alinhamento do corpo
+    alin_classe <- if(!base::is.null(alinhamento_corpo_vetor) && i <= base::length(alinhamento_corpo_vetor)) {
+      base::paste0("dt-", alinhamento_corpo_vetor[i])
+    } else {
+      "dt-center" # Default
     }
+    
+    # Define largura
+    largura <- if(!base::is.null(largura_cols_vetor) && i <= base::length(largura_cols_vetor)) largura_cols_vetor[i] else NULL
+    
+    lista_columnDefs[[base::length(lista_columnDefs) + 1]] <- base::list(
+      targets = target_idx,
+      width = largura,
+      className = alin_classe
+    )
   }
 
   # Incrementa o contador para o título
   base::assign("contador_tabelas_alex", base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1, envir = .GlobalEnv)
   titulo_final <- base::paste0("Tabela ", base::get("contador_tabelas_alex", envir = .GlobalEnv), ": ", titulo_tabela)
 
-  # Renderiza o título H2 com seu estilo original
   html_titulo <- htmltools::tags$h2(
     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
-                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
+                         "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
     htmltools::tags$b(titulo_final)
   )
+
+  # Prepara alinhamento do Header para o JS
+  alin_header_js <- if(!base::is.null(alinhamento_header_vetor)) jsonlite::toJSON(alinhamento_header_vetor) else "null"
 
   # Criação da DT
   tabela <- DT::datatable(
@@ -204,7 +323,6 @@ tabela_interativa <- function(dados,
     width = "100%", 
     class = "hover row-border", 
     options = base::list(
-      # CORREÇÃO AQUI: Dinâmico conforme sua escolha
       dom = if(pesquisa_geral) 'ft p' else 't p',
       pageLength = n_pages,
       searching = TRUE, 
@@ -216,27 +334,45 @@ tabela_interativa <- function(dados,
       columnDefs = lista_columnDefs,
       initComplete = DT::JS(
         base::paste0("function(settings, json) {",
-                      # Alinhamento à esquerda, Negrito e Margens da Barra de Pesquisa
-                      "$(this.api().table().container()).find('.dataTables_filter').css({",
-                      "  'float': 'left', 'text-align': 'left', 'font-weight': 'bold',",
-                      "  'margin-top': '15px', 'margin-bottom': '15px'",
-                      "});",
-                      # Estilo do corpo e cabeçalho (Seu estilo original de 3px e fundo branco)
-                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
-                      "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
-                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
-                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
-                      # Efeito Hover Alex: Negrito apenas na tabela principal
-                      "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
-                      "  if (!$(this).closest('table').hasClass('subtable')) {",
-                      "    $(this).css({'background-color': '#ffffff', 'color': '#000000', 'font-weight': 'bold'});",
-                      "  }",
-                      "}).on('mouseleave', 'tr', function() {",
-                      "  if (!$(this).closest('table').hasClass('subtable')) {",
-                      "    $(this).css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
-                      "  }",
-                      "});",
-                      "}")
+                     "$(this.api().table().container()).find('.dataTables_filter').css({",
+                     "  'float': 'left', 'text-align': 'left', 'font-weight': 'bold',",
+                     "  'margin-top': '15px', 'margin-bottom': '15px'",
+                     "});",
+                     "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
+                     
+                     # Estilo do Header e Quebra de Linha
+                     "$(this.api().table().header()).css({",
+                     "  'font-size': '", tam_fonte_header, "', ",
+                     "  'background-color': '#ffffff', ",
+                     "  'color': '", cor_primaria, "', ",
+                     "  'white-space': 'normal'", 
+                     "});",
+                     
+                     "$(this.api().table().header()).find('tr:first-child th').css({",
+                     "  'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px', 'vertical-align': 'middle'",
+                     "});",
+                     
+                     # --- LOGICA DE ALINHAMENTO DO HEADER ---
+                     "var alinHeaders = ", alin_header_js, ";",
+                     "var offsetHeader = ", offset, ";",
+                     "$(this.api().table().header()).find('tr:first-child th').each(function(index) {",
+                     "  if(alinHeaders && index >= offsetHeader && alinHeaders[index - offsetHeader]) {",
+                     "    $(this).css('text-align', alinHeaders[index - offsetHeader]);",
+                     "  } else { $(this).css('text-align', 'center'); }",
+                     "});",
+
+                     "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
+                     
+                     "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
+                     "  if (!$(this).closest('table').hasClass('subtable')) {",
+                     "    $(this).css({'background-color': '#ffffff', 'color': '#000000', 'font-weight': 'bold'});",
+                     "  }",
+                     "}).on('mouseleave', 'tr', function() {",
+                     "  if (!$(this).closest('table').hasClass('subtable')) {",
+                     "    $(this).css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
+                     "  }",
+                     "});",
+                     "}")
       ),
       language = base::list(paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
                             emptyTable = "Sem dados", zeroRecords = "Nenhum registro encontrado", search = "Pesquisa Geral:")
@@ -244,6 +380,7 @@ tabela_interativa <- function(dados,
   )
   return(htmltools::tagList(html_titulo, tabela))
 }
+
 # 
 # 
 # tabela_interativa_detalhes <- function(dados, 
@@ -982,80 +1119,144 @@ bd_catalogo <- gsheet::gsheet2tbl(
 # # 3. EXIBIR A CENTRAL
 # gerar_central_cards(dados_cards)
 
+# ==========================================================
+# CENTRAL DE DOWNLOADS E ACESSO - VERSÃO ATUALIZADA ALEX
+# ==========================================================
+
+# 1. Criação do DataFrame (Mantido conforme original)
+bd_central_downloads <- base::data.frame(
+  "id_planilha" = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
+  "descricao"   = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", "Detalhamento Financeiro vinculado aos processos", "Dicionário para tradução de códigos contábeis", "Identificação da origem do capital", "Classificação detalhada do objeto de gasto", "Tabela mestra de padronização de itens do Estado"),
+  "url"         = base::c(
+    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826",
+    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695",
+    "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687",
+    "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696",
+    "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856",
+    "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131"
+  ),
+  stringsAsFactors = FALSE
+)
+
+# 2. Geração dos Botões HTML (Acessar e Download)
+bd_central_downloads$acessar <- base::apply(bd_central_downloads, 1, function(x) {
+  base::paste0("<a href='", x['url'], "' target='_blank' style='background-color:#03045e; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>ACESSAR</a>")
+})
+
+bd_central_downloads$download <- base::apply(bd_central_downloads, 1, function(x) {
+  url_download <- base::gsub("/edit.*", "/export?format=xlsx", x['url'])
+  base::paste0("<a href='", url_download, "' target='_blank' style='background-color:#333333; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>DOWNLOAD</a>")
+})
+
+# 3. Configurações de Exibição (VETORES)
+minhas_colunas_down <- base::c(
+  "Banco de Dados"  = "id_planilha",
+  "Descrição"       = "descricao",
+  "Acesso<br>Online" = "acessar",   # Usando <br> para testar a nova função
+  "Baixar<br>Arquivo" = "download"  # Usando <br> para testar a nova função
+)
+
+# Larguras: Banco de dados com maior espaço (dominante)
+minhas_larguras_down <- base::c("800px", "350px", "90px", "90px")
+
+# Alinhamentos: Banco e Descrição Justificados | Botões Centralizados
+meu_alin_header_down <- base::c("left", "left", "center", "center")
+meu_alin_corpo_down  <- base::c("justify", "justify", "center", "center")
+
+# 4. Execução da Renderização
+tabela_interativa(
+  dados                = bd_central_downloads,
+  titulo_tabela        = "Central de Downloads e Repositório de Dados",
+  tam_fonte_corpo      = "11.3px",
+  tam_fonte_header     = "12.2px",
+  tam_fonte_titulo     = "14.3px",
+  cor_titulo           = "#03045e",
+  cor_primaria         = "#03045e",
+  cor_texto_corpo      = "#000000",
+  mostrar_filtro       = FALSE,
+  pesquisa_geral       = FALSE,
+  largura_cols_vetor   = minhas_larguras_down,
+  colunas_selecionadas = minhas_colunas_down,
+  # Novos parâmetros de alinhamento:
+  alinhamento_header_vetor = meu_alin_header_down,
+  alinhamento_corpo_vetor  = meu_alin_corpo_down,
+  n_pages = 6,
+  mostrar_indice = FALSE
+)
 
 # ==========================================================
 # CENTRAL DE DOWNLOADS E ACESSO - VERSÃO INTEGRAL COMENTADA
 # ==========================================================
 
-# Inicia a criação do dataframe com os dados, descrições e links originais Alex
-bd_central_downloads <- base::data.frame(
-  # Define o nome amigável de cada banco de dados
-  "id_planilha" = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
-  # Define a descrição técnica de cada base
-  "descricao"   = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", "Detalhamento Financeiro vinculado aos processos", "Dicionário para tradução de códigos contábeis", "Identificação da origem do capital", "Classificação detalhada do objeto de gasto", "Tabela mestra de padronização de itens do Estado"),
-  # Define as URLs reais das planilhas que você enviou
-  "url"         = base::c(
-    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826", # Link Processos
-    "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695", # Link Itens
-    "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687", # Link Natureza
-    "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696", # Link Fonte
-    "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856", # Link Elemento
-    "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131"  # Link Catálogo
-  ),
-  # Garante que as strings não virem fatores
-  stringsAsFactors = FALSE
-)
-
-# --- GERAÇÃO DO BOTÃO ACESSAR (ABRE A PLANILHA NO NAVEGADOR) ---
-bd_central_downloads$acessar <- base::apply(bd_central_downloads, 1, function(x) {
-  # Retorna link HTML estilizado na cor azul marinho oficial Alex
-  base::paste0("<a href='", x['url'], "' target='_blank' style='background-color:#03045e; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>ACESSAR</a>")
-})
-
-# --- GERAÇÃO DO BOTÃO DOWNLOAD (BAIXA O EXCEL AUTOMATICAMENTE) ---
-bd_central_downloads$download <- base::apply(bd_central_downloads, 1, function(x) {
-  # Transforma o link de edição em link de exportação direta para Excel (.xlsx)
-  url_download <- base::gsub("/edit.*", "/export?format=xlsx", x['url'])
-  # Retorna link HTML com cor preta para diferenciar do botão de acesso
-  base::paste0("<a href='", url_download, "' target='_blank' style='background-color:#333333; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>DOWNLOAD</a>")
-})
-
-# Define os vetores de mapeamento para as colunas que você quer exibir
-minhas_colunas_down <- base::c(
-  "Banco de Dados" = "id_planilha",
-  "Descrição"      = "descricao",
-  "Acesso Online"  = "acessar",
-  "Baixar Arquivo" = "download"
-)
-
-# Define larguras fixas para acomodar os dois botões lateralmente
-minhas_larguras_down <- base::c("800px", "350px", "80px", "80px")
-
-# Executa a renderização da tabela com seus padrões de fonte e cores
-tabela_interativa(
-  # Passa o dataframe com as duas colunas de botões criadas
-  dados = bd_central_downloads,
-  # Define o título do repositório
-  titulo_tabela = "Central de Downloads e Repositório de Dados",
-  # Aplica suas fontes compactas Alex
-  tam_fonte_corpo  = "11.3px",
-  tam_fonte_header = "12.2px",
-  tam_fonte_titulo = "14.3px",
-  # Aplica suas cores oficiais
-  cor_titulo       = "#03045e",
-  cor_primaria     = "#000000",
-  cor_texto_corpo  = "#000000",
-  # Mantém visual limpo sem filtros individuais
-  mostrar_filtro   = FALSE,
-  # Mantém busca global ativa na ESQUERDA
-  pesquisa_geral   = FALSE,
-  # Aplica vetores de configuração definidos acima
-  largura_cols_vetor   = minhas_larguras_down,
-  colunas_selecionadas = minhas_colunas_down,
-  # Mostra 6 linhas por página e oculta o índice lateral
-  n_pages = 6,
-  mostrar_indice = FALSE
-)
+# # Inicia a criação do dataframe com os dados, descrições e links originais Alex
+# bd_central_downloads <- base::data.frame(
+#   # Define o nome amigável de cada banco de dados
+#   "id_planilha" = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
+#   # Define a descrição técnica de cada base
+#   "descricao"   = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", "Detalhamento Financeiro vinculado aos processos", "Dicionário para tradução de códigos contábeis", "Identificação da origem do capital", "Classificação detalhada do objeto de gasto", "Tabela mestra de padronização de itens do Estado"),
+#   # Define as URLs reais das planilhas que você enviou
+#   "url"         = base::c(
+#     "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826", # Link Processos
+#     "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695", # Link Itens
+#     "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687", # Link Natureza
+#     "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696", # Link Fonte
+#     "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856", # Link Elemento
+#     "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131"  # Link Catálogo
+#   ),
+#   # Garante que as strings não virem fatores
+#   stringsAsFactors = FALSE
+# )
+# 
+# # --- GERAÇÃO DO BOTÃO ACESSAR (ABRE A PLANILHA NO NAVEGADOR) ---
+# bd_central_downloads$acessar <- base::apply(bd_central_downloads, 1, function(x) {
+#   # Retorna link HTML estilizado na cor azul marinho oficial Alex
+#   base::paste0("<a href='", x['url'], "' target='_blank' style='background-color:#03045e; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>ACESSAR</a>")
+# })
+# 
+# # --- GERAÇÃO DO BOTÃO DOWNLOAD (BAIXA O EXCEL AUTOMATICAMENTE) ---
+# bd_central_downloads$download <- base::apply(bd_central_downloads, 1, function(x) {
+#   # Transforma o link de edição em link de exportação direta para Excel (.xlsx)
+#   url_download <- base::gsub("/edit.*", "/export?format=xlsx", x['url'])
+#   # Retorna link HTML com cor preta para diferenciar do botão de acesso
+#   base::paste0("<a href='", url_download, "' target='_blank' style='background-color:#333333; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>DOWNLOAD</a>")
+# })
+# 
+# # Define os vetores de mapeamento para as colunas que você quer exibir
+# minhas_colunas_down <- base::c(
+#   "Banco de Dados" = "id_planilha",
+#   "Descrição"      = "descricao",
+#   "Acesso Online"  = "acessar",
+#   "Baixar Arquivo" = "download"
+# )
+# 
+# # Define larguras fixas para acomodar os dois botões lateralmente
+# minhas_larguras_down <- base::c("800px", "200px", "80px", "80px")
+# 
+# # Executa a renderização da tabela com seus padrões de fonte e cores
+# tabela_interativa(
+#   # Passa o dataframe com as duas colunas de botões criadas
+#   dados = bd_central_downloads,
+#   # Define o título do repositório
+#   titulo_tabela = "Central de Downloads e Repositório de Dados",
+#   # Aplica suas fontes compactas Alex
+#   tam_fonte_corpo  = "11.3px",
+#   tam_fonte_header = "12.2px",
+#   tam_fonte_titulo = "14.3px",
+#   # Aplica suas cores oficiais
+#   cor_titulo       = "#03045e",
+#   cor_primaria     = "#000000",
+#   cor_texto_corpo  = "#000000",
+#   # Mantém visual limpo sem filtros individuais
+#   mostrar_filtro   = FALSE,
+#   # Mantém busca global ativa na ESQUERDA
+#   pesquisa_geral   = FALSE,
+#   # Aplica vetores de configuração definidos acima
+#   largura_cols_vetor   = minhas_larguras_down,
+#   colunas_selecionadas = minhas_colunas_down,
+#   # Mostra 6 linhas por página e oculta o índice lateral
+#   n_pages = 6,
+#   mostrar_indice = FALSE
+# )
 ```
 
 
@@ -1529,11 +1730,11 @@ minhas_colunas <- base::c(
   "Modalidade"        = "modalidade",
   "Agente"            = "agente",
   "Qtd. Itens"        = "total_itens",
-  "Mês Entrada"       = "mes_entrada",
-  "Mês Saída"         = "mes_saida",
+  "Mês<br>(Entrada)"       = "mes_entrada",
+  "Mês<br>(Saída)"         = "mes_saida",
   "Valor Total (R$)"  = "valor_total_proc",
-  "Tempo (Dias)"      = "dias_uteis",
-  "(%) Empenho"    = "pct_empenho"
+  "Tempo<br>(Dias)"      = "dias_uteis",
+  "(%) Empenho"       = "pct_empenho"
 )
 
 minhas_larguras <- base::c("30px", 
@@ -1543,9 +1744,13 @@ minhas_larguras <- base::c("30px",
                            "60px", 
                            "60px", 
                            "60px", 
-                           "240px", 
+                           "270px", 
                            "80px", 
                            "70px")
+
+alinhamento_1 <- c("center","center","center",
+                   "center","center","center",
+                   "center","center","center")
 
 # --- SUB-TABELA DE DETALHES (FILHA) ---
 # Adicionado "Tempo Item" ao final do vetor
@@ -1560,15 +1765,19 @@ meus_nomes_detalhes <- base::c(
   "Tempo (Dias)"
 )
 
+alinhamento_1 <- c("center","justify","center",
+                   "center","center","center",
+                   "center","center")
+
 # Ajuste nas larguras dos detalhes para acomodar a nova coluna
 minhas_larguras_detalhes <- base::c("60px", 
                                     "400px", 
-                                    "200px", 
+                                    "210px", 
                                     "60px", 
+                                    "130px", 
+                                    "130px", 
                                     "120px", 
-                                    "120px", 
-                                    "120px", 
-                                    "80px")
+                                    "70px")
 
 # ==========================================================
 # 4. EXECUÇÃO DO RELATÓRIO
@@ -1591,6 +1800,9 @@ tabela_interativa_detalhes(
   largura_cols_vetor      = minhas_larguras,
   colunas_detalhes_nomes = meus_nomes_detalhes,
   largura_detalhes_vetor = minhas_larguras_detalhes,
+  alinhamento_header_vetor = alinhamento_1,
+  alinhamento_corpo_vetor = alinhamento_2,
+  
   
   mostrar_filtro          = FALSE,
   pesquisa_geral          = TRUE, 
@@ -1890,7 +2102,9 @@ gerar_dashboard_agente <- function(agente_alvo, bd_principal) {
       hoverlabel = base::list(bgcolor = "white", bordercolor = "black", align = "left", 
                               font = base::list(family = fonte_padrao, color = "black")),
       annotations = base::list(text = texto_centro, showarrow = FALSE)
-    )
+    ) %>%
+  # Configuração de responsividade e ocultação da barra do Plotly
+  plotly::config(displayModeBar = FALSE, responsive = TRUE)
 }
 
 gerar_dashboard_agente("Daniel", bd_principal)
@@ -2022,38 +2236,39 @@ bd_filho_agentes <- status_por_processo %>%
 # ==========================================================
 nomes_col <- base::c(
   "Modalidade"               = "mod_proc",
-  "Nº<br>Processos"             = "n_processos",
+  "Nº<br>Processos"          = "n_processos",
   "Aporte<br>Consolidado"    = "aporte_total",
   "Processos<br>Finalizados" = "n_resolvidos",
-  "Aporte Resolvido"         = "aporte_resolvido",
+  "Aporte<br>Resolvido"         = "aporte_resolvido",
   "Eficiência (%)"           = "p_resolvido_txt",
   "Processos<br>Pendentes"   = "n_pendentes",
-  "Aporte Pendente"          = "aporte_pendente",
-  "Ciclo Médio"              = "ciclo_txt"
+  "Aporte<br>Pendente"          = "aporte_pendente",
+  "Ciclo<br>Médio"              = "ciclo_txt"
 )
 
-largura_col <- base::c("30px", 
+largura_col <- base::c("30px",
                        "130px", 
-                       "100px", 
-                       "90",
-                       "40px", 
-                       "40px", 
-                       "40px", 
-                       "240px", 
-                       "70px", 
+                       "90px", 
+                       "130px",
+                       "60px", 
+                       "130px", 
+                       "50px", 
+                       "60px", 
+                       "130px", 
                        "60px")
+
 alinhamento_col <- base::c(
-  "left","left","left","left","left","left","left","left","left"
+  "center","center","center","center","center","center","center","center","center"
 )
 
 nomes_det <- base::c(
-  "Agente (Rank)", 
+  "Agente<br>(Rank)", 
   "Processos", 
   "Finalizados", 
   "Pendentes", 
   "Itens<br>Resolvidos", 
   "Itens<br>Pendentes", 
-  "Aporte em Gestão", 
+  "Aporte em<br>Gestão", 
   "Ciclo<br>(Agente)", 
   "Média<br>(Modalidade)", 
   "Avaliação<br>(Likert)", 
@@ -2061,21 +2276,20 @@ nomes_det <- base::c(
 )
 
 # Ajuste nas larguras dos detalhes para acomodar a nova coluna
-largura_det <- base::c("80px", 
+largura_det <- base::c("130px", 
                        "40px", 
                        "40px", 
-                       "50px", 
+                       "40px", 
                        "100px", 
                        "100px", 
-                       "220px", 
+                       "260px", 
                        "80px",
                        "100px",
                        "90px",
                        "100px")
 
 alinhamento_det <- base::c(
-  "left","left","left","left","left","left","left","left","left","left","left"
-)
+  "center","center","center","center","center","center","left","center","center","center","center")
 
 # ==========================================================
 # 5. EXECUÇÃO
@@ -2103,8 +2317,6 @@ tabela_interativa_detalhes(
   mostrar_filtro         = FALSE,
   mostrar_indice         = FALSE,
 )
-
-
 
 ```
 
