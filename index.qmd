@@ -1882,8 +1882,12 @@ minhas_larguras <- base::c("120px", "100px", "200px", "70px", "70px", "70px", "3
 # Tudo à esquerda! (Vetor de 9 posições)
 alin_esquerda <- base::rep("left", 9)
 
+# Tudo à esquerda! (Vetor de 9 posições)
+alinhamento_det <- base::rep("center","justify","center","center","left","left","center","center")
+
 # --- CONFIGURAÇÃO FILHO (8 colunas) ---
 meus_nomes_detalhes <- base::c("ID Item", "Descrição Material / Serviço", "Fornecedor", "Qtd", "Valor Unitário", "Valor Total", "Situação", "Dias")
+
 minhas_larguras_detalhes <- base::c("60px", "400px", "200px", "50px", "100px", "100px", "100px", "60px")
 
 # --- EXECUÇÃO AJUSTADA ---
@@ -1905,6 +1909,7 @@ tabela_interativa_detalhes(
   
   alinhamento_header_vetor = alin_esquerda,
   alinhamento_corpo_vetor  = alin_esquerda,
+  alinhamento_detalhes_vetor = alinhamento_det,
   
   colunas_detalhes_nomes = meus_nomes_detalhes,
   largura_detalhes_vetor = minhas_larguras_detalhes,
@@ -2367,7 +2372,7 @@ alinhamento_col <- base::rep("left", 9)
 nomes_det <- base::c(
   "Agente<br>(Rank)", 
   "Processos", 
-  "Finalizados", 
+  "Empenhados", 
   "Pendentes", 
   "Itens<br>Emp.", # Nome alterado aqui também
   "Itens<br>Pen.", 
