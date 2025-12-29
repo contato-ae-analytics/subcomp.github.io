@@ -2383,16 +2383,16 @@ nomes_det <- base::c(
 # Larguras Filho (11 valores): Destaque no Valor Financeiro
 largura_det <- base::c(
   "250px", # Agente
-  "65px",  # Processos
-  "65px",  # Finalizados
-  "65px",  # Pendentes
+  "80px",  # Processos
+  "80px",  # Finalizados
+  "80px",  # Pendentes
   # "65px", # Itens Empenhados
   # "65px", # Itens Pendentes
-  "310px", # Valor (MUITO ESPAÇO)
+  "320px", # Valor (MUITO ESPAÇO)
   "120px",  # Ciclo
-  "80px",  # Média
+  "90px",  # Média
   "130px", # Avaliação
-  "70px"  # Eficiência
+  "80px"  # Eficiência
 )
 
 # Alinhamento Filho (11 valores) - Tudo à esquerda
