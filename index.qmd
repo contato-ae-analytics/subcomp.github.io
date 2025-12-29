@@ -2369,8 +2369,8 @@ nomes_det <- base::c(
   "Processos", 
   "Finalizados", 
   "Pendentes", 
-  "Itens<br>Empenhados", # Nome alterado aqui também
-  "Itens<br>Pendentes", 
+  "Itens<br>Emp.", # Nome alterado aqui também
+  "Itens<br>Pen.", 
   "Valor", 
   "Ciclo", 
   "Média", 
@@ -2381,20 +2381,21 @@ nomes_det <- base::c(
 # Larguras Filho (11 valores): Destaque no Valor Financeiro
 largura_det <- base::c(
   "250px", # Agente
-  "60px",  # Processos
-  "60px",  # Finalizados
-  "60px",  # Pendentes
-  "80px", # Itens Empenhados
-  "80px", # Itens Pendentes
+  "70px",  # Processos
+  "70px",  # Finalizados
+  "70px",  # Pendentes
+  "70px", # Itens Empenhados
+  "70px", # Itens Pendentes
   "320px", # Valor (MUITO ESPAÇO)
-  "80px",  # Ciclo
+  "90px",  # Ciclo
   "90px",  # Média
   "130px", # Avaliação
   "80px"  # Eficiência
 )
 
 # Alinhamento Filho (11 valores) - Tudo à esquerda
-alinhamento_det_filho <- base::rep("left", 11)
+# alinhamento_det_filho <- base::rep("left", 11)
+alinhamento_det_filho <- c("left","center","center","center","center","center","left","center","center","center","center")
 
 # ==========================================================
 # 5. EXECUÇÃO
@@ -2436,7 +2437,7 @@ tabela_interativa_detalhes(
 :::
 
 
-## Modalidades | Natureza da Despesa (R$)
+## Análise das Modalidades por Natureza da Despesa
 
 ::: {style="font-size: 0.9em; text-align: justify; margin-top: 25px; margin-bottom: 25px; "}
 
