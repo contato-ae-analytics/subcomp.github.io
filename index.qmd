@@ -244,26 +244,169 @@ tabela_interativa <- function(dados,
   )
   return(htmltools::tagList(html_titulo, tabela))
 }
-
+# 
+# 
+# tabela_interativa_detalhes <- function(dados, 
+#                                         dados_detalhes, 
+#                                         coluna_chave, 
+#                                         titulo_tabela, 
+#                                         colunas_detalhes_nomes = NULL, 
+#                                         largura_detalhes_vetor = NULL, 
+#                                         tam_fonte_corpo = "13px",   
+#                                         tam_fonte_titulo = "20px",  
+#                                         tam_fonte_header = "14px",  
+#                                         cor_titulo = "#03045e",     
+#                                         cor_primaria = "#03045e",   
+#                                         cor_texto_corpo = "#333333",
+#                                         mostrar_filtro = TRUE,      
+#                                         pesquisa_geral = FALSE,     
+#                                         largura_cols_vetor = NULL,  
+#                                         colunas_selecionadas = NULL,
+#                                         n_pages = 10,               
+#                                         mostrar_indice = TRUE) {
+# 
+#   if (!base::exists("contador_tabelas_alex", envir = .GlobalEnv)) {
+#     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
+#   }
+# 
+#   dados_processados <- dados
+#   if (!base::is.null(colunas_selecionadas)) {
+#     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
+#   }
+# 
+#   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
+#   n_colunas_reais <- base::ncol(dados_processados)
+# 
+#   base::assign("contador_tabelas_alex", base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1, envir = .GlobalEnv)
+#   titulo_final <- base::paste0("Tabela ", base::get("contador_tabelas_alex", envir = .GlobalEnv), ": ", titulo_tabela)
+# 
+#   html_titulo <- htmltools::tags$h2(
+#     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
+#                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
+#     htmltools::tags$b(titulo_final)
+#   )
+# 
+#   
+#   
+#   json_detalhes_js <- jsonlite::toJSON(dados_detalhes, ArrayOrder = "row")
+#   nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
+#   larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
+#   # nomes_detalhes_js <- if(!base::is.na(colunas_detalhes_nomes) && !base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
+#   # larguras_detalhes_js <- if(!base::is.na(largura_detalhes_vetor) && !base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
+# 
+#   lista_column_defs <- base::list(
+#     base::list(targets = 0, className = 'details-control', width = '20px', orderable = FALSE)
+#   )
+#   
+#   if (!base::is.null(largura_cols_vetor)) {
+#     for (i in 1:base::length(largura_cols_vetor)) {
+#       if (i < n_colunas_reais) {
+#         lista_column_defs[[base::length(lista_column_defs) + 1]] <- base::list(targets = i, width = largura_cols_vetor[i])
+#       }
+#     }
+#   }
+# 
+#   tabela <- DT::datatable(
+#     base::data.frame(dados_processados, check.names = FALSE),
+#     escape = FALSE, 
+#     rownames = mostrar_indice,
+#     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
+#     width = "100%", 
+#     class = "row-border", 
+#     options = base::list(
+#       dom = if(pesquisa_geral) 'ft p' else 't p',
+#       pageLength = n_pages,
+#       searching = TRUE, 
+#       lengthChange = FALSE,
+#       info = FALSE,
+#       ordering = FALSE,      
+#       autoWidth = FALSE,    
+#       scrollX = TRUE,
+#       columnDefs = lista_column_defs,
+#       
+#       initComplete = DT::JS(
+#         base::paste0("function(settings, json) {",
+#                       "$(this.api().table().container()).find('.dataTables_filter').css({",
+#                       "  'float': 'left', 'text-align': 'left', 'font-weight': 'bold',",
+#                       "  'margin-top': '15px', 'margin-bottom': '15px'",
+#                       "});",
+#                       "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
+#                       "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
+#                       "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
+#                       "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
+#                       
+#                       "var table = this.api(); var detalhes_data = ", json_detalhes_js, ";",
+#                       "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
+#                       
+#                       "$(this.api().table().body()).on('click', 'td.details-control', function() {",
+#                       "  var tr = $(this).closest('tr'); var row = table.row(tr);",
+#                       "  if (row.child.isShown()) {",
+#                       "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
+#                       "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal', 'border-left': ''});",
+#                       "  } else {",
+#                       "    tr.css({'background-color': '#f8f9fa', 'color': '", cor_primaria, "', 'font-weight': '600', 'border-left': '4px solid ", cor_primaria, "'});",
+#                       "    var rowData = row.data(); var indexChave = ", if(mostrar_indice) "2" else "1", "; var chave = rowData[indexChave];",
+#                       "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
+#                       
+#                       "    var html_sub = '<table class=\"subtable\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff !important; color:#03045e; font-weight:bold;\">';",
+#                       "    if(sub_dados.length > 0) {",
+#                       "       var colKeys = Object.keys(sub_dados[0]).filter(k => k !== '", coluna_chave, "');",
+#                       "       colKeys.forEach((key, index) => {",
+#                       "          var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
+#                       "          var width = (customLarguras && customLarguras[index]) ? 'width:'+customLarguras[index]+';' : '';",
+#                       "          html_sub += '<th style=\"padding:6px; border-bottom:1px solid #ddd; text-align:left; '+width+'\">' + label + '</th>';",
+#                       "       });",
+#                       "       html_sub += '</tr></thead><tbody>';",
+#                       "       sub_dados.forEach(r => {",
+#                       "          html_sub += '<tr class=\"subrow\" style=\"border-bottom:1px solid #f1f1f1; background-color: transparent !important;\">';",
+#                       "          colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; font-weight: normal !important;\">' + (r[k] || '') + '</td>'; });",
+#                       "          html_sub += '</tr>';",
+#                       "       });",
+#                       "    } else { html_sub += '<tr><td>Nenhum detalhe disponível</td></tr>'; }",
+#                       "    html_sub += '</tbody></table>';",
+#                       "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
+#                       "  }",
+#                       "});",
+#                       
+#                       "$(this.api().table().body()).on('mouseenter', 'tr', function(e) {",
+#                       "  var tr = $(this);",
+#                       "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable') && !tr.hasClass('subrow')) {",
+#                       "    tr.css({'background-color': '#ffffff', 'color': '#000000', 'font-weight': 'bold'});",
+#                       "  }",
+#                       "}).on('mouseleave', 'tr', function(e) {",
+#                       "  var tr = $(this);",
+#                       "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable') && !tr.hasClass('subrow')) {",
+#                       "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
+#                       "  }",
+#                       "});",
+#                       "}")
+#       ),
+#       language = base::list(paginate = base::list("previous" = "Anterior", "next" = "Próximo"), search = "Pesquisa Geral:")
+#     )
+#   )
+#   return(htmltools::tagList(html_titulo, tabela))
+# }
 
 tabela_interativa_detalhes <- function(dados, 
-                                        dados_detalhes, 
-                                        coluna_chave, 
-                                        titulo_tabela, 
-                                        colunas_detalhes_nomes = NULL, 
-                                        largura_detalhes_vetor = NULL, 
-                                        tam_fonte_corpo = "13px",   
-                                        tam_fonte_titulo = "20px",  
-                                        tam_fonte_header = "14px",  
-                                        cor_titulo = "#03045e",     
-                                        cor_primaria = "#03045e",   
-                                        cor_texto_corpo = "#333333",
-                                        mostrar_filtro = TRUE,      
-                                        pesquisa_geral = FALSE,     
-                                        largura_cols_vetor = NULL,  
-                                        colunas_selecionadas = NULL,
-                                        n_pages = 10,               
-                                        mostrar_indice = TRUE) {
+                                       dados_detalhes, 
+                                       coluna_chave, 
+                                       titulo_tabela, 
+                                       colunas_detalhes_nomes = NULL, 
+                                       largura_detalhes_vetor = NULL, 
+                                       tam_fonte_corpo = "13px",   
+                                       tam_fonte_titulo = "20px",  
+                                       tam_fonte_header = "14px",  
+                                       cor_titulo = "#03045e",     
+                                       cor_primaria = "#03045e",   
+                                       cor_texto_corpo = "#333333",
+                                       mostrar_filtro = TRUE,      
+                                       pesquisa_geral = FALSE,     
+                                       largura_cols_vetor = NULL,  
+                                       colunas_selecionadas = NULL,
+                                       alinhamento_header_vetor = NULL, # Novo parâmetro
+                                       alinhamento_corpo_vetor = NULL,  # Novo parâmetro
+                                       n_pages = 10,               
+                                       mostrar_indice = TRUE) {
 
   if (!base::exists("contador_tabelas_alex", envir = .GlobalEnv)) {
     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
@@ -286,24 +429,39 @@ tabela_interativa_detalhes <- function(dados,
     htmltools::tags$b(titulo_final)
   )
 
-  
-  
   json_detalhes_js <- jsonlite::toJSON(dados_detalhes, ArrayOrder = "row")
   nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
   larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
-  # nomes_detalhes_js <- if(!base::is.na(colunas_detalhes_nomes) && !base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
-  # larguras_detalhes_js <- if(!base::is.na(largura_detalhes_vetor) && !base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
 
+  # --- CONFIGURAÇÃO DE COLUMN DEFS (LARGURAS E ALINHAMENTO DO CORPO) ---
   lista_column_defs <- base::list(
     base::list(targets = 0, className = 'details-control', width = '20px', orderable = FALSE)
   )
   
-  if (!base::is.null(largura_cols_vetor)) {
-    for (i in 1:base::length(largura_cols_vetor)) {
-      if (i < n_colunas_reais) {
-        lista_column_defs[[base::length(lista_column_defs) + 1]] <- base::list(targets = i, width = largura_cols_vetor[i])
-      }
+  # Lógica de Alinhamento do Corpo
+  for (i in 1:(n_colunas_reais - 1)) {
+    # Se o usuário passou um vetor de alinhamento, usa ele (índice i pq a col 0 é o controle)
+    alin_classe <- if(!base::is.null(alinhamento_corpo_vetor) && i <= base::length(alinhamento_corpo_vetor)) {
+      base::paste0("dt-", alinhamento_corpo_vetor[i])
+    } else {
+      "dt-center" # Default
     }
+    
+    # Se o usuário passou largura
+    largura <- if(!base::is.null(largura_cols_vetor) && i <= base::length(largura_cols_vetor)) largura_cols_vetor[i] else NULL
+    
+    lista_column_defs[[base::length(lista_column_defs) + 1]] <- base::list(
+      targets = i, 
+      className = alin_classe,
+      width = largura
+    )
+  }
+
+  # Lógica de Alinhamento do Header (JS)
+  alin_header_js <- if(!base::is.null(alinhamento_header_vetor)) {
+    jsonlite::toJSON(alinhamento_header_vetor)
+  } else {
+    "null"
   }
 
   tabela <- DT::datatable(
@@ -326,14 +484,40 @@ tabela_interativa_detalhes <- function(dados,
       
       initComplete = DT::JS(
         base::paste0("function(settings, json) {",
-                      "$(this.api().table().container()).find('.dataTables_filter').css({",
-                      "  'float': 'left', 'text-align': 'left', 'font-weight': 'bold',",
-                      "  'margin-top': '15px', 'margin-bottom': '15px'",
-                      "});",
-                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
-                      "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
-                      "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
-                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
+                     "$(this.api().table().container()).find('.dataTables_filter').css({",
+                     "  'float': 'left', 'text-align': 'left', 'font-weight': 'bold',",
+                     "  'margin-top': '15px', 'margin-bottom': '15px'",
+                     "});",
+                     "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
+                     
+                     # Estilo Geral do Header
+                     "$(this.api().table().header()).css({",
+                     "  'font-size': '", tam_fonte_header, "', ",
+                     "  'background-color': '#ffffff', ",
+                     "  'color': '", cor_primaria, "', ",
+                     "  'white-space': 'normal'", 
+                     "});",
+                     
+                     "$(this.api().table().header()).find('tr:first-child th').css({",
+                     "  'border-top': '3px solid #000000', ",
+                     "  'border-bottom': '3px solid #000000', ",
+                     "  'padding': '12px',",
+                     "  'vertical-align': 'middle'",
+                     "});",
+                     
+                     # Alinhamento individual do Header
+                     "var alinHeaders = ", alin_header_js, ";",
+                     "if(alinHeaders) {",
+                     "  $(this.api().table().header()).find('tr:first-child th').each(function(index) {",
+                     "    if(index > 0 && alinHeaders[index-1]) {",
+                     "      $(this).css('text-align', alinHeaders[index-1]);",
+                     "    } else { $(this).css('text-align', 'center'); }",
+                     "  });",
+                     "} else {",
+                     "  $(this.api().table().header()).find('tr:first-child th').css('text-align', 'center');",
+                     "}",
+                     
+                     "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
                       
                       "var table = this.api(); var detalhes_data = ", json_detalhes_js, ";",
                       "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
@@ -354,12 +538,12 @@ tabela_interativa_detalhes <- function(dados,
                       "       colKeys.forEach((key, index) => {",
                       "          var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
                       "          var width = (customLarguras && customLarguras[index]) ? 'width:'+customLarguras[index]+';' : '';",
-                      "          html_sub += '<th style=\"padding:6px; border-bottom:1px solid #ddd; text-align:left; '+width+'\">' + label + '</th>';",
+                      "          html_sub += '<th style=\"padding:6px; border-bottom:1px solid #ddd; text-align:center; vertical-align:middle; '+width+'\">' + label + '</th>';",
                       "       });",
                       "       html_sub += '</tr></thead><tbody>';",
                       "       sub_dados.forEach(r => {",
                       "          html_sub += '<tr class=\"subrow\" style=\"border-bottom:1px solid #f1f1f1; background-color: transparent !important;\">';",
-                      "          colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; font-weight: normal !important;\">' + (r[k] || '') + '</td>'; });",
+                      "          colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; font-weight: normal !important; text-align:center;\">' + (r[k] || '') + '</td>'; });",
                       "          html_sub += '</tr>';",
                       "       });",
                       "    } else { html_sub += '<tr><td>Nenhum detalhe disponível</td></tr>'; }",
@@ -845,7 +1029,7 @@ minhas_colunas_down <- base::c(
 )
 
 # Define larguras fixas para acomodar os dois botões lateralmente
-minhas_larguras_down <- base::c("600px", "350px", "70px", "70px")
+minhas_larguras_down <- base::c("800px", "350px", "80px", "80px")
 
 # Executa a renderização da tabela com seus padrões de fonte e cores
 tabela_interativa(
@@ -1355,13 +1539,13 @@ minhas_colunas <- base::c(
 minhas_larguras <- base::c("30px", 
                            "130px", 
                            "100px", 
-                           "90",
-                           "40px", 
-                           "40px", 
-                           "40px", 
+                           "140",
+                           "60px", 
+                           "60px", 
+                           "60px", 
                            "240px", 
-                           "70px", 
-                           "60px")
+                           "80px", 
+                           "70px")
 
 # --- SUB-TABELA DE DETALHES (FILHA) ---
 # Adicionado "Tempo Item" ao final do vetor
@@ -1838,7 +2022,7 @@ bd_filho_agentes <- status_por_processo %>%
 # ==========================================================
 nomes_col <- base::c(
   "Modalidade"               = "mod_proc",
-  "Nº Total<br>Processos"    = "n_processos",
+  "Nº<br>Processos"             = "n_processos",
   "Aporte<br>Consolidado"    = "aporte_total",
   "Processos<br>Finalizados" = "n_resolvidos",
   "Aporte Resolvido"         = "aporte_resolvido",
@@ -1848,31 +2032,19 @@ nomes_col <- base::c(
   "Ciclo Médio"              = "ciclo_txt"
 )
 
-# minhas_colunas <- base::c(
-#   "Modalidade"             = "mod_proc",
-#   "Nº Total\nProcessos"    = "n_processos",
-#   "Aporte\nConsolidado"    = "aporte_total",
-#   "Processos\nFinalizados" = "n_resolvidos",
-#   # "Res. (Itens)"           = "itens_res_total",
-#   "Aporte Resolvido"       = "aporte_resolvido",
-#   "Eficiência (%)"         = "p_resolvido_txt",
-#   "Processos\nPendentes"   = "n_pendentes",
-#   # "Pend. (Itens)"          = "itens_pen_total",
-#   "Aporte Pendente"        = "aporte_pendente",
-#   "Ciclo Médio"            = "ciclo_txt"
-# )
-
 largura_col <- base::c("30px", 
-                        "130px", 
-                        "100px", 
-                        "90",
-                        "40px", 
-                        "40px", 
-                        "40px", 
-                        "240px", 
-                        "70px", 
-                        "60px")
-
+                       "130px", 
+                       "100px", 
+                       "90",
+                       "40px", 
+                       "40px", 
+                       "40px", 
+                       "240px", 
+                       "70px", 
+                       "60px")
+alinhamento_col <- base::c(
+  "left","left","left","left","left","left","left","left","left"
+)
 
 nomes_det <- base::c(
   "Agente (Rank)", 
@@ -1888,20 +2060,6 @@ nomes_det <- base::c(
   "Eficiência<br>Individual"
 )
 
-# meus_nomes_detalhes <- base::c(
-#   "Agente (Rank)", 
-#   "Processos", 
-#   "Finalizados", 
-#   "Pendentes", 
-#   "Itens\nResolvidos", 
-#   "Itens\nPendentes", 
-#   "Aporte em Gestão", 
-#   "Ciclo\n(Agente)", 
-#   "Média\n(Modalidade)", 
-#   "Avaliação\n(Likert)", 
-#   "Eficiência\nIndividual"
-# )
-
 # Ajuste nas larguras dos detalhes para acomodar a nova coluna
 largura_det <- base::c("80px", 
                        "40px", 
@@ -1915,6 +2073,9 @@ largura_det <- base::c("80px",
                        "90px",
                        "100px")
 
+alinhamento_det <- base::c(
+  "left","left","left","left","left","left","left","left","left","left","left"
+)
 
 # ==========================================================
 # 5. EXECUÇÃO
@@ -1931,6 +2092,8 @@ tabela_interativa_detalhes(
   cor_titulo             = cor_titulo,
   cor_primaria           = cor_primaria,
   cor_texto_corpo        = cor_texto_corpo,
+  alinhamento_header_vetor = alinhamento_col,
+  alinhamento_corpo_vetor = alinhamento_det,
   
   colunas_detalhes_nomes = nomes_det, 
   largura_detalhes_vetor = largura_det, 
