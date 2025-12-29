@@ -1242,9 +1242,17 @@ plotly::plot_ly() %>%
   plotly::config(displayModeBar = FALSE, responsive = TRUE)
 
 
+
 # ==========================================================
-# --- 1. PREPARAÇÃO DA TABELA PRINCIPAL (RESUMO POR PROCESSO) ---
+# CONFIGURAÇÃO DE FONTES E CORES (VISUAL COMPACTO ALEX)
 # ==========================================================
+tam_fonte_corpo = "11.3px"
+tam_fonte_titulo = "14.3px"
+tam_fonte_header = "12.2px"
+cor_titulo = "#03045e"
+cor_primaria = "#000000"
+cor_texto_corpo = "#000000"
+
 
 # ==========================================================
 # --- 1. PREPARAÇÃO DA TABELA PRINCIPAL (RESUMO POR PROCESSO) ---
@@ -1319,7 +1327,7 @@ minhas_larguras <- base::c("30px",
                            "40px", 
                            "40px", 
                            "170px", 
-                           "70px", 
+                           "100px", 
                            "70px")
 
 # --- SUB-TABELA DE DETALHES (FILHA) ---
@@ -1338,12 +1346,12 @@ meus_nomes_detalhes <- base::c(
 # Ajuste nas larguras dos detalhes para acomodar a nova coluna
 minhas_larguras_detalhes <- base::c("60px", 
                                     "350px", 
-                                    "200px", 
+                                    "180px", 
                                     "50px", 
-                                    "110px", 
-                                    "110px", 
                                     "100px", 
-                                    "70px")
+                                    "100px", 
+                                    "100px", 
+                                    "80px")
 
 # ==========================================================
 # 4. EXECUÇÃO DO RELATÓRIO
@@ -1353,14 +1361,14 @@ tabela_interativa_detalhes(
   dados                  = bd_resumo_processos,
   dados_detalhes          = bd_detalhes_itens,
   coluna_chave           = "processo",
-  titulo_tabela          = "Detalhamento de Processos",
+  titulo_tabela          = "Monitoramento Consolidado de Processos e Itens",
   
-  tam_fonte_corpo        = "11.3px",
-  tam_fonte_header       = "12.2px",
-  tam_fonte_titulo       = "14.3px",
-  cor_titulo             = "#03045e",
-  cor_primaria           = "#000000",
-  cor_texto_corpo        = "#000000",
+  tam_fonte_corpo        = tam_fonte_corpo,
+  tam_fonte_header       = tam_fonte_header,
+  tam_fonte_titulo       = tam_fonte_titulo,
+  cor_titulo             = cor_titulo,
+  cor_primaria           = cor_primaria,
+  cor_texto_corpo        = cor_texto_corpo,
   
   colunas_selecionadas   = minhas_colunas,
   largura_cols_vetor      = minhas_larguras,
@@ -1372,6 +1380,7 @@ tabela_interativa_detalhes(
   n_pages                = 10,
   mostrar_indice          = FALSE
 )
+
 ```
 
 :::
