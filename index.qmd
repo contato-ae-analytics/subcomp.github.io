@@ -1740,11 +1740,11 @@ minhas_colunas <- base::c(
 minhas_larguras <- base::c("30px", 
                            "130px", 
                            "80px", 
-                           "200",
+                           "220px",
                            "60px", 
                            "60px", 
                            "60px", 
-                           "350px", 
+                           "420px", 
                            "60px", 
                            "60px")
 
@@ -2251,12 +2251,12 @@ nomes_col <- base::c(
 largura_col <- base::c("30px",
                        "90px", 
                        "90px", 
-                       "260px",
+                       "320px",
                        "50px", 
-                       "260px", 
+                       "320px", 
                        "50px", 
                        "50px", 
-                       "260px", 
+                       "320px", 
                        "50px")
 
 alinhamento_col <- base::c(
@@ -2282,13 +2282,13 @@ nomes_det <- base::c(
 )
 
 # Ajuste nas larguras dos detalhes para acomodar a nova coluna
-largura_det <- base::c("200px", 
-                       "50px", 
-                       "50px", 
-                       "50px", 
+largura_det <- base::c("280px", 
+                       "70px", 
+                       "70px", 
+                       "70px", 
                        # "80px", 
                        # "80px", 
-                       "270px", 
+                       "320px", 
                        "80px",
                        "100px",
                        "90px",
