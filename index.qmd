@@ -1929,9 +1929,17 @@ tabela_interativa_detalhes(
 
 ::: {.panel-tabset}
 
-## Setor
+## SETOR
 
 ```{r}
+#| label: SETOR
+#| code-summary: "SETOR"
+#| echo: false
+#| warning: false
+#| message: false
+#| out-width: "100%"
+#| fig-height: 5
+
 gerar_dashboard_setor <- function(bd_principal,
                                   tam_titulo_graf  = 0,
                                   tam_centro_cab   = 12,
@@ -2057,7 +2065,6 @@ gerar_dashboard_setor <- function(bd_principal,
 
 gerar_dashboard_setor(
   bd_principal, 
-  
   # --- Configurações do Centro (Gráfico) ---
   tam_titulo_graf  = 0,        # Título principal bem grande
   tam_centro_cab   = 10,        # Cabeçalho "SUMÁRIO CONSOLIDADO"
@@ -2065,13 +2072,13 @@ gerar_dashboard_setor(
   tam_centro_corpo = 10,        # Blocos de Empenhados e Pendentes
   
   # --- Configurações do Hover (Balão ao passar o mouse) ---
-  tam_hover_header = 10,        # Título da Modalidade no balão (Destaque)
-  tam_hover_dest   = 10,        # Eficiência dentro do balão
-  tam_hover_corpo  = 10,        # Informações detalhadas do balão
+  tam_hover_header = 9,        # Título da Modalidade no balão (Destaque)
+  tam_hover_dest   = 9,        # Eficiência dentro do balão
+  tam_hover_corpo  = 9,        # Informações detalhadas do balão
   
   # --- Rótulos e Cores Técnicas ---
-  tam_fatias       = 10,        # Nomes das modalidades nas fatias do gráfico
-  cor_eficiencia   = "#000080", # Azul Marinho para a Eficiência
+  tam_fatias       = 12,        # Nomes das modalidades nas fatias do gráfico
+  cor_eficiencia   = "#0b132b", # Azul Marinho para a Eficiência
   cor_titulo       = "#000000"  # Preto absoluto para o título
 )
 ```
