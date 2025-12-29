@@ -1765,7 +1765,7 @@ meus_nomes_detalhes <- base::c(
   "Tempo (Dias)"
 )
 
-alinhamento_1 <- c("center","justify","center",
+alinhamento_2 <- c("center","justify","center",
                    "center","center","center",
                    "center","center")
 
@@ -2268,10 +2268,10 @@ nomes_det <- base::c(
   "Pendentes", 
   "Itens<br>Resolvidos", 
   "Itens<br>Pendentes", 
-  "Aporte em<br>Gestão", 
-  "Ciclo<br>(Agente)", 
-  "Média<br>(Modalidade)", 
-  "Avaliação<br>(Likert)", 
+  "Aporte<br>(Gestão)", 
+  "Ciclo", 
+  "Média", 
+  "Avaliação", 
   "Eficiência<br>Individual"
 )
 
