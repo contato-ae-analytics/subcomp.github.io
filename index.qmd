@@ -265,37 +265,31 @@ tabela_interativa_detalhes <- function(dados,
                                         n_pages = 10,               
                                         mostrar_indice = TRUE) {
 
-  # Inicialização do contador global Alex
   if (!base::exists("contador_tabelas_alex", envir = .GlobalEnv)) {
     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
   }
 
-  # Processamento dos dados principais
   dados_processados <- dados
   if (!base::is.null(colunas_selecionadas)) {
     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
   }
 
-  # Adiciona coluna do botão de expansão
   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
   n_colunas_reais <- base::ncol(dados_processados)
 
-  # Atualiza contador para o título numerado
   base::assign("contador_tabelas_alex", base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1, envir = .GlobalEnv)
   titulo_final <- base::paste0("Tabela ", base::get("contador_tabelas_alex", envir = .GlobalEnv), ": ", titulo_tabela)
 
   html_titulo <- htmltools::tags$h2(
     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
-                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
+                         "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
     htmltools::tags$b(titulo_final)
   )
 
-  # Prepara os dados JSON para a sub-tabela
   json_detalhes_js <- jsonlite::toJSON(dados_detalhes, ArrayOrder = "row")
-  nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
-  larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
+  nomes_detalhes_js <- if(!base::is.na(colunas_detalhes_nomes) && !base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
+  larguras_detalhes_js <- if(!base::is.na(largura_detalhes_vetor) && !base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
 
-  # Configuração de larguras com proteção contra Erro 7
   lista_column_defs <- base::list(
     base::list(targets = 0, className = 'details-control', width = '20px', orderable = FALSE)
   )
@@ -316,7 +310,6 @@ tabela_interativa_detalhes <- function(dados,
     width = "100%", 
     class = "row-border", 
     options = base::list(
-      # CORREÇÃO AQUI: Dinâmico conforme sua escolha
       dom = if(pesquisa_geral) 'ft p' else 't p',
       pageLength = n_pages,
       searching = TRUE, 
@@ -329,51 +322,48 @@ tabela_interativa_detalhes <- function(dados,
       
       initComplete = DT::JS(
         base::paste0("function(settings, json) {",
-                      # Alinhamento, Negrito e Margens na Barra de Pesquisa
                       "$(this.api().table().container()).find('.dataTables_filter').css({",
                       "  'float': 'left', 'text-align': 'left', 'font-weight': 'bold',",
                       "  'margin-top': '15px', 'margin-bottom': '15px'",
                       "});",
-                      # Preservação do Estilo (Bordas 3px, Fundo Branco)
                       "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
                       "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
                       "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
                       "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
-
-                     # Lógica de expansão e sub-tabela (ATUALIZADA)
-                     "var table = this.api(); var detalhes_data = ", json_detalhes_js, ";",
-                     "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
-                     "$(this.api().table().body()).on('click', 'td.details-control', function() {",
-                     "  var tr = $(this).closest('tr'); var row = table.row(tr);",
-                     "  if (row.child.isShown()) {",
-                     "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
-                     "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal', 'border-left': ''});",
-                     "  } else {",
-                     "    tr.css({'background-color': '#f8f9fa', 'color': '", cor_primaria, "', 'font-weight': '600', 'border-left': '4px solid ", cor_primaria, "'});",
-                     "    var rowData = row.data(); var indexChave = ", if(mostrar_indice) "2" else "1", "; var chave = rowData[indexChave];",
-                     "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
-                     "    var html_sub = '<table class=\"subtable\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff !important; color:#03045e; font-weight:bold;\">';",
-                     "    if(sub_dados.length > 0) {",
-                     "       // FILTRO AQUI: Remove a coluna chave (processo) dos detalhes",
-                     "       var colKeys = Object.keys(sub_dados[0]).filter(k => k !== '", coluna_chave, "');",
-                     "       colKeys.forEach((key, index) => {",
-                     "          var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
-                     "          var width = (customLarguras && customLarguras[index]) ? 'width:'+customLarguras[index]+';' : '';",
-                     "          html_sub += '<th style=\"padding:6px; border-bottom:1px solid #ddd; text-align:left; '+width+'\">' + label + '</th>';",
-                     "       });",
-                     "       html_sub += '</tr></thead><tbody>';",
-                     "       sub_dados.forEach(r => {",
-                     "          html_sub += '<tr class=\"subrow\" style=\"border-bottom:1px solid #f1f1f1; background-color: transparent !important;\">';",
-                     "          // USA AS CHAVES FILTRADAS PARA OS VALORES",
-                     "          colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; font-weight: normal !important;\">' + (r[k] || '') + '</td>'; });",
-                     "          html_sub += '</tr>';",
-                     "       });",
-                     "    } else { html_sub += '<tr><td>Nenhum detalhe disponível</td></tr>'; }",
-                     "    html_sub += '</tbody></table>';",
-                     "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
-                     "  }",
-                     "});",             
-                      # Hover Alex (TRAVADO para não afetar sub-tabelas)
+                      
+                      "var table = this.api(); var detalhes_data = ", json_detalhes_js, ";",
+                      "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
+                      
+                      "$(this.api().table().body()).on('click', 'td.details-control', function() {",
+                      "  var tr = $(this).closest('tr'); var row = table.row(tr);",
+                      "  if (row.child.isShown()) {",
+                      "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
+                      "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal', 'border-left': ''});",
+                      "  } else {",
+                      "    tr.css({'background-color': '#f8f9fa', 'color': '", cor_primaria, "', 'font-weight': '600', 'border-left': '4px solid ", cor_primaria, "'});",
+                      "    var rowData = row.data(); var indexChave = ", if(mostrar_indice) "2" else "1", "; var chave = rowData[indexChave];",
+                      "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
+                      
+                      "    var html_sub = '<table class=\"subtable\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff !important; color:#03045e; font-weight:bold;\">';",
+                      "    if(sub_dados.length > 0) {",
+                      "       var colKeys = Object.keys(sub_dados[0]).filter(k => k !== '", coluna_chave, "');",
+                      "       colKeys.forEach((key, index) => {",
+                      "          var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
+                      "          var width = (customLarguras && customLarguras[index]) ? 'width:'+customLarguras[index]+';' : '';",
+                      "          html_sub += '<th style=\"padding:6px; border-bottom:1px solid #ddd; text-align:left; '+width+'\">' + label + '</th>';",
+                      "       });",
+                      "       html_sub += '</tr></thead><tbody>';",
+                      "       sub_dados.forEach(r => {",
+                      "          html_sub += '<tr class=\"subrow\" style=\"border-bottom:1px solid #f1f1f1; background-color: transparent !important;\">';",
+                      "          colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; font-weight: normal !important;\">' + (r[k] || '') + '</td>'; });",
+                      "          html_sub += '</tr>';",
+                      "       });",
+                      "    } else { html_sub += '<tr><td>Nenhum detalhe disponível</td></tr>'; }",
+                      "    html_sub += '</tbody></table>';",
+                      "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
+                      "  }",
+                      "});",
+                      
                       "$(this.api().table().body()).on('mouseenter', 'tr', function(e) {",
                       "  var tr = $(this);",
                       "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable') && !tr.hasClass('subrow')) {",
@@ -392,6 +382,153 @@ tabela_interativa_detalhes <- function(dados,
   )
   return(htmltools::tagList(html_titulo, tabela))
 }
+
+# tabela_interativa_detalhes <- function(dados, 
+#                                         dados_detalhes, 
+#                                         coluna_chave, 
+#                                         titulo_tabela, 
+#                                         colunas_detalhes_nomes = NULL, 
+#                                         largura_detalhes_vetor = NULL, 
+#                                         tam_fonte_corpo = "13px",   
+#                                         tam_fonte_titulo = "20px",  
+#                                         tam_fonte_header = "14px",  
+#                                         cor_titulo = "#03045e",     
+#                                         cor_primaria = "#03045e",   
+#                                         cor_texto_corpo = "#333333",
+#                                         mostrar_filtro = TRUE,      
+#                                         pesquisa_geral = FALSE,     
+#                                         largura_cols_vetor = NULL,  
+#                                         colunas_selecionadas = NULL,
+#                                         n_pages = 10,               
+#                                         mostrar_indice = TRUE) {
+# 
+#   # Inicialização do contador global Alex
+#   if (!base::exists("contador_tabelas_alex", envir = .GlobalEnv)) {
+#     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
+#   }
+# 
+#   # Processamento dos dados principais
+#   dados_processados <- dados
+#   if (!base::is.null(colunas_selecionadas)) {
+#     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
+#   }
+# 
+#   # Adiciona coluna do botão de expansão
+#   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
+#   n_colunas_reais <- base::ncol(dados_processados)
+# 
+#   # Atualiza contador para o título numerado
+#   base::assign("contador_tabelas_alex", base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1, envir = .GlobalEnv)
+#   titulo_final <- base::paste0("Tabela ", base::get("contador_tabelas_alex", envir = .GlobalEnv), ": ", titulo_tabela)
+# 
+#   html_titulo <- htmltools::tags$h2(
+#     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
+#                           "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
+#     htmltools::tags$b(titulo_final)
+#   )
+# 
+#   # Prepara os dados JSON para a sub-tabela
+#   json_detalhes_js <- jsonlite::toJSON(dados_detalhes, ArrayOrder = "row")
+#   nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
+#   larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
+# 
+#   # Configuração de larguras com proteção contra Erro 7
+#   lista_column_defs <- base::list(
+#     base::list(targets = 0, className = 'details-control', width = '20px', orderable = FALSE)
+#   )
+#   
+#   if (!base::is.null(largura_cols_vetor)) {
+#     for (i in 1:base::length(largura_cols_vetor)) {
+#       if (i < n_colunas_reais) {
+#         lista_column_defs[[base::length(lista_column_defs) + 1]] <- base::list(targets = i, width = largura_cols_vetor[i])
+#       }
+#     }
+#   }
+# 
+#   tabela <- DT::datatable(
+#     base::data.frame(dados_processados, check.names = FALSE),
+#     escape = FALSE, 
+#     rownames = mostrar_indice,
+#     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
+#     width = "100%", 
+#     class = "row-border", 
+#     options = base::list(
+#       # CORREÇÃO AQUI: Dinâmico conforme sua escolha
+#       dom = if(pesquisa_geral) 'ft p' else 't p',
+#       pageLength = n_pages,
+#       searching = TRUE, 
+#       lengthChange = FALSE,
+#       info = FALSE,
+#       ordering = FALSE,      
+#       autoWidth = FALSE,    
+#       scrollX = TRUE,
+#       columnDefs = lista_column_defs,
+#       
+#       initComplete = DT::JS(
+#         base::paste0("function(settings, json) {",
+#                       # Alinhamento, Negrito e Margens na Barra de Pesquisa
+#                       "$(this.api().table().container()).find('.dataTables_filter').css({",
+#                       "  'float': 'left', 'text-align': 'left', 'font-weight': 'bold',",
+#                       "  'margin-top': '15px', 'margin-bottom': '15px'",
+#                       "});",
+#                       # Preservação do Estilo (Bordas 3px, Fundo Branco)
+#                       "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
+#                       "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
+#                       "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
+#                       "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
+# 
+#                      # Lógica de expansão e sub-tabela (ATUALIZADA)
+#                      "var table = this.api(); var detalhes_data = ", json_detalhes_js, ";",
+#                      "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
+#                      "$(this.api().table().body()).on('click', 'td.details-control', function() {",
+#                      "  var tr = $(this).closest('tr'); var row = table.row(tr);",
+#                      "  if (row.child.isShown()) {",
+#                      "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
+#                      "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal', 'border-left': ''});",
+#                      "  } else {",
+#                      "    tr.css({'background-color': '#f8f9fa', 'color': '", cor_primaria, "', 'font-weight': '600', 'border-left': '4px solid ", cor_primaria, "'});",
+#                      "    var rowData = row.data(); var indexChave = ", if(mostrar_indice) "2" else "1", "; var chave = rowData[indexChave];",
+#                      "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
+#                      "    var html_sub = '<table class=\"subtable\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff !important; color:#03045e; font-weight:bold;\">';",
+#                      "    if(sub_dados.length > 0) {",
+#                      "       // FILTRO AQUI: Remove a coluna chave (processo) dos detalhes",
+#                      "       var colKeys = Object.keys(sub_dados[0]).filter(k => k !== '", coluna_chave, "');",
+#                      "       colKeys.forEach((key, index) => {",
+#                      "          var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
+#                      "          var width = (customLarguras && customLarguras[index]) ? 'width:'+customLarguras[index]+';' : '';",
+#                      "          html_sub += '<th style=\"padding:6px; border-bottom:1px solid #ddd; text-align:left; '+width+'\">' + label + '</th>';",
+#                      "       });",
+#                      "       html_sub += '</tr></thead><tbody>';",
+#                      "       sub_dados.forEach(r => {",
+#                      "          html_sub += '<tr class=\"subrow\" style=\"border-bottom:1px solid #f1f1f1; background-color: transparent !important;\">';",
+#                      "          // USA AS CHAVES FILTRADAS PARA OS VALORES",
+#                      "          colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; font-weight: normal !important;\">' + (r[k] || '') + '</td>'; });",
+#                      "          html_sub += '</tr>';",
+#                      "       });",
+#                      "    } else { html_sub += '<tr><td>Nenhum detalhe disponível</td></tr>'; }",
+#                      "    html_sub += '</tbody></table>';",
+#                      "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
+#                      "  }",
+#                      "});",             
+#                       # Hover Alex (TRAVADO para não afetar sub-tabelas)
+#                       "$(this.api().table().body()).on('mouseenter', 'tr', function(e) {",
+#                       "  var tr = $(this);",
+#                       "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable') && !tr.hasClass('subrow')) {",
+#                       "    tr.css({'background-color': '#ffffff', 'color': '#000000', 'font-weight': 'bold'});",
+#                       "  }",
+#                       "}).on('mouseleave', 'tr', function(e) {",
+#                       "  var tr = $(this);",
+#                       "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable') && !tr.hasClass('subrow')) {",
+#                       "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
+#                       "  }",
+#                       "});",
+#                       "}")
+#       ),
+#       language = base::list(paginate = base::list("previous" = "Anterior", "next" = "Próximo"), search = "Pesquisa Geral:")
+#     )
+#   )
+#   return(htmltools::tagList(html_titulo, tabela))
+# }
 
 
  # # Lógica de expansão e sub-tabela
@@ -1224,7 +1361,7 @@ plotly::plot_ly() %>%
     title = base::list(
       text = base::paste0("<b style='color:", titulo_cor, "; font-size:", titulo_tamanho, "px'>", titulo_nome, "</b>",
                           "<br><span style='color:", sub_cor, "; font-size:", sub_tamanho, "px'>", subtitulo_texto, "</span>"),
-      x = 0, y = 0.80, xanchor = "left", xref = "paper"
+      x = 0, y = 0.98, xanchor = "left", xref = "paper"
     ),
     # Aplica o estilo do Hover Label definido pelo Alex
     hoverlabel = base::list(
