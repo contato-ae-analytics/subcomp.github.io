@@ -1740,11 +1740,11 @@ minhas_colunas <- base::c(
 minhas_larguras <- base::c("30px", 
                            "130px", 
                            "80px", 
-                           "400px",
+                           "550px",
                            "50px", 
                            "50px", 
                            "50px", 
-                           "600px", 
+                           "800px", 
                            "50px", 
                            "50px")
 
