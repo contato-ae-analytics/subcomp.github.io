@@ -286,9 +286,13 @@ tabela_interativa_detalhes <- function(dados,
     htmltools::tags$b(titulo_final)
   )
 
+  
+  
   json_detalhes_js <- jsonlite::toJSON(dados_detalhes, ArrayOrder = "row")
-  nomes_detalhes_js <- if(!base::is.na(colunas_detalhes_nomes) && !base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
-  larguras_detalhes_js <- if(!base::is.na(largura_detalhes_vetor) && !base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
+  nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
+  larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
+  # nomes_detalhes_js <- if(!base::is.na(colunas_detalhes_nomes) && !base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
+  # larguras_detalhes_js <- if(!base::is.na(largura_detalhes_vetor) && !base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
 
   lista_column_defs <- base::list(
     base::list(targets = 0, className = 'details-control', width = '20px', orderable = FALSE)
