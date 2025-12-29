@@ -2224,7 +2224,7 @@ nomes_col <- base::c(
   "Nº<br>Processos"          = "n_processos",
   "Valor<br>Consolidado"    = "aporte_total",
   "Processos<br>Finalizados" = "n_resolvidos",
-  "Valor<br>Resolvido"         = "aporte_resolvido",
+  "Valor<br>Empenhado"         = "aporte_resolvido",
   "Eficiência<br>(%)"           = "p_resolvido_txt",
   "Processos<br>Pendentes"   = "n_pendentes",
   "Valor<br>Pendente"          = "aporte_pendente",
@@ -2234,12 +2234,12 @@ nomes_col <- base::c(
 largura_col <- base::c("30px",
                        "90px", 
                        "90px", 
-                       "320px",
+                       "450px",
                        "50px", 
-                       "320px", 
+                       "450px", 
                        "50px", 
                        "50px", 
-                       "320px", 
+                       "450px", 
                        "50px")
 
 alinhamento_col <- base::c(
@@ -2247,7 +2247,7 @@ alinhamento_col <- base::c(
 )
 
 alinhamento_det <- base::c(
-  "center","center","center","center","center","center","center","center","center"
+  "center","center","left","center","left","center","center","left","center"
 )
 
 nomes_det <- base::c(
