@@ -339,38 +339,40 @@ tabela_interativa_detalhes <- function(dados,
                       "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
                       "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
                       "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
-                      
-                      # Lógica de expansão e sub-tabela
-                      "var table = this.api(); var detalhes_data = ", json_detalhes_js, ";",
-                      "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
-                      "$(this.api().table().body()).on('click', 'td.details-control', function() {",
-                      "  var tr = $(this).closest('tr'); var row = table.row(tr);",
-                      "  if (row.child.isShown()) {",
-                      "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
-                      "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal', 'border-left': ''});",
-                      "  } else {",
-                      "    tr.css({'background-color': '#f8f9fa', 'color': '", cor_primaria, "', 'font-weight': '600', 'border-left': '4px solid ", cor_primaria, "'});",
-                      "    var rowData = row.data(); var indexChave = ", if(mostrar_indice) "2" else "1", "; var chave = rowData[indexChave];",
-                      "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
-                      "    var html_sub = '<table class=\"subtable\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff !important; color:#03045e; font-weight:bold;\">';",
-                      "    if(sub_dados.length > 0) {",
-                      "       var colKeys = Object.keys(sub_dados[0]);",
-                      "       colKeys.forEach((key, index) => {",
-                      "          var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
-                      "          var width = (customLarguras && customLarguras[index]) ? 'width:'+customLarguras[index]+';' : '';",
-                      "          html_sub += '<th style=\"padding:6px; border-bottom:1px solid #ddd; text-align:left; '+width+'\">' + label + '</th>';",
-                      "       });",
-                      "       html_sub += '</tr></thead><tbody>';",
-                      "       sub_dados.forEach(r => {",
-                      "          html_sub += '<tr class=\"subrow\" style=\"border-bottom:1px solid #f1f1f1; background-color: transparent !important;\">';",
-                      "          colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; font-weight: normal !important;\">' + (r[k] || '') + '</td>'; });",
-                      "          html_sub += '</tr>';",
-                      "       });",
-                      "    } else { html_sub += '<tr><td>Nenhum detalhe disponível</td></tr>'; }",
-                      "    html_sub += '</tbody></table>';",
-                      "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
-                      "  }",
-                      "});",
+
+                     # Lógica de expansão e sub-tabela (ATUALIZADA)
+                     "var table = this.api(); var detalhes_data = ", json_detalhes_js, ";",
+                     "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
+                     "$(this.api().table().body()).on('click', 'td.details-control', function() {",
+                     "  var tr = $(this).closest('tr'); var row = table.row(tr);",
+                     "  if (row.child.isShown()) {",
+                     "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
+                     "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal', 'border-left': ''});",
+                     "  } else {",
+                     "    tr.css({'background-color': '#f8f9fa', 'color': '", cor_primaria, "', 'font-weight': '600', 'border-left': '4px solid ", cor_primaria, "'});",
+                     "    var rowData = row.data(); var indexChave = ", if(mostrar_indice) "2" else "1", "; var chave = rowData[indexChave];",
+                     "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
+                     "    var html_sub = '<table class=\"subtable\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff !important; color:#03045e; font-weight:bold;\">';",
+                     "    if(sub_dados.length > 0) {",
+                     "       // FILTRO AQUI: Remove a coluna chave (processo) dos detalhes",
+                     "       var colKeys = Object.keys(sub_dados[0]).filter(k => k !== '", coluna_chave, "');",
+                     "       colKeys.forEach((key, index) => {",
+                     "          var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
+                     "          var width = (customLarguras && customLarguras[index]) ? 'width:'+customLarguras[index]+';' : '';",
+                     "          html_sub += '<th style=\"padding:6px; border-bottom:1px solid #ddd; text-align:left; '+width+'\">' + label + '</th>';",
+                     "       });",
+                     "       html_sub += '</tr></thead><tbody>';",
+                     "       sub_dados.forEach(r => {",
+                     "          html_sub += '<tr class=\"subrow\" style=\"border-bottom:1px solid #f1f1f1; background-color: transparent !important;\">';",
+                     "          // USA AS CHAVES FILTRADAS PARA OS VALORES",
+                     "          colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; font-weight: normal !important;\">' + (r[k] || '') + '</td>'; });",
+                     "          html_sub += '</tr>';",
+                     "       });",
+                     "    } else { html_sub += '<tr><td>Nenhum detalhe disponível</td></tr>'; }",
+                     "    html_sub += '</tbody></table>';",
+                     "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
+                     "  }",
+                     "});",             
                       # Hover Alex (TRAVADO para não afetar sub-tabelas)
                       "$(this.api().table().body()).on('mouseenter', 'tr', function(e) {",
                       "  var tr = $(this);",
@@ -391,6 +393,39 @@ tabela_interativa_detalhes <- function(dados,
   return(htmltools::tagList(html_titulo, tabela))
 }
 
+
+ # # Lógica de expansão e sub-tabela
+ #                      "var table = this.api(); var detalhes_data = ", json_detalhes_js, ";",
+ #                      "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
+ #                      "$(this.api().table().body()).on('click', 'td.details-control', function() {",
+ #                      "  var tr = $(this).closest('tr'); var row = table.row(tr);",
+ #                      "  if (row.child.isShown()) {",
+ #                      "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
+ #                      "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal', 'border-left': ''});",
+ #                      "  } else {",
+ #                      "    tr.css({'background-color': '#f8f9fa', 'color': '", cor_primaria, "', 'font-weight': '600', 'border-left': '4px solid ", cor_primaria, "'});",
+ #                      "    var rowData = row.data(); var indexChave = ", if(mostrar_indice) "2" else "1", "; var chave = rowData[indexChave];",
+ #                      "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
+ #                      "    var html_sub = '<table class=\"subtable\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff !important; color:#03045e; font-weight:bold;\">';",
+ #                      "    if(sub_dados.length > 0) {",
+ #                      "       var colKeys = Object.keys(sub_dados[0]);",
+ #                      "       colKeys.forEach((key, index) => {",
+ #                      "          var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
+ #                      "          var width = (customLarguras && customLarguras[index]) ? 'width:'+customLarguras[index]+';' : '';",
+ #                      "          html_sub += '<th style=\"padding:6px; border-bottom:1px solid #ddd; text-align:left; '+width+'\">' + label + '</th>';",
+ #                      "       });",
+ #                      "       html_sub += '</tr></thead><tbody>';",
+ #                      "       sub_dados.forEach(r => {",
+ #                      "          html_sub += '<tr class=\"subrow\" style=\"border-bottom:1px solid #f1f1f1; background-color: transparent !important;\">';",
+ #                      "          colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; font-weight: normal !important;\">' + (r[k] || '') + '</td>'; });",
+ #                      "          html_sub += '</tr>';",
+ #                      "       });",
+ #                      "    } else { html_sub += '<tr><td>Nenhum detalhe disponível</td></tr>'; }",
+ #                      "    html_sub += '</tbody></table>';",
+ #                      "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
+ #                      "  }",
+ #                      "});",
+ #                     
 # ==============================================================================
 # F. FUNÇÕES DE TRATAMENTO E AUDITORIA
 # ==============================================================================
@@ -525,7 +560,7 @@ O setor atua de forma estratégica na coordenação e execução de compras e co
 
 <!-- Importação das bases de dados -->
 
-::: {style="font-size: 0.9em; text-align: justify; margin-top: 25px; margin-bottom: 25px; padding: 20px 20px;"}
+::: {style="font-size: 0.9em; text-align: justify; margin-top: 25px; margin-bottom: 25px;"}
 
 
 ```{r}
@@ -1225,17 +1260,17 @@ plotly::plot_ly() %>%
                  buttons = base::list(
                    base::list(method = "update", label = "Gráfico: Barras", 
                               args = base::list(base::list(type = "bar", textposition = "outside"), 
-                                                base::list(margin = base::list(t = 150, b = 30, l = 0, r = 0)))),
+                                                base::list(margin = base::list(t = 150, b = 130, l = 0, r = 0)))),
                    base::list(method = "update", label = "Gráfico: Linhas", 
                               args = base::list(base::list(type = "scatter", mode = "lines+markers+text", textposition = "top center"),
-                                                base::list(margin = base::list(t = 150, b = 40, l = 0, r = 0))))
+                                                base::list(margin = base::list(t = 150, b = 130, l = 0, r = 0))))
                  ), font = base::list(family = "Inter, sans-serif", size = tamanho_botoes))
     ),
     # Legenda superior horizontal configurada pelo Alex
     legend = base::list(orientation = 'h', x = 0, xanchor = "left", y = 1.25,
                         font = base::list(family = "Inter, sans-serif", size = tamanho_legenda, color = cor_legenda)),
     # Ajuste fino das margens do gráfico
-    margin = base::list(t = 150, b = 40, l = 0, r = 0),
+    margin = base::list(t = 150, b = 130, l = 0, r = 0),
     plot_bgcolor = "white", paper_bgcolor = "white"
   ) %>%
   # Configuração de responsividade e ocultação da barra do Plotly
@@ -1254,9 +1289,46 @@ cor_primaria = "#000000"
 cor_texto_corpo = "#000000"
 
 
+# # ==========================================================
+# # --- 1. PREPARAÇÃO DA TABELA PRINCIPAL (RESUMO POR PROCESSO) ---
+# # ==========================================================
+# 
+# bd_resumo_processos <- bd_principal %>%
+#   dplyr::group_by(processo) %>% 
+#   dplyr::summarise(
+#     modalidade   = dplyr::first(modalidade_processo),
+#     agente       = dplyr::first(agente),
+#     total_itens  = base::max(qtd_itens_processo, na.rm = TRUE),
+#     v_total_num  = base::sum(valor_total, na.rm = TRUE),
+#     
+#     # CRITÉRIO ALEX: O maior tempo entre os itens define o processo
+#     dias_uteis   = base::max(dias_uteis, na.rm = TRUE),
+#     
+#     # Mês de entrada e o mês de saída do item mais lento
+#     mes_entrada  = dplyr::first(mes_entrada),
+#     mes_saida    = dplyr::last(base::sort(mes_saida)),
+#     
+#     # Eficiência média (Já arredondado sem multiplicar, conforme solicitado)
+#     pct_empenho  = base::mean(pct_empenho, na.rm = TRUE),
+#     .groups = "drop"
+#   ) %>%
+#   dplyr::mutate(
+#     valor_total_proc = base::paste0("R$ ", base::format(v_total_num, big.mark = ".", decimal.mark = ",")),
+#     # Ajuste do round: apenas formatação de texto com símbolo %
+#     pct_empenho      = base::paste0(base::round(pct_empenho, 1), "%")
+#   )
+
 # ==========================================================
 # --- 1. PREPARAÇÃO DA TABELA PRINCIPAL (RESUMO POR PROCESSO) ---
 # ==========================================================
+
+# Vetor auxiliar para tradução (Trata os nomes que o GitHub gera)
+traducao_meses <- c(
+  "January" = "Janeiro", "February" = "Fevereiro", "March" = "Março",
+  "April" = "Abril", "May" = "Maio", "June" = "Junho",
+  "July" = "Julho", "August" = "Agosto", "September" = "Setembro",
+  "October" = "Outubro", "November" = "Novembro", "December" = "Dezembro"
+)
 
 bd_resumo_processos <- bd_principal %>%
   dplyr::group_by(processo) %>% 
@@ -1265,21 +1337,21 @@ bd_resumo_processos <- bd_principal %>%
     agente       = dplyr::first(agente),
     total_itens  = base::max(qtd_itens_processo, na.rm = TRUE),
     v_total_num  = base::sum(valor_total, na.rm = TRUE),
-    
-    # CRITÉRIO ALEX: O maior tempo entre os itens define o processo
     dias_uteis   = base::max(dias_uteis, na.rm = TRUE),
     
-    # Mês de entrada e o mês de saída do item mais lento
-    mes_entrada  = dplyr::first(mes_entrada),
-    mes_saida    = dplyr::last(base::sort(mes_saida)),
+    # Pegamos os meses originais
+    mes_entrada_raw = dplyr::first(mes_entrada),
+    mes_saida_raw   = dplyr::last(base::sort(mes_saida)),
     
-    # Eficiência média (Já arredondado sem multiplicar, conforme solicitado)
     pct_empenho  = base::mean(pct_empenho, na.rm = TRUE),
     .groups = "drop"
   ) %>%
   dplyr::mutate(
+    # --- AQUI ESTÁ A TRADUÇÃO ---
+    mes_entrada = dplyr::recode(mes_entrada_raw, !!!traducao_meses),
+    mes_saida   = dplyr::recode(mes_saida_raw, !!!traducao_meses),
+    
     valor_total_proc = base::paste0("R$ ", base::format(v_total_num, big.mark = ".", decimal.mark = ",")),
-    # Ajuste do round: apenas formatação de texto com símbolo %
     pct_empenho      = base::paste0(base::round(pct_empenho, 1), "%")
   )
 
@@ -1389,9 +1461,306 @@ tabela_interativa_detalhes(
 
 ::: {style="font-size: 0.9em; text-align: justify; margin-top: 25px; margin-bottom: 25px; "}
 
+
+```{r}
+# ==========================================================
+# GRÁFICO CONSOLIDADO: SETOR COMPLETO
+# ==========================================================
+gerar_dashboard_setor <- function(bd_principal) {
+  
+  # --- BLOCO DE CONFIGURAÇÃO (ESTILO RIGOROSO MANTIDO) ---
+  fonte_padrao     <- "Inter, sans-serif"
+  cores_fatias     <- c('#74c69d', '#40916c', '#6fffe9', '#5bc0be', '#3a506b', '#1c2541', '#0b132b', '#081c15', '#000000')
+  
+  cor_titulo       <- "#081c15" 
+  cor_empenhado    <- "#008000"
+  cor_pendente     <- "#B22222"
+  cor_eficiencia   <- "#0b132b" 
+  
+  tam_titulo       <- 20
+  tam_corpo_centro <- 13 
+  tam_destaque     <- 16 
+  
+  espacador_frase  <- "<span style='font-size:4px;'><br></span>"
+  espacador_bloco  <- "<span style='font-size:10px;'><br></span>"
+  
+  # --- 1. PROCESSAMENTO (SEM FILTRO DE AGENTE) ---
+  df_proc_unico <- bd_principal %>%
+    dplyr::group_by(processo) %>%
+    dplyr::summarise(
+      modalidade       = dplyr::first(modalidade_processo),
+      tempo_processo   = base::max(dias_uteis, na.rm = TRUE),
+      valor_processo   = base::sum(valor_total, na.rm = TRUE),
+      total_itens_proc = dplyr::n(),
+      itens_empenhados = base::sum(status_item == "Empenhado" | !base::is.na(nota_de_empenho), na.rm = TRUE),
+      valor_empenhado  = base::sum(base::ifelse(status_item == "Empenhado" | !base::is.na(nota_de_empenho), valor_total, 0), na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    dplyr::mutate(
+      situacao_proc = base::ifelse(itens_empenhados == total_itens_proc, "Resolvido", "Pendente")
+    )
+  
+  # --- 2. AGRUPAMENTO POR MODALIDADE (RÓTULOS E HOVER) ---
+  df_modalidade <- df_proc_unico %>%
+    dplyr::group_by(modalidade) %>%
+    dplyr::summarise(
+      n_processos = dplyr::n(), 
+      n_resolvidos = base::sum(situacao_proc == "Resolvido"),
+      n_pendentes = base::sum(situacao_proc == "Pendente"), 
+      valor_total_mod = base::sum(valor_processo),
+      valor_emp_mod = base::sum(valor_empenhado), 
+      tempo_medio_mod = base::mean(tempo_processo, na.rm = TRUE), 
+      .groups = "drop"
+    ) %>%
+    dplyr::mutate(
+      p_res = base::sprintf("%.2f", (n_resolvidos / n_processos) * 100),
+      p_pen = base::sprintf("%.2f", (n_pendentes / n_processos) * 100),
+      v_total_txt = base::paste0("R$ ", base::format(valor_total_mod, big.mark = ".", decimal.mark = ",")),
+      v_emp_txt = base::paste0("R$ ", base::format(valor_emp_mod, big.mark = ".", decimal.mark = ",")),
+      v_pen_txt = base::paste0("R$ ", base::format(valor_total_mod - valor_emp_mod, big.mark = ".", decimal.mark = ",")),
+      
+      label_grafico = base::paste0(modalidade, "<br>", n_processos, " proc. (", 
+                                   base::sprintf("%.1f", (n_processos / base::sum(n_processos)) * 100), "%)"),
+      
+      hover_txt = base::paste0("<span style='color:black; font-family:", fonte_padrao, "'>",
+                               "<b>MODALIDADE: ", modalidade, "</b><br>",
+                               "<span style='color:#bdc3c7'>──────────────────────────</span><br>",
+                               "<b>PERFORMANCE SETORIAL</b><br>",
+                               "<span style='color:", cor_eficiencia, "; font-size:14px;'>📊 <b>Eficiência: ", p_res, "%</b></span><br>",
+                               "⏱ <b>Ciclo Médio:</b> ", base::round(tempo_medio_mod, 0), " dias úteis<br>",
+                               "📦 <b>Volume:</b> ", n_processos, " processos totais<br>",
+                               "<span style='color:#bdc3c7'>──────────────────────────</span><br>",
+                               "<b>STATUS DOS PROCESSOS</b><br>",
+                               "• Resolvidos: ", n_resolvidos, " (", p_res, "%)<br>",
+                               "• Pendentes: ", n_pendentes, " (", p_pen, "%)<br>",
+                               "<span style='color:#bdc3c7'>──────────────────────────</span><br>",
+                               "<b>APORTE FINANCEIRO</b><br>",
+                               "💰 <b>Total:</b> ", v_total_txt, "<br>",
+                               "✅ <b>Empenhado:</b> ", v_emp_txt, "<br>",
+                               "❌ <b>Pendente:</b> ", v_pen_txt, "</span>")
+    )
+  
+  # --- 3. MÉTRICAS DO CENTRO ---
+  total_p <- base::nrow(df_proc_unico); total_v <- base::sum(df_proc_unico$valor_processo)
+  res_n <- base::sum(df_proc_unico$situacao_proc == "Resolvido"); res_v <- base::sum(df_proc_unico$valor_empenhado)
+  res_p <- base::sprintf("%.2f", (res_n / total_p) * 100)
+  pen_n <- total_p - res_n; pen_v <- total_v - res_v; pen_p <- base::sprintf("%.2f", (pen_n / total_p) * 100)
+  eficiencia_global <- base::sprintf("%.2f", (res_n / total_p) * 100)
+  
+  texto_centro <- base::paste0(
+    "<span style='font-family:", fonte_padrao, ";'>",
+    "<b><span style='color:", cor_titulo, "; font-size:", tam_corpo_centro + 2, "px;'>SUMÁRIO CONSOLIDADO SETORIAL</span></b><br>",
+    "<span style='color:#bdc3c7'>_________________________________</span><br>",
+    espacador_bloco,
+    "<b><span style='font-size:", tam_destaque, "px;'>Processos Totais: ", total_p, "</span></b><br>",
+    espacador_frase,
+    "<b><span style='font-size:", tam_destaque, "px;'>Valor Total: R$ ", base::format(total_v, big.mark = ".", decimal.mark = ","), "</span></b><br>",
+    espacador_frase,
+    "<span style='color:", cor_eficiencia, "; font-size:", tam_destaque, "px;'>📊 <b>Eficiência Global: ", eficiencia_global, "%</b></span><br>",
+    espacador_bloco,
+    "<span style='color:#bdc3c7'>_________________________________</span><br>",
+    espacador_bloco,
+    "<b><span style='color:", cor_empenhado, "; font-size:", tam_destaque, "px;'>EMPENHADOS: ", res_n, " (", res_p, "%)</span></b><br>",
+    espacador_frase,
+    "<b><span style='color:", cor_empenhado, "; font-size:", tam_destaque, "px;'>Valor: R$ ", base::format(res_v, big.mark = ".", decimal.mark = ","), "</span></b><br>",
+    espacador_bloco,
+    "<b><span style='color:", cor_pendente, "; font-size:", tam_destaque, "px;'>PENDENTES: ", pen_n, " (", pen_p, "%)</span></b><br>",
+    espacador_frase,
+    "<b><span style='color:", cor_pendente, "; font-size:", tam_destaque, "px;'>Valor: R$ ", base::format(pen_v, big.mark = ".", decimal.mark = ","), "</span></b><br>",
+    "<span style='color:#bdc3c7'>_________________________________</span><br>",
+    espacador_bloco,
+    "</span>"
+  )
+  
+  # --- 4. CONSTRUÇÃO DO GRÁFICO ---
+  plotly::plot_ly(df_modalidade, labels = ~label_grafico, values = ~n_processos, type = 'pie', hole = 0.75,
+                  textinfo = 'text', text = ~label_grafico, hoverinfo = 'text', 
+                  hovertext = ~hover_txt,
+                  marker = base::list(colors = cores_fatias, line = base::list(color = '#FFFFFF', width = 3))) %>%
+    plotly::layout(
+      title = base::list(text = "<b>Análise de Gestão: Consolidado Setorial</b>", 
+                         font = base::list(family = fonte_padrao, size = tam_titulo, color = cor_titulo)),
+      font = base::list(family = fonte_padrao),
+      showlegend = FALSE,
+      hoverlabel = base::list(bgcolor = "white", bordercolor = "black", align = "left", 
+                               font = base::list(family = fonte_padrao, color = "black")),
+      annotations = base::list(text = texto_centro, showarrow = FALSE)
+    )
+}
+
+# Para usar basta chamar:
+gerar_dashboard_setor(bd_principal)
+```
+
 :::
 
 ### Índices de Produtividade Individual
+
+::: {style="font-size: 0.9em; text-align: justify; margin-top: 25px; margin-bottom: 25px; "}
+
+::: {.panel-tabset}
+
+## Daniel
+
+```{r}
+# ==========================================================
+# FUNÇÃO MESTRE PARA DASHBOARD (VERSÃO FINAL GOLD)
+# ==========================================================
+gerar_dashboard_agente <- function(agente_alvo, bd_principal) {
+  
+  # --- BLOCO DE CONFIGURAÇÃO (ESTILO RIGOROSO) ---
+  fonte_padrao     <- "Inter, sans-serif"
+  cores_fatias     <- c('#74c69d', '#40916c', '#6fffe9', '#5bc0be', '#3a506b', '#1c2541', '#0b132b', '#081c15', '#000000')
+  
+  cor_titulo       <- "#081c15" 
+  cor_empenhado    <- "#008000"
+  cor_pendente     <- "#B22222"
+  cor_eficiencia   <- "#0b132b" 
+  
+  tam_titulo       <- 20
+  tam_corpo_centro <- 13 
+  tam_destaque     <- 16 
+  
+  espacador_frase  <- "<span style='font-size:4px;'><br></span>"
+  espacador_bloco  <- "<span style='font-size:10px;'><br></span>"
+  
+  # --- TRAVA DE SEGURANÇA ---
+  df_filtro <- bd_principal %>% dplyr::filter(agente == agente_alvo)
+  if (base::nrow(df_filtro) == 0) {
+    base::message(base::paste0("⚠ Agente '", agente_alvo, "' sem dados. Pulando..."))
+    return(NULL)
+  }
+  
+  # --- 1. PROCESSAMENTO ---
+  df_proc_unico <- df_filtro %>%
+    dplyr::group_by(processo) %>%
+    dplyr::summarise(
+      modalidade       = dplyr::first(modalidade_processo),
+      tempo_processo   = base::max(dias_uteis, na.rm = TRUE),
+      valor_processo   = base::sum(valor_total, na.rm = TRUE),
+      total_itens_proc = dplyr::n(),
+      itens_empenhados = base::sum(status_item == "Empenhado" | !base::is.na(nota_de_empenho), na.rm = TRUE),
+      valor_empenhado  = base::sum(base::ifelse(status_item == "Empenhado" | !base::is.na(nota_de_empenho), valor_total, 0), na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    dplyr::mutate(situacao_proc = base::ifelse(itens_empenhados == total_itens_proc, "Resolvido", "Pendente"))
+  
+  # --- 2. AGRUPAMENTO POR MODALIDADE (RÓTULOS E HOVER) ---
+  df_modalidade <- df_proc_unico %>%
+    dplyr::group_by(modalidade) %>%
+    dplyr::summarise(
+      n_processos = dplyr::n(), n_resolvidos = base::sum(situacao_proc == "Resolvido"),
+      n_pendentes = base::sum(situacao_proc == "Pendente"), valor_total_mod = base::sum(valor_processo),
+      valor_emp_mod = base::sum(valor_empenhado), tempo_medio_mod = base::mean(tempo_processo, na.rm = TRUE), .groups = "drop"
+    ) %>%
+    dplyr::mutate(
+      p_res = base::sprintf("%.2f", (n_resolvidos / n_processos) * 100),
+      p_pen = base::sprintf("%.2f", (n_pendentes / n_processos) * 100),
+      v_total_txt = base::paste0("R$ ", base::format(valor_total_mod, big.mark = ".", decimal.mark = ",")),
+      v_emp_txt = base::paste0("R$ ", base::format(valor_emp_mod, big.mark = ".", decimal.mark = ",")),
+      v_pen_txt = base::paste0("R$ ", base::format(valor_total_mod - valor_emp_mod, big.mark = ".", decimal.mark = ",")),
+      
+      # TEXTO QUE APARECE NAS FATIAS (Label + N + %)
+      label_grafico = base::paste0(modalidade, "<br>", n_processos, " proc. (", 
+                                   base::sprintf("%.1f", (n_processos / base::sum(n_processos)) * 100), "%)"),
+      
+      hover_txt = base::paste0("<span style='color:black; font-family:", fonte_padrao, "'>",
+                               "<b>MODALIDADE: ", modalidade, "</b><br>",
+                               "<span style='color:#bdc3c7'>──────────────────────────</span><br>",
+                               "<b>PERFORMANCE E FLUXO</b><br>",
+                               "<span style='color:", cor_eficiencia, "; font-size:14px;'>📊 <b>Eficiência: ", p_res, "%</b></span><br>",
+                               "⏱ <b>Ciclo Médio:</b> ", base::round(tempo_medio_mod, 0), " dias úteis<br>",
+                               "📦 <b>Volume:</b> ", n_processos, " processos totais<br>",
+                               "<span style='color:#bdc3c7'>──────────────────────────</span><br>",
+                               "<b>STATUS DOS PROCESSOS</b><br>",
+                               "• Resolvidos: ", n_resolvidos, " (", p_res, "%)<br>",
+                               "• Pendentes: ", n_pendentes, " (", p_pen, "%)<br>",
+                               "<span style='color:#bdc3c7'>──────────────────────────</span><br>",
+                               "<b>APORTE FINANCEIRO</b><br>",
+                               "💰 <b>Total:</b> ", v_total_txt, "<br>",
+                               "✅ <b>Empenhado:</b> ", v_emp_txt, "<br>",
+                               "❌ <b>Pendente:</b> ", v_pen_txt, "</span>")
+    )
+  
+  # --- 3. MÉTRICAS DO CENTRO ---
+  total_p <- base::nrow(df_proc_unico); total_v <- base::sum(df_proc_unico$valor_processo)
+  res_n <- base::sum(df_proc_unico$situacao_proc == "Resolvido"); res_v <- base::sum(df_proc_unico$valor_empenhado)
+  res_p <- base::sprintf("%.2f", (res_n / total_p) * 100)
+  pen_n <- total_p - res_n; pen_v <- total_v - res_v; pen_p <- base::sprintf("%.2f", (pen_n / total_p) * 100)
+  eficiencia_global <- base::sprintf("%.2f", (res_n / total_p) * 100)
+  
+  texto_centro <- base::paste0(
+    "<span style='font-family:", fonte_padrao, ";'>",
+    "<b><span style='color:", cor_titulo, "; font-size:", tam_corpo_centro + 2, "px;'>SUMÁRIO CONSOLIDADO</span></b><br>",
+    "<span style='color:#bdc3c7'>_________________________________</span><br>",
+    espacador_bloco,
+    "<b><span style='font-size:", tam_destaque, "px;'>Processos Totais: ", total_p, "</span></b><br>",
+    espacador_frase,
+    "<b><span style='font-size:", tam_destaque, "px;'>Valor Total: R$ ", base::format(total_v, big.mark = ".", decimal.mark = ","), "</span></b><br>",
+    espacador_frase,
+    "<span style='color:", cor_eficiencia, "; font-size:", tam_destaque, "px;'>📊 <b>Eficiência Global: ", eficiencia_global, "%</b></span><br>",
+    espacador_bloco,
+    "<span style='color:#bdc3c7'>_________________________________</span><br>",
+    espacador_bloco,
+    "<b><span style='color:", cor_empenhado, "; font-size:", tam_destaque, "px;'>EMPENHADOS: ", res_n, " (", res_p, "%)</span></b><br>",
+    espacador_frase,
+    "<b><span style='color:", cor_empenhado, "; font-size:", tam_destaque, "px;'>Valor: R$ ", base::format(res_v, big.mark = ".", decimal.mark = ","), "</span></b><br>",
+    espacador_bloco,
+    "<b><span style='color:", cor_pendente, "; font-size:", tam_destaque, "px;'>PENDENTES: ", pen_n, " (", pen_p, "%)</span></b><br>",
+    espacador_frase,
+    "<b><span style='color:", cor_pendente, "; font-size:", tam_destaque, "px;'>Valor: R$ ", base::format(pen_v, big.mark = ".", decimal.mark = ","), "</span></b><br>",
+    "<span style='color:#bdc3c7'>_________________________________</span><br>",
+    espacador_bloco,
+    "</span>"
+  )
+  
+  # --- 4. CONSTRUÇÃO DO GRÁFICO ---
+  plotly::plot_ly(df_modalidade, labels = ~label_grafico, values = ~n_processos, type = 'pie', hole = 0.75,
+                  textinfo = 'text', text = ~label_grafico, hoverinfo = 'text', 
+                  hovertext = ~hover_txt, # Usando hovertext para garantir a exibição do hover_txt organizado
+                  marker = base::list(colors = cores_fatias, line = base::list(color = '#FFFFFF', width = 3))) %>%
+    plotly::layout(
+      title = base::list(text = base::paste0("<b>Análise de Gestão: ", agente_alvo, "</b>"), 
+                         font = base::list(family = fonte_padrao, size = tam_titulo, color = cor_titulo)),
+      font = base::list(family = fonte_padrao),
+      showlegend = FALSE,
+      hoverlabel = base::list(bgcolor = "white", bordercolor = "black", align = "left", 
+                              font = base::list(family = fonte_padrao, color = "black")),
+      annotations = base::list(text = texto_centro, showarrow = FALSE)
+    )
+}
+
+gerar_dashboard_agente("Daniel", bd_principal)
+
+```
+
+
+
+
+## ARP - ATA
+Conteúdo da modalidade ARP - ATA
+
+## CAE
+Conteúdo da modalidade CAE
+
+## DLE
+Conteúdo da modalidade DLE
+
+## INEX
+Conteúdo da modalidade INEX
+
+## PE
+Conteúdo da modalidade PE
+
+## RDL
+Conteúdo da modalidade RDL
+
+:::
+
+:::
+
+
+
 
 ::: {style="font-size: 0.9em; text-align: justify; margin-top: 25px; margin-bottom: 25px; "}
 
