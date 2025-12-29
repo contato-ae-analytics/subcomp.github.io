@@ -2022,6 +2022,13 @@ gerar_dashboard_setor(
 ## Daniel
 
 ```{r}
+#| label: Daniel
+#| code-summary: "Daniel"
+#| echo: false
+#| warning: false
+#| message: false
+#| out-width: "100%"
+#| fig-height: 7
 # ==========================================================
 # FUNÇÃO MESTRE PARA DASHBOARD (VERSÃO FINAL GOLD)
 # ==========================================================
