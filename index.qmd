@@ -1744,12 +1744,19 @@ alin_esquerda <- base::rep("left", 9)
 meus_nomes_detalhes <- base::c("ID Item", "Descrição Material / Serviço", "Fornecedor", "Qtd", "Valor Unitário", "Valor Total", "Situação", "Dias")
 minhas_larguras_detalhes <- base::c("60px", "400px", "200px", "50px", "100px", "100px", "100px", "60px")
 
-# --- EXECUÇÃO ---
+# --- EXECUÇÃO AJUSTADA ---
 tabela_interativa_detalhes(
   dados                  = bd_resumo_processos,
   dados_detalhes         = bd_detalhes_itens,
   coluna_chave           = "processo",
-  titulo_tabela          = "Relatório de Gestão de Processos",
+  titulo_tabela          = "Detalhamento dos Processos",
+  
+  tam_fonte_corpo        = tam_fonte_corpo,
+  tam_fonte_header       = tam_fonte_header,
+  tam_fonte_titulo       = tam_fonte_titulo,
+  cor_titulo             = cor_titulo,
+  cor_primaria           = cor_primaria,
+  cor_texto_corpo        = cor_texto_corpo,
   
   colunas_selecionadas   = minhas_colunas,
   largura_cols_vetor     = minhas_larguras,
@@ -1760,8 +1767,10 @@ tabela_interativa_detalhes(
   colunas_detalhes_nomes = meus_nomes_detalhes,
   largura_detalhes_vetor = minhas_larguras_detalhes,
   
-  cor_primaria = "#03045e",
-  mostrar_indice = FALSE
+  mostrar_indice         = FALSE,
+  mostrar_filtro         = FALSE,
+  pesquisa_geral         = TRUE, 
+  n_pages                = 10
 )
 ```
 
