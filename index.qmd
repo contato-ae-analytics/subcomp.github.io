@@ -2259,8 +2259,8 @@ bd_pai_modalidade <- status_por_processo %>%
     v_total_mod      = base::sum(valor_do_proc, na.rm = TRUE),
     n_resolvidos     = base::sum(proc_resolvido == TRUE),
     n_pendentes      = base::sum(proc_resolvido == FALSE),
-    itens_res_total  = base::sum(itens_res_proc),
-    itens_pen_total  = base::sum(itens_pen_proc),
+    # itens_res_total  = base::sum(itens_res_proc),
+    # itens_pen_total  = base::sum(itens_pen_proc),
     v_resolvido      = base::sum(base::ifelse(proc_resolvido == TRUE, valor_do_proc, 0)),
     v_pendente       = base::sum(base::ifelse(proc_resolvido == FALSE, valor_do_proc, 0)),
     # Esta é a Média do Setor que será a base da comparação
@@ -2289,8 +2289,8 @@ bd_filho_agentes <- status_por_processo %>%
     total_proc_ag   = dplyr::n(),
     res_ag          = base::sum(proc_resolvido == TRUE),
     pen_ag          = base::sum(proc_resolvido == FALSE),
-    itens_ag_res    = base::sum(itens_res_proc),
-    itens_ag_pen    = base::sum(itens_pen_proc),
+    # itens_ag_res    = base::sum(itens_res_proc),
+    # itens_ag_pen    = base::sum(itens_pen_proc),
     v_gestao_ag     = base::sum(valor_do_proc, na.rm = TRUE),
     # Média Individual do Agente nesta modalidade
     tempo_ag_num    = base::mean(tempo_do_proc, na.rm = TRUE),
@@ -2326,8 +2326,8 @@ bd_filho_agentes <- status_por_processo %>%
                 total_proc_ag, 
                 res_ag, 
                 pen_ag, 
-                itens_ag_res,
-                itens_ag_pen,
+                # itens_ag_res,
+                # itens_ag_pen,
                 aporte_gestao, 
                 ciclo_ag_txt, 
                 media_setor, 
@@ -2362,7 +2362,7 @@ largura_col <- base::c(
   "80px",  # Eficiência
   "90px", # Pendentes
   "350px", # Valor Pendente (ESPAÇO GRANDE)
-  "130px"   # Ciclo
+  "140px"   # Ciclo
 )
 
 # Alinhamento Pai (11 valores) - Tudo à esquerda
@@ -2374,8 +2374,8 @@ nomes_det <- base::c(
   "Qtd. Processos", 
   "Processos<br>Empenhados", 
   "Processos<br>Pendentes", 
-  "Itens<br>Empenhados", # Nome alterado aqui também
-  "Itens<br>Pendentes", 
+  # "Itens<br>Empenhados", # Nome alterado aqui também
+  # "Itens<br>Pendentes", 
   "Valor", 
   "Ciclo", 
   "Média", 
@@ -2389,17 +2389,17 @@ largura_det <- base::c(
   "65px",  # Processos
   "65px",  # Finalizados
   "65px",  # Pendentes
-  "65px", # Itens Empenhados
-  "65px", # Itens Pendentes
+  # "65px", # Itens Empenhados
+  # "65px", # Itens Pendentes
   "310px", # Valor (MUITO ESPAÇO)
   "120px",  # Ciclo
-  "10px",  # Média
+  "60px",  # Média
   "130px", # Avaliação
-  "80px"  # Eficiência
+  "70px"  # Eficiência
 )
 
 # Alinhamento Filho (11 valores) - Tudo à esquerda
-alinhamento_det_filho <- base::rep("left", 11)
+alinhamento_det_filho <- base::rep("left", 9)
 # alinhamento_det_filho <- c("left","center","center","center","center","center","left","center","center","center","center")
 
 # ==========================================================
