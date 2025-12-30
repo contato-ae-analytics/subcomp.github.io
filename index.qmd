@@ -1700,7 +1700,7 @@ gerar_dashboard <- function(bd_principal,
   plotly::plot_ly(df_modalidade, labels = ~label_grafico, values = ~n_processos, type = 'pie', hole = 0.68,
                   textinfo = 'text', text = ~label_grafico, hoverinfo = 'text', hovertext = ~hover_txt,
                   marker = base::list(colors = cores_fatias, line = base::list(color = '#FFFFFF', width = largura_barra))) %>%
-    plotly::layout(margin = base::list(t = 30, b = 30, l = 20, r = 20), font = base::list(family = fonte_padrao, size = tam_fatias),
+    plotly::layout(margin = base::list(t = 25, b = 25, l = 20, r = 20), font = base::list(family = fonte_padrao, size = tam_fatias),
                    showlegend = FALSE, hoverlabel = base::list(bgcolor = "white", bordercolor = "#ecf0f1", align = "left", namelength = -1, font = base::list(family = fonte_padrao)),
                    annotations = base::list(text = texto_centro, showarrow = FALSE)) %>%
     plotly::config(displayModeBar = FALSE, responsive = TRUE)
@@ -1711,8 +1711,8 @@ gerar_dashboard(
   bd_principal     = bd_principal,
   nome_alvo        = NULL,              # NULL = Banco Todo
   tam_fatias       = 12,                # Texto nas fatias do gráfico
-  tam_centro_cab   = 12,                # Tamanho do título EFICIÊNCIA
-  tam_centro_corpo = 9,                # Tamanho das linhas TOTAL/OK/PEND
+  tam_centro_cab   = 12.5,                # Tamanho do título EFICIÊNCIA
+  tam_centro_corpo = 11,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
   tam_hover_corpo  = 11,                # Texto dentro do balão (Hover)
   cor_eficiencia   = "#0b132b",         # Cor do título central
@@ -1738,8 +1738,8 @@ gerar_dashboard(
   bd_principal     = bd_principal,
   nome_alvo        = "Rodrigo",              # NULL = Banco Todo
   tam_fatias       = 12,                # Texto nas fatias do gráfico
-  tam_centro_cab   = 12,                # Tamanho do título EFICIÊNCIA
-  tam_centro_corpo = 9,                # Tamanho das linhas TOTAL/OK/PEND
+  tam_centro_cab   = 12.5,                # Tamanho do título EFICIÊNCIA
+  tam_centro_corpo = 11,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
   tam_hover_corpo  = 11,                # Texto dentro do balão (Hover)
   cor_eficiencia   = "#0b132b",         # Cor do título central
@@ -1762,8 +1762,8 @@ gerar_dashboard(
   bd_principal     = bd_principal,
   nome_alvo        = "Daniel",              # NULL = Banco Todo
   tam_fatias       = 12,                # Texto nas fatias do gráfico
-  tam_centro_cab   = 12,                # Tamanho do título EFICIÊNCIA
-  tam_centro_corpo = 9,                # Tamanho das linhas TOTAL/OK/PEND
+  tam_centro_cab   = 12.5,                # Tamanho do título EFICIÊNCIA
+  tam_centro_corpo = 11,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
   tam_hover_corpo  = 11,                # Texto dentro do balão (Hover)
   cor_eficiencia   = "#0b132b",         # Cor do título central
@@ -1788,8 +1788,8 @@ gerar_dashboard(
   bd_principal     = bd_principal,
   nome_alvo        = "José Victor",              # NULL = Banco Todo
   tam_fatias       = 12,                # Texto nas fatias do gráfico
-  tam_centro_cab   = 12,                # Tamanho do título EFICIÊNCIA
-  tam_centro_corpo = 9,                # Tamanho das linhas TOTAL/OK/PEND
+  tam_centro_cab   = 12.5,                # Tamanho do título EFICIÊNCIA
+  tam_centro_corpo = 11,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
   tam_hover_corpo  = 11,                # Texto dentro do balão (Hover)
   cor_eficiencia   = "#0b132b",         # Cor do título central
@@ -1813,8 +1813,8 @@ gerar_dashboard(
   bd_principal     = bd_principal,
   nome_alvo        = "Fernanda",              # NULL = Banco Todo
   tam_fatias       = 12,                # Texto nas fatias do gráfico
-  tam_centro_cab   = 12,                # Tamanho do título EFICIÊNCIA
-  tam_centro_corpo = 9,                # Tamanho das linhas TOTAL/OK/PEND
+  tam_centro_cab   = 12.5,                # Tamanho do título EFICIÊNCIA
+  tam_centro_corpo = 11,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
   tam_hover_corpo  = 11,                # Texto dentro do balão (Hover)
   cor_eficiencia   = "#0b132b",         # Cor do título central
@@ -2352,7 +2352,7 @@ nomes_col <- base::c(
   "Ciclo<br>Médio"                = "ciclo_txt"
 )
 
-largura_col <- base::c("200px", "60px", "60px", "350px", "60px", "350px", "60px", "60px", "350px", "245px")
+largura_col <- base::c("200px", "50px", "50px", "370px", "60px", "350px", "60px", "60px", "350px", "245px")
 alinhamento_col <- base::rep("left", 10)
 
 nomes_det <- base::c(
@@ -2414,26 +2414,46 @@ tabela_interativa_detalhes(
 ::: {.panel-tabset}
 
 ## AD
-Conteúdo da modalidade AD  
-Texto, gráfico, tabela ou código
+
+```{r}
+
+```
 
 ## ARP - ATA
-Conteúdo da modalidade ARP - ATA
+
+```{r}
+
+```
 
 ## CAE
-Conteúdo da modalidade CAE
+
+```{r}
+
+```
 
 ## DLE
-Conteúdo da modalidade DLE
+
+```{r}
+
+```
 
 ## INEX
-Conteúdo da modalidade INEX
+
+```{r}
+
+```
 
 ## PE
-Conteúdo da modalidade PE
+
+```{r}
+
+```
 
 ## RDL
-Conteúdo da modalidade RDL
+
+```{r}
+
+```
 
 :::
 
