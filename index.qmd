@@ -2548,7 +2548,7 @@ gerar_grafico_natureza_top <- function(bd_principal,
       yaxis = base::list(title = "", tickfont = base::list(size = tamanho_eixo_y, color = cor_eixo_y),
                          categoryorder = "array", categoryarray = df_init$label_y),
       xaxis = base::list(title = "", showticklabels = FALSE, range = base::list(0, max_v_i * 1.8)),
-      legend = base::list(orientation = 'h', x = 0, y = 1.15, font = base::list(size = tamanho_legenda, color = cor_legenda)),
+      legend = base::list(orientation = 'h', x = 0, y = 1.30, font = base::list(size = tamanho_legenda, color = cor_legenda)),
       hoverlabel = base::list(bgcolor = "#FFFFFF", bordercolor = borda_balao_hover, font = base::list(size = hover_fonte_tam, family = fonte_padrao, color = "black")),
       updatemenus = base::list(base::list(active = 1, x = 0, y = 1.08, buttons = criar_botoes_top(dados_base))),
       margin = base::list(t = 0, b = 0, l = 320),
@@ -2751,21 +2751,27 @@ bd_filho_final <- dplyr::bind_rows(bd_filho_naturezas, detalhes_total_geral) %>%
 # 3. CONFIGURAÇÃO E EXECUÇÃO
 # ==========================================================
 nomes_col_final <- base::c(
-  "Modalidade"       = "mod_proc",
-  "Proc. (Total)"    = "qtd_total_proc",
-  "Valor Total"      = "val_total",
-  "Proc. (Emp.)"     = "qtd_emp",
-  "Empenhado (R$)"   = "val_emp",
-  "Empenhado (%)"    = "p_emp_txt",
-  "Proc. (Pen.)"     = "qtd_pen",
-  "Pendente (R$)"    = "val_pen",
-  "Pendente (%)"     = "p_pen_txt"
+  "Categoria"                = "mod_proc",
+  "Qtd."                     = "qtd_total_proc",
+  "Valor Total<br>(R$)"      = "val_total",
+  "Proc.<br>Empenhados"      = "qtd_emp",
+  "Empenhado<br>(R$)"        = "val_emp",
+  "Empenhado<br>(%)"         = "p_emp_txt",
+  "Proc.<br>Pendentes"       = "qtd_pen",
+  "Pendente<br>(R$)"         = "val_pen",
+  "Pendente<br>(%)"          = "p_pen_txt"
 )
 
 nomes_det_final <- base::c(
-  "Natureza de Despesa", "Proc. (T)", "Total (R$)", 
-  "Proc. (E)", "Empenhado (R$)", "% (E)", 
-  "Proc. (P)", "Pendente (R$)", "% (P)"
+  "Cod - Natureza de Despesa", 
+  "Qtd.<br>Processos", 
+  "Valor (R$)", 
+  "Proc.<br>Empenhados", 
+  "Empenhado<br>(R$)", 
+  "Empenhado<br>(%)", 
+  "Proc.<br>Pendentes", 
+  "Pendente<br>(R$)", 
+  "Pendetes<br>(%)"
 )
 
 larguras_final <- base::c("150px", "80px", "200px", "80px", "200px", "80px", "80px", "200px", "80px")
@@ -2775,7 +2781,7 @@ tabela_interativa_detalhes(
   dados                      = bd_pai_modalidade,
   dados_detalhes             = bd_filho_final,
   coluna_chave               = "mod_proc",
-  titulo_tabela              = "Detalhamento das atividades",
+  titulo_tabela              = "Detalhamento por natureza de despesa",
   tam_fonte_corpo            = tam_fonte_corpo,
   tam_fonte_header           = tam_fonte_header,
   tam_fonte_titulo           = tam_fonte_titulo,
