@@ -1,7 +1,7 @@
 ---
 title: "Relatório Analítico Subgerência de Compras | SUBCOMP"
 subtitle: "Fundação Hospitalar Alfredo da Matta (FUHAM)"
-author: "Alexssandro Silva | ΛΣ Consultoria"
+# author: "Alexssandro Silva | ΛΣ Consultoria"
 # date: "`r format(Sys.Date(), '%d de %B de 2025')`"
 # Tags para ajudar no filtro da página principal
 # description: "Análise Exploratória e Modelagem Preditiva de Dados de Compras"
