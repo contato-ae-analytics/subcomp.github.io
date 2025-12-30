@@ -1928,7 +1928,6 @@ tabela_interativa_detalhes(
 ##################################################################################################################
 ##################################################################################################################
 ##################################################################################################################
-
 # ==========================================================
 # 1. PRÉ-PROCESSAMENTO: STATUS POR PROCESSO
 # ==========================================================
@@ -1942,7 +1941,7 @@ status_por_processo <- bd_principal %>%
     itens_pen_proc = base::sum(status_item != "Empenhado" & base::is.na(nota_de_empenho), na.rm = TRUE),
     tempo_do_proc  = base::mean(dias_uteis, na.rm = TRUE),
     agente_proc    = dplyr::first(agente),
-    mod_proc       = dplyr::first(modalidade_processo),
+    mod_proc       = base::as.character(dplyr::first(modalidade_processo)), # Forçar character aqui
     .groups = "drop"
   ) %>%
   dplyr::filter(!base::is.na(mod_proc), tempo_do_proc >= 0)
@@ -1950,7 +1949,6 @@ status_por_processo <- bd_principal %>%
 # ==========================================================
 # 2. BANCO PAI: CONSOLIDADO POR MODALIDADE + LINHA TOTAL
 # ==========================================================
-# Agrupamento base por modalidade
 bd_pai_modalidade_base <- status_por_processo %>%
   dplyr::group_by(mod_proc) %>%
   dplyr::summarise(
@@ -1964,10 +1962,9 @@ bd_pai_modalidade_base <- status_por_processo %>%
     .groups = "drop"
   )
 
-# Criando a linha de TOTAL GERAL (Consolidação de todas as modalidades)
 bd_total_geral <- bd_pai_modalidade_base %>%
   dplyr::summarise(
-    mod_proc         = base::as.factor("TOTAL GERAL"),
+    mod_proc         = "TOTAL GERAL",
     n_processos      = base::sum(n_processos),
     v_total_mod      = base::sum(v_total_mod),
     n_resolvidos     = base::sum(n_resolvidos),
@@ -1977,7 +1974,6 @@ bd_total_geral <- bd_pai_modalidade_base %>%
     ciclo_medio_mod  = base::mean(ciclo_medio_mod, na.rm = TRUE)
   )
 
-# União final com cálculo de percentuais da Tabela Pai
 bd_pai_modalidade <- base::rbind(bd_total_geral, bd_pai_modalidade_base) %>%
   dplyr::mutate(
     p_represent_geral = (n_processos / base::max(n_processos[mod_proc == "TOTAL GERAL"])) * 100,
@@ -1989,12 +1985,12 @@ bd_pai_modalidade <- base::rbind(bd_total_geral, bd_pai_modalidade_base) %>%
     p_resolvido_txt   = base::paste0(base::round(p_resolvido, 1), "%"),
     ciclo_txt         = base::paste0(base::round(ciclo_medio_mod, 1), " dias")
   ) %>%
-  dplyr::arrange(base::desc(mod_proc == "TOTAL GERAL"), base::desc(p_resolvido))
+  # CORREÇÃO AQUI: Usando dplyr::desc explicitamente
+  dplyr::arrange(dplyr::desc(mod_proc == "TOTAL GERAL"), dplyr::desc(p_resolvido))
 
 # ==========================================================
 # 3. BANCO FILHO: PERFORMANCE E COMPARAÇÃO POR AGENTE
 # ==========================================================
-# Detalhes individuais por modalidade
 bd_filho_base <- status_por_processo %>%
   dplyr::mutate(agente_proc = base::ifelse(base::is.na(agente_proc), "Não Identificado", base::as.character(agente_proc))) %>%
   dplyr::group_by(mod_proc, agente_proc) %>%
@@ -2027,7 +2023,6 @@ bd_filho_base <- status_por_processo %>%
     media_setor   = base::paste0(base::round(ciclo_medio_mod, 1), " dias")
   )
 
-# Detalhes específicos para a linha "TOTAL GERAL"
 detalhes_total_geral <- status_por_processo %>%
   dplyr::group_by(agente_proc) %>%
   dplyr::summarise(
@@ -2050,15 +2045,12 @@ detalhes_total_geral <- status_por_processo %>%
     eficiencia_ag  = base::paste0(base::round((res_ag / total_proc_ag) * 100, 1), "%")
   )
 
-# Unindo tudo no Banco Filho
-bd_filho_agentes <- dplyr::bind_rows(bd_filho_base, detalhes_total_geral) %>%
-  dplyr::select(mod_proc, agente_rank, p_particip_txt, total_proc_ag, res_ag, pen_ag, aporte_gestao, ciclo_ag_txt, media_setor, avaliacao_txt, eficiencia_ag)
+bd_filho_agentes <- dplyr::bind_rows(bd_filho_base, detalhes_total_geral)
 
 # ==========================================================
 # 4. CONFIGURAÇÃO DE COLUNAS E EXECUÇÃO
 # ==========================================================
 
-# Nomes Tabela Pai (10 colunas)
 nomes_col <- base::c(
   "Modalidade"               = "mod_proc",
   "Representatividade<br>(%)" = "p_represent_txt",
@@ -2075,7 +2067,6 @@ nomes_col <- base::c(
 largura_col <- base::c("160px", "100px", "80px", "350px", "90px", "350px", "80px", "90px", "350px", "160px")
 alinhamento_col <- base::rep("left", 10)
 
-# Nomes Tabela Filho (10 colunas)
 nomes_det <- base::c(
   "Agente<br>(Rank)", 
   "Participação<br>(%)",
@@ -2092,7 +2083,6 @@ nomes_det <- base::c(
 largura_det <- base::c("250px", "100px", "80px", "80px", "80px", "320px", "120px", "90px", "130px", "80px")
 alinhamento_det_filho <- base::rep("left", 10)
 
-# --- EXECUÇÃO FINAL ---
 tabela_interativa_detalhes(
   dados                      = bd_pai_modalidade,
   dados_detalhes             = bd_filho_agentes,
