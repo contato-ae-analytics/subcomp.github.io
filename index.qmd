@@ -2774,7 +2774,7 @@ nomes_det_final <- base::c(
   "Pendetes<br>(%)"
 )
 
-larguras_final <- base::c("150px", "80px", "200px", "80px", "200px", "80px", "80px", "200px", "80px")
+larguras_final <- base::c("200px", "60px", "200px", "80px", "200px", "80px", "80px", "200px", "80px")
 larguras_det_final <- base::c("300px", "60px", "150px", "60px", "150px", "60px", "60px", "150px", "60px")
 
 tabela_interativa_detalhes(
