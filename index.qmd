@@ -2068,7 +2068,7 @@ bd_filho_agentes <- dplyr::bind_rows(bd_filho_base, detalhes_total_geral) %>%
 nomes_col <- base::c(
   "Modalidades<br>(Processos)"                    = "mod_proc",
   "Qtd."                          = "n_processos",
-  "Qtd.<br>(%)"                           = "p_represent_txt", 
+  "Qtd. (%)"                           = "p_represent_txt", 
   "Valor Total<br>(R$)"                    = "aporte_total",
   "Proc.<br>Empenhados"      = "n_resolvidos",
   "Empenhado<br>(R$)"       = "aporte_resolvido",
@@ -2078,13 +2078,13 @@ nomes_col <- base::c(
   "Ciclo<br>Médio"                = "ciclo_txt"
 )
 
-largura_col <- base::c("200px", "60px", "60px", "350px", "80px", "350px", "80px", "80px", "350px", "185px")
+largura_col <- base::c("200px", "60px", "60px", "350px", "80px", "350px", "80px", "80px", "350px", "190px")
 alinhamento_col <- base::rep("left", 10)
 
 nomes_det <- base::c(
   "Agente<br>(Rank)", 
   "Qtd.",
-  "Qtd.<br>(%)", 
+  "Qtd. (%)", 
   "Proc.<br>Empenhados", 
   "Proc.<br>Pendentes", 
   "Valor<br>(R$)", 
