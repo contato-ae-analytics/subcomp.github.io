@@ -1941,7 +1941,7 @@ status_por_processo <- bd_principal %>%
     itens_pen_proc = base::sum(status_item != "Empenhado" & base::is.na(nota_de_empenho), na.rm = TRUE),
     tempo_do_proc  = base::mean(dias_uteis, na.rm = TRUE),
     agente_proc    = dplyr::first(agente),
-    mod_proc       = base::as.character(dplyr::first(modalidade_processo)), # Forçar character aqui
+    mod_proc       = base::as.character(dplyr::first(modalidade_processo)), 
     .groups = "drop"
   ) %>%
   dplyr::filter(!base::is.na(mod_proc), tempo_do_proc >= 0)
@@ -1976,16 +1976,16 @@ bd_total_geral <- bd_pai_modalidade_base %>%
 
 bd_pai_modalidade <- base::rbind(bd_total_geral, bd_pai_modalidade_base) %>%
   dplyr::mutate(
-    p_represent_geral = (n_processos / base::max(n_processos[mod_proc == "TOTAL GERAL"])) * 100,
-    p_represent_txt   = base::paste0(base::round(p_represent_geral, 1), "%"),
+    # Percentual Geral
+    p_represent_txt   = base::paste0(base::round((n_processos / base::max(n_processos[mod_proc == "TOTAL GERAL"])) * 100, 1), "%"),
     p_resolvido       = (n_resolvidos / n_processos) * 100,
+    # RESTAURANDO OS R$ NOS VALORES DA TABELA PAI
     aporte_total      = base::paste0("R$ ", base::format(v_total_mod, big.mark = ".", decimal.mark = ",")),
     aporte_resolvido  = base::paste0("R$ ", base::format(v_resolvido, big.mark = ".", decimal.mark = ",")),
     aporte_pendente   = base::paste0("R$ ", base::format(v_pendente, big.mark = ".", decimal.mark = ",")),
     p_resolvido_txt   = base::paste0(base::round(p_resolvido, 1), "%"),
     ciclo_txt         = base::paste0(base::round(ciclo_medio_mod, 1), " dias")
   ) %>%
-  # CORREÇÃO AQUI: Usando dplyr::desc explicitamente
   dplyr::arrange(dplyr::desc(mod_proc == "TOTAL GERAL"), dplyr::desc(p_resolvido))
 
 # ==========================================================
@@ -2014,9 +2014,10 @@ bd_filho_base <- status_por_processo %>%
       razao_tempo <= 0.9 ~ "Acima do Esperado",
       razao_tempo <= 1.1 ~ "Dentro do Esperado",
       razao_tempo <= 1.4 ~ "Abaixo do Esperado",
-      TRUE               ~ "Abaixo da Média"
+      TRUE               ~ "" 
     ),
     agente_rank   = base::paste0(rank_prod, "º - ", agente_proc),
+    # RESTAURANDO R$ NA TABELA FILHO
     aporte_gestao = base::paste0("R$ ", base::format(v_gestao_ag, big.mark = ".", decimal.mark = ",")),
     eficiencia_ag = base::paste0(base::round(p_efic_ag, 1), "%"),
     ciclo_ag_txt  = base::paste0(base::round(tempo_ag_num, 1), " dias"),
@@ -2035,8 +2036,8 @@ detalhes_total_geral <- status_por_processo %>%
     .groups = "drop"
   ) %>%
   dplyr::mutate(
-    n_total_geral  = base::sum(total_proc_ag),
-    p_particip_txt = base::paste0(base::round((total_proc_ag / n_total_geral) * 100, 1), "%"),
+    n_total_banco  = base::sum(total_proc_ag),
+    p_particip_txt = base::paste0(base::round((total_proc_ag / n_total_banco) * 100, 1), "%"),
     agente_rank    = agente_proc,
     aporte_gestao  = base::paste0("R$ ", base::format(v_gestao_ag, big.mark = ".", decimal.mark = ",")),
     ciclo_ag_txt   = base::paste0(base::round(tempo_ag_num, 1), " dias"),
@@ -2048,14 +2049,14 @@ detalhes_total_geral <- status_por_processo %>%
 bd_filho_agentes <- dplyr::bind_rows(bd_filho_base, detalhes_total_geral)
 
 # ==========================================================
-# 4. CONFIGURAÇÃO DE COLUNAS E EXECUÇÃO
+# 4. CONFIGURAÇÃO DE COLUNAS (ORIGINAL RESTAURADA)
 # ==========================================================
 
 nomes_col <- base::c(
   "Modalidade"               = "mod_proc",
-  "Representatividade<br>(%)" = "p_represent_txt",
-  "Nº<br>Processos"          = "n_processos",
-  "Valor<br>Consolidado"     = "aporte_total",
+  "Qtd.Proc."                = "n_processos",
+  "(%)"                      = "p_represent_txt", 
+  "Valor<br>Total"           = "aporte_total",
   "Processos<br>Finalizados" = "n_resolvidos",
   "Valor<br>Empenhado"       = "aporte_resolvido",
   "Eficiência<br>(%)"        = "p_resolvido_txt",
@@ -2064,18 +2065,18 @@ nomes_col <- base::c(
   "Ciclo<br>Médio"           = "ciclo_txt"
 )
 
-largura_col <- base::c("160px", "100px", "80px", "350px", "90px", "350px", "80px", "90px", "350px", "160px")
+largura_col <- base::c("180px", "100px", "80px", "350px", "90px", "350px", "80px", "90px", "350px", "160px")
 alinhamento_col <- base::rep("left", 10)
 
 nomes_det <- base::c(
   "Agente<br>(Rank)", 
-  "Participação<br>(%)",
-  "Qtd. Processos", 
-  "Processos<br>Empenhados", 
-  "Processos<br>Pendentes", 
+  "Qtd. Proc.",
+  "(%)", 
+  "Proc.<br>Empenhados", 
+  "Proc.<br>Pendentes", 
   "Valor", 
   "Ciclo", 
-  "Média Setor", 
+  "Média", 
   "Avaliação", 
   "Eficiência<br>Individual"
 )
@@ -2083,6 +2084,9 @@ nomes_det <- base::c(
 largura_det <- base::c("250px", "100px", "80px", "80px", "80px", "320px", "120px", "90px", "130px", "80px")
 alinhamento_det_filho <- base::rep("left", 10)
 
+# ==========================================================
+# 5. EXECUÇÃO
+# ==========================================================
 tabela_interativa_detalhes(
   dados                      = bd_pai_modalidade,
   dados_detalhes             = bd_filho_agentes,
