@@ -2551,7 +2551,7 @@ gerar_grafico_natureza_top <- function(bd_principal,
       legend = base::list(orientation = 'h', x = 0, y = 1.15, font = base::list(size = tamanho_legenda, color = cor_legenda)),
       hoverlabel = base::list(bgcolor = "#FFFFFF", bordercolor = borda_balao_hover, font = base::list(size = hover_fonte_tam, family = fonte_padrao, color = "black")),
       updatemenus = base::list(base::list(active = 1, x = 0, y = 1.08, buttons = criar_botoes_top(dados_base))),
-      margin = base::list(t = 20, b = 20, l = 320),
+      margin = base::list(t = 0, b = 0, l = 320),
       plot_bgcolor = "white", barmode = 'group'
     ) %>%
     plotly::config(displayModeBar = FALSE, responsive = TRUE)
@@ -2657,142 +2657,144 @@ gerar_grafico_natureza_top(
 
 ```{r}
 # ==========================================================
-# 1. PRÉ-PROCESSAMENTO: STATUS POR PROCESSO (BANCO PAI)
+# 1. PROCESSAMENTO PAI: MODALIDADES (VALORES, % E QTD)
 # ==========================================================
 status_por_processo <- bd_principal %>%
   dplyr::group_by(processo) %>%
   dplyr::summarise(
     proc_resolvido = base::all(status_item == "EMPENHADO" | !base::is.na(nota_de_empenho)),
     valor_do_proc  = base::sum(valor_total, na.rm = TRUE),
-    mod_proc       = base::as.character(dplyr::first(modalidade_processo)), 
+    mod_proc       = base::trimws(base::as.character(dplyr::first(modalidade_processo))), 
     .groups = "drop"
   ) %>%
-  dplyr::filter(!base::is.na(mod_proc))
+  dplyr::filter(!base::is.na(mod_proc), mod_proc != "")
 
-# Consolidado por Modalidade
-bd_pai_modalidade_base <- status_por_processo %>%
+bd_pai_base <- status_por_processo %>%
   dplyr::group_by(mod_proc) %>%
   dplyr::summarise(
-    n_processos      = dplyr::n(),
-    v_total_mod      = base::sum(valor_do_proc, na.rm = TRUE),
-    n_resolvidos     = base::sum(proc_resolvido == TRUE),
-    n_pendentes      = base::sum(proc_resolvido == FALSE),
-    v_resolvido      = base::sum(base::ifelse(proc_resolvido == TRUE, valor_do_proc, 0)),
-    v_pendente       = base::sum(base::ifelse(proc_resolvido == FALSE, valor_do_proc, 0)),
+    qtd_total_proc   = dplyr::n(),
+    v_total          = base::sum(valor_do_proc, na.rm = TRUE),
+    qtd_emp          = base::sum(proc_resolvido == TRUE),
+    v_emp            = base::sum(base::ifelse(proc_resolvido == TRUE, valor_do_proc, 0)),
+    qtd_pen          = base::sum(proc_resolvido == FALSE),
+    v_pen            = base::sum(base::ifelse(proc_resolvido == FALSE, valor_do_proc, 0)),
     .groups = "drop"
   )
 
-bd_total_geral_pai <- bd_pai_modalidade_base %>%
+bd_total_geral_pai <- bd_pai_base %>%
   dplyr::summarise(
     mod_proc         = "TOTAL GERAL",
-    n_processos      = base::sum(n_processos),
-    v_total_mod      = base::sum(v_total_mod),
-    n_resolvidos     = base::sum(n_resolvidos),
-    n_pendentes      = base::sum(n_pendentes),
-    v_resolvido      = base::sum(v_resolvido),
-    v_pendente       = base::sum(v_pendente)
+    qtd_total_proc   = base::sum(qtd_total_proc),
+    v_total          = base::sum(v_total),
+    qtd_emp          = base::sum(qtd_emp),
+    v_emp            = base::sum(v_emp),
+    qtd_pen          = base::sum(qtd_pen),
+    v_pen            = base::sum(v_pen)
   )
 
-bd_pai_modalidade <- base::rbind(bd_total_geral_pai, bd_pai_modalidade_base) %>%
+bd_pai_modalidade <- base::rbind(bd_total_geral_pai, bd_pai_base) %>%
   dplyr::mutate(
-    p_represent_txt  = base::paste0(base::round((n_processos / base::max(n_processos[mod_proc == "TOTAL GERAL"])) * 100, 1), "%"),
-    aporte_total     = base::paste0("R$ ", base::format(v_total_mod, big.mark = ".", decimal.mark = ",")),
-    aporte_resolvido = base::paste0("R$ ", base::format(v_resolvido, big.mark = ".", decimal.mark = ",")),
-    aporte_pendente  = base::paste0("R$ ", base::format(v_pendente, big.mark = ".", decimal.mark = ","))
+    # Percentuais e Formatação
+    p_emp_txt    = base::paste0(base::round((v_emp / v_total) * 100, 1), "%"),
+    p_pen_txt    = base::paste0(base::round((v_pen / v_total) * 100, 1), "%"),
+    val_total    = base::paste0("R$ ", base::format(v_total, big.mark = ".", decimal.mark = ",")),
+    val_emp      = base::paste0("R$ ", base::format(v_emp, big.mark = ".", decimal.mark = ",")),
+    val_pen      = base::paste0("R$ ", base::format(v_pen, big.mark = ".", decimal.mark = ","))
   )
 
 # ==========================================================
-# 2. BANCO FILHO: NATUREZAS COM VALORES E FREQUÊNCIA
+# 2. PROCESSAMENTO FILHO: NATUREZAS (ORDEM DECRESCENTE POR VALOR TOTAL)
 # ==========================================================
-quebrar_texto_tab <- function(x, n = 40) {
-  base::lapply(x, function(s) {
-    base::paste(base::strwrap(s, width = n), collapse = "<br>")
-  }) %>% base::unlist()
-}
-
-# Função de processamento corrigida para evitar erro de tamanho (p_impacto)
-processar_filho_natureza <- function(df_input, label_mod, v_referencia) {
-  # Garante que v_referencia seja um único número (primeira posição)
-  v_ref <- v_referencia[1]
-  if(base::is.na(v_ref) || v_ref == 0) v_ref <- 1
-  
+processar_filho_total <- function(df_input, label_mod) {
   df_input %>%
     dplyr::mutate(status_resumo = base::ifelse(status_item == "EMPENHADO" | !base::is.na(nota_de_empenho), "RES", "PEN")) %>%
     dplyr::group_by(natureza_despesa) %>%
     dplyr::summarise(
       mod_proc        = label_mod,
       desc_nat        = dplyr::first(nd_especificacao),
-      frequencia      = dplyr::n(), 
+      q_total_nat     = dplyr::n_distinct(processo),
       v_total_nat     = base::sum(valor_total, na.rm = TRUE),
-      v_res_nat       = base::sum(base::ifelse(status_resumo == "RES", valor_total, 0), na.rm = TRUE),
-      v_pen_nat       = base::sum(base::ifelse(status_resumo == "PEN", valor_total, 0), na.rm = TRUE),
+      q_emp_nat       = dplyr::n_distinct(processo[status_resumo == "RES"]),
+      v_emp_nat       = base::sum(valor_total[status_resumo == "RES"], na.rm = TRUE),
+      q_pen_nat       = dplyr::n_distinct(processo[status_resumo == "PEN"]),
+      v_pen_nat       = base::sum(valor_total[status_resumo == "PEN"], na.rm = TRUE),
       .groups = "drop"
     ) %>%
+    # ORDENAÇÃO FUNDAMENTAL: MAIOR VALOR PARA O MENOR
+    dplyr::arrange(dplyr::desc(v_total_nat)) %>%
     dplyr::mutate(
-      natureza_rank   = base::paste0("<b>", natureza_despesa, "</b> - ", quebrar_texto_tab(desc_nat)),
-      p_impacto       = base::paste0(base::round((v_total_nat / v_ref) * 100, 1), "%"),
-      total_txt       = base::paste0("R$ ", base::format(v_total_nat, big.mark = ".", decimal.mark = ",")),
-      empenhado_txt   = base::paste0("R$ ", base::format(v_res_nat, big.mark = ".", decimal.mark = ",")),
-      pendente_txt    = base::paste0("R$ ", base::format(v_pen_nat, big.mark = ".", decimal.mark = ","))
+      natureza_rank   = base::paste0("<b>", natureza_despesa, "</b> - ", base::substr(desc_nat, 1, 40)),
+      p_emp_n         = base::paste0(base::round((v_emp_nat / v_total_nat) * 100, 1), "%"),
+      p_pen_n         = base::paste0(base::round((v_pen_nat / v_total_nat) * 100, 1), "%"),
+      t_txt           = base::paste0("R$ ", base::format(v_total_nat, big.mark = ".", decimal.mark = ",")),
+      e_txt           = base::paste0("R$ ", base::format(v_emp_nat, big.mark = ".", decimal.mark = ",")),
+      p_txt           = base::paste0("R$ ", base::format(v_pen_nat, big.mark = ".", decimal.mark = ","))
     )
 }
 
-# Naturezas por Modalidade
 bd_filho_naturezas <- bd_principal %>%
   dplyr::group_split(modalidade_processo) %>%
   base::lapply(function(sub) {
-    mod_nome <- base::as.character(base::unique(sub$modalidade_processo))
-    # Busca o valor da modalidade no pai e garante que pegue apenas um valor
-    v_mod <- bd_pai_modalidade$v_total_mod[bd_pai_modalidade$mod_proc == mod_nome]
-    processar_filho_natureza(sub, mod_nome, v_mod)
+    processar_filho_total(sub, base::trimws(base::as.character(base::unique(sub$modalidade_processo))))
   }) %>%
   dplyr::bind_rows()
 
-# Naturezas para o Total Geral
-v_geral_total <- bd_pai_modalidade$v_total_mod[bd_pai_modalidade$mod_proc == "TOTAL GERAL"]
-detalhes_total_geral <- processar_filho_natureza(bd_principal, "TOTAL GERAL", v_geral_total)
+detalhes_total_geral <- processar_filho_total(bd_principal, "TOTAL GERAL")
 
 bd_filho_final <- dplyr::bind_rows(bd_filho_naturezas, detalhes_total_geral) %>%
-  dplyr::select(mod_proc, natureza_rank, frequencia, p_impacto, total_txt, empenhado_txt, pendente_txt)
+  dplyr::select(mod_proc, natureza_rank, 
+                q_total_nat, t_txt, 
+                q_emp_nat, e_txt, p_emp_n, 
+                q_pen_nat, p_txt, p_pen_n)
 
 # ==========================================================
-# 3. CHAMADA DA TABELA
+# 3. CONFIGURAÇÃO E EXECUÇÃO
 # ==========================================================
-nomes_col <- base::c(
-  "Modalidade"             = "mod_proc",
-  "Processos"              = "n_processos",
-  "Part. (%)"              = "p_represent_txt", 
-  "Valor Total"            = "aporte_total",
-  "Qtd. Empenhados"        = "n_resolvidos",
-  "Valor Empenhado"        = "aporte_resolvido",
-  "Qtd. Pendentes"         = "n_pendentes",
-  "Valor Pendente"         = "aporte_pendente"
+nomes_col_final <- base::c(
+  "Modalidade"       = "mod_proc",
+  "Proc. (Total)"    = "qtd_total_proc",
+  "Valor Total"      = "val_total",
+  "Proc. (Emp.)"     = "qtd_emp",
+  "Empenhado (R$)"   = "val_emp",
+  "Empenhado (%)"    = "p_emp_txt",
+  "Proc. (Pen.)"     = "qtd_pen",
+  "Pendente (R$)"    = "val_pen",
+  "Pendente (%)"     = "p_pen_txt"
 )
 
-nomes_det_alex <- base::c(
-  "Natureza de Despesa", 
-  "Pedidos (Freq.)",
-  "Impacto na Mod. (%)", 
-  "Valor Total (R$)",
-  "Empenhado (R$)",
-  "Pendente (R$)"
+nomes_det_final <- base::c(
+  "Natureza de Despesa", "Proc. (T)", "Total (R$)", 
+  "Proc. (E)", "Empenhado (R$)", "% (E)", 
+  "Proc. (P)", "Pendente (R$)", "% (P)"
 )
+
+larguras_final <- base::c("150px", "80px", "200px", "80px", "200px", "80px", "80px", "200px", "80px")
+larguras_det_final <- base::c("300px", "60px", "150px", "60px", "150px", "60px", "60px", "150px", "60px")
 
 tabela_interativa_detalhes(
   dados                      = bd_pai_modalidade,
   dados_detalhes             = bd_filho_final,
   coluna_chave               = "mod_proc",
-  titulo_tabela              = "Detalhamento: Modalidade x Natureza de Despesa",
-  tam_fonte_corpo            = 12,
-  tam_fonte_header           = 13,
-  cor_titulo                 = "#03045e",
-  cor_primaria               = "#001d3d",
-  colunas_selecionadas       = nomes_col,
-  colunas_detalhes_nomes     = nomes_det_alex,
-  largura_cols_vetor         = base::c("150px", "80px", "80px", "180px", "80px", "180px", "80px", "180px"),
-  largura_detalhes_vetor     = base::c("350px", "90px", "110px", "200px", "200px", "200px"),
-  pesquisa_geral             = TRUE
+  titulo_tabela              = "Detalhamento das atividades",
+  tam_fonte_corpo            = tam_fonte_corpo,
+  tam_fonte_header           = tam_fonte_header,
+  tam_fonte_titulo           = tam_fonte_titulo,
+  cor_titulo                 = cor_titulo,
+  cor_primaria               = cor_primaria,
+  cor_texto_corpo            = cor_texto_corpo,
+  alinhamento_header_vetor   = base::rep("left", 9),
+  alinhamento_corpo_vetor    = base::rep("left", 9),
+  alinhamento_detalhes_vetor = base::rep("left", 9),
+  colunas_selecionadas       = nomes_col_final,
+  largura_cols_vetor         = larguras_final,  
+  colunas_detalhes_nomes     = nomes_det_final, 
+  largura_detalhes_vetor     = larguras_det_final, 
+  pesquisa_geral             = TRUE,
+  mostrar_filtro             = FALSE,
+  mostrar_indice             = FALSE
 )
+
+
 ```
 
 :::
