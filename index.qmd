@@ -2422,7 +2422,147 @@ tabela_interativa_detalhes(
 #| out-width: "100%"
 #| fig-height: 6
 
-# --- VERSÃO SUPREMA BLINDADA (05:00 AM) - ORDEM + LEGENDA R$ + HOVER ORIGINAL ---
+# # --- VERSÃO SUPREMA BLINDADA (05:00 AM) - ORDEM + LEGENDA R$ + HOVER ORIGINAL ---
+# gerar_grafico_natureza_top <- function(bd_principal, 
+#                                        modalidade_alvo,
+#                                        titulo_nome        = "",
+#                                        subtitulo_texto    = "",
+#                                        titulo_cor         = "#03045e",
+#                                        titulo_tamanho     = 14.5,
+#                                        sub_cor            = "#000000",
+#                                        sub_tamanho        = 13,
+#                                        cor_empenhado      = "#001d3d",
+#                                        cor_n_empenhado    = "#48cae4",
+#                                        tamanho_rotulos    = 10,
+#                                        cor_rotulos        = "#000000",
+#                                        tamanho_eixo_y     = 11,
+#                                        cor_eixo_y         = "#000000",
+#                                        tamanho_legenda    = 12,
+#                                        cor_legenda        = "#000000",
+#                                        tamanho_botoes     = 12,
+#                                        hover_bg_cor       = "#FFFFFF",
+#                                        hover_txt_cor      = "#000000",
+#                                        hover_fonte_tam    = 11,
+#                                        borda_balao_hover  = "#000000",
+#                                        alinhamento_balao  = "left") {
+#   
+#   fonte_padrao <- "Inter, sans-serif"
+#   
+#   # Função para quebrar texto longo
+#   quebrar_texto <- function(x, n = 40) {
+#     base::lapply(x, function(s) {
+#       base::paste(base::strwrap(s, width = n), collapse = "<br>")
+#     }) %>% base::unlist()
+#   }
+# 
+#   # 1. PROCESSAMENTO: ORDENAÇÃO PELA SOMA TOTAL E PREPARAÇÃO DOS DADOS
+#   dados_base <- bd_principal %>%
+#     dplyr::filter(modalidade_processo == modalidade_alvo, !base::is.na(natureza_despesa)) %>%
+#     dplyr::mutate(status_item = base::toupper(status_item)) %>%
+#     dplyr::group_by(natureza_despesa, processo) %>%
+#     dplyr::summarise(
+#       v_proc_na_nat = base::sum(valor_total, na.rm = TRUE),
+#       qtd_itens     = dplyr::n(),
+#       agente_proc   = dplyr::first(agente),
+#       status_resumo = base::ifelse(base::any(status_item == "EMPENHADO"), "EMP", "PEN"),
+#       desc_nat      = dplyr::first(nd_especificacao),
+#       .groups = "drop"
+#     ) %>%
+#     dplyr::group_by(natureza_despesa) %>%
+#     dplyr::summarise(
+#       V_Empenhado   = base::sum(v_proc_na_nat[status_resumo == "EMP"], na.rm = TRUE),
+#       V_N_Empenhado = base::sum(v_proc_na_nat[status_resumo == "PEN"], na.rm = TRUE),
+#       Soma_Total    = V_Empenhado + V_N_Empenhado,
+#       desc_nat      = dplyr::first(desc_nat),
+#       # Hover Detalhado Original (Mantido)
+#       Hover_Emp = base::paste0("<span style='font-family:", fonte_padrao, ";'><b>DETALHAMENTO EMPENHADOS:</b><br>",
+#                                base::paste(base::unique(base::paste0("• ", processo, " | ", agente_proc, " (", qtd_itens, " itens) | R$ ", 
+#                                base::format(v_proc_na_nat[status_resumo == "EMP"], big.mark = "."))), collapse = "<br>"), "</span>"),
+#       Hover_Pen = base::paste0("<span style='font-family:", fonte_padrao, ";'><b>DETALHAMENTO PENDENTES:</b><br>",
+#                                base::paste(base::unique(base::paste0("• ", processo, " | ", agente_proc, " (", qtd_itens, " itens) | R$ ", 
+#                                base::format(v_proc_na_nat[status_resumo == "PEN"], big.mark = "."))), collapse = "<br>"), "</span>"),
+#       .groups = "drop"
+#     ) %>%
+#     dplyr::filter(Soma_Total > 0) %>%
+#     dplyr::arrange(Soma_Total) %>%
+#     dplyr::mutate(
+#       label_y = base::paste0("<b>", natureza_despesa, "</b> - ", quebrar_texto(desc_nat)),
+#       label_y = base::factor(label_y, levels = label_y)
+#     )
+# 
+#   # 2. BOTÕES COM LEGENDA R$ E ORDEM TRAVADA
+#   criar_botoes_top <- function(df) {
+#     opcoes <- base::list(5, 10, 15, base::nrow(df))
+#     base::lapply(opcoes, function(n) {
+#       d_sub <- df %>% dplyr::slice_tail(n = n)
+#       t_e <- base::sum(d_sub$V_Empenhado); t_ne <- base::sum(d_sub$V_N_Empenhado)
+#       max_v <- base::max(base::c(d_sub$V_Empenhado, d_sub$V_N_Empenhado), na.rm = TRUE)
+#       
+#       base::list(
+#         method = "update",
+#         label = base::ifelse(n == base::nrow(df), "Mostrar: Tudo", base::paste0("Mostrar: Top ", n)),
+#         args = base::list(
+#           base::list(
+#             y = base::list(d_sub$label_y, d_sub$label_y),
+#             x = base::list(d_sub$V_Empenhado, d_sub$V_N_Empenhado),
+#             text = base::list(base::paste0("<b>R$ ", base::format(d_sub$V_Empenhado, big.mark = "."), "</b>"),
+#                               base::paste0("<b>R$ ", base::format(d_sub$V_N_Empenhado, big.mark = "."), "</b>")),
+#             hovertext = base::list(d_sub$Hover_Emp, d_sub$Hover_Pen),
+#             name = base::list(base::paste0("<b>Empenhado: R$ ", base::format(t_e, big.mark = "."), "</b>"),
+#                               base::paste0("<b>Não Empenhado: R$ ", base::format(t_ne, big.mark = "."), "</b>"))
+#           ),
+#           base::list(
+#             yaxis = base::list(categoryorder = "array", categoryarray = d_sub$label_y, title = "", tickfont = base::list(size = tamanho_eixo_y, color = cor_eixo_y)),
+#             xaxis = base::list(showticklabels = FALSE, range = base::list(0, max_v * 1.8))
+#           )
+#         )
+#       )
+#     })
+#   }
+# 
+#   # 3. RENDERIZAÇÃO INICIAL (TOP 10)
+#   df_init <- dados_base %>% dplyr::slice_tail(n = 10)
+#   t_e_i <- base::sum(df_init$V_Empenhado); t_ne_i <- base::sum(df_init$V_N_Empenhado)
+#   max_v_i <- base::max(base::c(df_init$V_Empenhado, df_init$V_N_Empenhado), na.rm = TRUE)
+# 
+#   plotly::plot_ly(df_init) %>%
+#     plotly::add_bars(y = ~label_y, x = ~V_Empenhado, orientation = 'h',
+#                      name = base::paste0("<b>Empenhado: R$ ", base::format(t_e_i, big.mark = "."), "</b>"),
+#                      marker = base::list(color = cor_empenhado),
+#                      text = ~base::paste0("<b>R$ ", base::format(V_Empenhado, big.mark = "."), "</b>"),
+#                      textposition = 'outside', cliponaxis = FALSE, 
+#                      hoverinfo = "text", hovertext = ~Hover_Emp,
+#                      hoverlabel = base::list(bgcolor = "#FFFFFF", font = base::list(color = "black"))) %>%
+#     plotly::add_bars(y = ~label_y, x = ~V_N_Empenhado, orientation = 'h',
+#                      name = base::paste0("<b>Não Empenhado: R$ ", base::format(t_ne_i, big.mark = "."), "</b>"),
+#                      marker = base::list(color = cor_n_empenhado),
+#                      text = ~base::paste0("<b>R$ ", base::format(V_N_Empenhado, big.mark = "."), "</b>"),
+#                      textposition = 'outside', cliponaxis = FALSE, 
+#                      hoverinfo = "text", hovertext = ~Hover_Pen,
+#                      hoverlabel = base::list(bgcolor = "#FFFFFF", font = base::list(color = "black"))) %>%
+#     plotly::layout(
+#       font = base::list(family = fonte_padrao),
+#       hovermode = "y unified",
+#       title = base::list(text = base::paste0("<b style='color:", titulo_cor, "; font-size:", titulo_tamanho, "px;'>", titulo_nome, "</b>",
+#                          "<br><span style='color:", sub_cor, "; font-size:", sub_tamanho, "px;'>", subtitulo_texto, "</span>"), x = 0, y = 0.98),
+#       yaxis = base::list(title = "", tickfont = base::list(size = tamanho_eixo_y, color = cor_eixo_y),
+#                          categoryorder = "array", categoryarray = df_init$label_y),
+#       xaxis = base::list(title = "", showticklabels = FALSE, range = base::list(0, max_v_i * 1.8)),
+#       legend = base::list(orientation = 'h', x = 0, y = 1.30, font = base::list(size = tamanho_legenda, color = cor_legenda)),
+#       hoverlabel = base::list(bgcolor = "#FFFFFF", bordercolor = borda_balao_hover, font = base::list(size = hover_fonte_tam, family = fonte_padrao, color = "black")),
+#       updatemenus = base::list(base::list(active = 1, x = 0, y = 1.08, buttons = criar_botoes_top(dados_base))),
+#       margin = base::list(t = 0, b = 0, l = 320),
+#       plot_bgcolor = "white", barmode = 'group'
+#     ) %>%
+#     plotly::config(displayModeBar = FALSE, responsive = TRUE)
+# }
+# 
+# gerar_grafico_natureza_top(
+#   bd_principal    = bd_principal, 
+#   modalidade_alvo = "AD"
+# )
+# 
+# --- VERSÃO FINAL ALEX (ALTERAÇÃO APENAS NO TEXTO DO HOVER) ---
 gerar_grafico_natureza_top <- function(bd_principal, 
                                        modalidade_alvo,
                                        titulo_nome        = "",
@@ -2435,11 +2575,11 @@ gerar_grafico_natureza_top <- function(bd_principal,
                                        cor_n_empenhado    = "#48cae4",
                                        tamanho_rotulos    = 10,
                                        cor_rotulos        = "#000000",
-                                       tamanho_eixo_y     = 11,
-                                       cor_eixo_y         = "#000000",
+                                       tamanho_eixo_y      = 11,
+                                       cor_eixo_y          = "#000000",
                                        tamanho_legenda    = 12,
                                        cor_legenda        = "#000000",
-                                       tamanho_botoes     = 12,
+                                       tamanho_botoes      = 12,
                                        hover_bg_cor       = "#FFFFFF",
                                        hover_txt_cor      = "#000000",
                                        hover_fonte_tam    = 11,
@@ -2448,14 +2588,19 @@ gerar_grafico_natureza_top <- function(bd_principal,
   
   fonte_padrao <- "Inter, sans-serif"
   
-  # Função para quebrar texto longo
+  # --- POSICIONAMENTO DINÂMICO ---
+  tem_titulo    <- titulo_nome != ""
+  pos_y_titulo  <- base::ifelse(tem_titulo, 1.40, 0)
+  pos_y_comum   <- base::ifelse(tem_titulo, 1.15, 1.10)
+  margem_topo   <- base::ifelse(tem_titulo, 150, 80)
+  
   quebrar_texto <- function(x, n = 40) {
     base::lapply(x, function(s) {
       base::paste(base::strwrap(s, width = n), collapse = "<br>")
     }) %>% base::unlist()
   }
 
-  # 1. PROCESSAMENTO: ORDENAÇÃO PELA SOMA TOTAL E PREPARAÇÃO DOS DADOS
+  # 1. PROCESSAMENTO DE DADOS
   dados_base <- bd_principal %>%
     dplyr::filter(modalidade_processo == modalidade_alvo, !base::is.na(natureza_despesa)) %>%
     dplyr::mutate(status_item = base::toupper(status_item)) %>%
@@ -2474,13 +2619,20 @@ gerar_grafico_natureza_top <- function(bd_principal,
       V_N_Empenhado = base::sum(v_proc_na_nat[status_resumo == "PEN"], na.rm = TRUE),
       Soma_Total    = V_Empenhado + V_N_Empenhado,
       desc_nat      = dplyr::first(desc_nat),
-      # Hover Detalhado Original (Mantido)
-      Hover_Emp = base::paste0("<span style='font-family:", fonte_padrao, ";'><b>DETALHAMENTO EMPENHADOS:</b><br>",
-                               base::paste(base::unique(base::paste0("• ", processo, " | ", agente_proc, " (", qtd_itens, " itens) | R$ ", 
-                               base::format(v_proc_na_nat[status_resumo == "EMP"], big.mark = "."))), collapse = "<br>"), "</span>"),
-      Hover_Pen = base::paste0("<span style='font-family:", fonte_padrao, ";'><b>DETALHAMENTO PENDENTES:</b><br>",
-                               base::paste(base::unique(base::paste0("• ", processo, " | ", agente_proc, " (", qtd_itens, " itens) | R$ ", 
-                               base::format(v_proc_na_nat[status_resumo == "PEN"], big.mark = "."))), collapse = "<br>"), "</span>"),
+      
+      # HOVER ALTERADO: TEXTO LIMPO, SEM QUADRADOS, NEGRITO APENAS NOS TÍTULOS
+      Hover_Emp = base::paste0("<span style='font-family:", fonte_padrao, ";'>",
+                               "<b>EMPENHADOS</b><br>",
+                               base::paste(base::unique(base::paste0(processo, " | ", agente_proc, " | R$ ", 
+                               base::format(v_proc_na_nat[status_resumo == "EMP"], big.mark = "."), " | ", qtd_itens, " itens")), 
+                               collapse = "<br>"), 
+                               "<br><span style='color:gray;'>..................................................</span><br></span>"),
+      
+      Hover_Pen = base::paste0("<span style='font-family:", fonte_padrao, ";'>",
+                               "<b>PENDENTES</b><br>",
+                               base::paste(base::unique(base::paste0(processo, " | ", agente_proc, " | R$ ", 
+                               base::format(v_proc_na_nat[status_resumo == "PEN"], big.mark = "."), " | ", qtd_itens, " itens")), 
+                               collapse = "<br>"), "</span>"),
       .groups = "drop"
     ) %>%
     dplyr::filter(Soma_Total > 0) %>%
@@ -2490,13 +2642,13 @@ gerar_grafico_natureza_top <- function(bd_principal,
       label_y = base::factor(label_y, levels = label_y)
     )
 
-  # 2. BOTÕES COM LEGENDA R$ E ORDEM TRAVADA
+  # 2. BOTÕES INTERATIVOS
   criar_botoes_top <- function(df) {
     opcoes <- base::list(5, 10, 15, base::nrow(df))
     base::lapply(opcoes, function(n) {
       d_sub <- df %>% dplyr::slice_tail(n = n)
       t_e <- base::sum(d_sub$V_Empenhado); t_ne <- base::sum(d_sub$V_N_Empenhado)
-      max_v <- base::max(base::c(d_sub$V_Empenhado, d_sub$V_N_Empenhado), na.rm = TRUE)
+      v_max_local <- base::max(base::c(d_sub$V_Empenhado, d_sub$V_N_Empenhado), na.rm = TRUE)
       
       base::list(
         method = "update",
@@ -2512,55 +2664,84 @@ gerar_grafico_natureza_top <- function(bd_principal,
                               base::paste0("<b>Não Empenhado: R$ ", base::format(t_ne, big.mark = "."), "</b>"))
           ),
           base::list(
-            yaxis = base::list(categoryorder = "array", categoryarray = d_sub$label_y, title = "", tickfont = base::list(size = tamanho_eixo_y, color = cor_eixo_y)),
-            xaxis = base::list(showticklabels = FALSE, range = base::list(0, max_v * 1.8))
+            yaxis = base::list(categoryorder = "array", categoryarray = d_sub$label_y, automargin = TRUE),
+            xaxis = base::list(showticklabels = FALSE, range = base::list(-v_max_local * 0.15, v_max_local * 1.8))
           )
         )
       )
     })
   }
 
-  # 3. RENDERIZAÇÃO INICIAL (TOP 10)
+  # 3. RENDERIZAÇÃO
   df_init <- dados_base %>% dplyr::slice_tail(n = 10)
-  t_e_i <- base::sum(df_init$V_Empenhado); t_ne_i <- base::sum(df_init$V_N_Empenhado)
+  t_e_i   <- base::sum(df_init$V_Empenhado); t_ne_i <- base::sum(df_init$V_N_Empenhado)
   max_v_i <- base::max(base::c(df_init$V_Empenhado, df_init$V_N_Empenhado), na.rm = TRUE)
 
   plotly::plot_ly(df_init) %>%
-    plotly::add_bars(y = ~label_y, x = ~V_Empenhado, orientation = 'h',
-                     name = base::paste0("<b>Empenhado: R$ ", base::format(t_e_i, big.mark = "."), "</b>"),
-                     marker = base::list(color = cor_empenhado),
-                     text = ~base::paste0("<b>R$ ", base::format(V_Empenhado, big.mark = "."), "</b>"),
-                     textposition = 'outside', cliponaxis = FALSE, 
-                     hoverinfo = "text", hovertext = ~Hover_Emp,
-                     hoverlabel = base::list(bgcolor = "#FFFFFF", font = base::list(color = "black"))) %>%
-    plotly::add_bars(y = ~label_y, x = ~V_N_Empenhado, orientation = 'h',
-                     name = base::paste0("<b>Não Empenhado: R$ ", base::format(t_ne_i, big.mark = "."), "</b>"),
-                     marker = base::list(color = cor_n_empenhado),
-                     text = ~base::paste0("<b>R$ ", base::format(V_N_Empenhado, big.mark = "."), "</b>"),
-                     textposition = 'outside', cliponaxis = FALSE, 
-                     hoverinfo = "text", hovertext = ~Hover_Pen,
-                     hoverlabel = base::list(bgcolor = "#FFFFFF", font = base::list(color = "black"))) %>%
+    plotly::add_bars(
+      y = ~label_y, x = ~V_Empenhado, orientation = 'h',
+      name = base::paste0("<b>Empenhado: R$ ", base::format(t_e_i, big.mark = "."), "</b>"),
+      marker = base::list(color = cor_empenhado),
+      text = ~base::paste0("<b>R$ ", base::format(V_Empenhado, big.mark = "."), "</b>"),
+      textposition = 'outside', cliponaxis = FALSE, 
+      hoverinfo = "text", hovertext = ~Hover_Emp
+    ) %>%
+    plotly::add_bars(
+      y = ~label_y, x = ~V_N_Empenhado, orientation = 'h',
+      name = base::paste0("<b>Não Empenhado: R$ ", base::format(t_ne_i, big.mark = "."), "</b>"),
+      marker = base::list(color = cor_n_empenhado),
+      text = ~base::paste0("<b>R$ ", base::format(V_N_Empenhado, big.mark = "."), "</b>"),
+      textposition = 'outside', cliponaxis = FALSE, 
+      hoverinfo = "text", hovertext = ~Hover_Pen
+    ) %>%
     plotly::layout(
       font = base::list(family = fonte_padrao),
       hovermode = "y unified",
-      title = base::list(text = base::paste0("<b style='color:", titulo_cor, "; font-size:", titulo_tamanho, "px;'>", titulo_nome, "</b>",
-                         "<br><span style='color:", sub_cor, "; font-size:", sub_tamanho, "px;'>", subtitulo_texto, "</span>"), x = 0, y = 0.98),
-      yaxis = base::list(title = "", tickfont = base::list(size = tamanho_eixo_y, color = cor_eixo_y),
+      title = base::list(
+        text = base::ifelse(tem_titulo, 
+                            base::paste0("<b style='color:", titulo_cor, ";'>", titulo_nome, "</b><br>",
+                                         "<span style='color:", sub_cor, ";'>", subtitulo_texto, "</span>"), 
+                            ""), 
+        x = 0, y = pos_y_titulo, yanchor = "top"
+      ),
+      legend = base::list(orientation = 'h', x = 0.22, y = pos_y_comum, yanchor = "top", 
+                         font = base::list(size = tamanho_legenda, color = cor_legenda)),
+      updatemenus = base::list(base::list(active = 1, x = 0, y = pos_y_comum, yanchor = "top", 
+                                         buttons = criar_botoes_top(dados_base))),
+      yaxis = base::list(title = "", automargin = TRUE, tickfont = base::list(size = tamanho_eixo_y, color = cor_eixo_y),
                          categoryorder = "array", categoryarray = df_init$label_y),
-      xaxis = base::list(title = "", showticklabels = FALSE, range = base::list(0, max_v_i * 1.8)),
-      legend = base::list(orientation = 'h', x = 0, y = 1.30, font = base::list(size = tamanho_legenda, color = cor_legenda)),
-      hoverlabel = base::list(bgcolor = "#FFFFFF", bordercolor = borda_balao_hover, font = base::list(size = hover_fonte_tam, family = fonte_padrao, color = "black")),
-      updatemenus = base::list(base::list(active = 1, x = 0, y = 1.08, buttons = criar_botoes_top(dados_base))),
-      margin = base::list(t = 0, b = 0, l = 320),
+      xaxis = base::list(title = "", showticklabels = FALSE, range = base::list(-max_v_i * 0.15, max_v_i * 1.8)),
+      margin = base::list(t = margem_topo, b = 40, l = 230),
       plot_bgcolor = "white", barmode = 'group'
     ) %>%
     plotly::config(displayModeBar = FALSE, responsive = TRUE)
 }
 
 gerar_grafico_natureza_top(
-  bd_principal    = bd_principal, 
-  modalidade_alvo = "AD"
-)
+    bd_principal    = bd_principal,,
+    modalidade_alvo   =  "AD",
+    # titulo_nome       = "",
+    # subtitulo_texto   = "",
+    titulo_cor        = "#03045e",
+    # titulo_tamanho    = 14.5,
+    # sub_cor           = "#000000",
+    # sub_tamanho       = 13,
+    cor_empenhado     = "#52b788",
+    cor_n_empenhado   = "#d80032",
+    tamanho_rotulos   = 8,
+    cor_rotulos       = "#000000",
+    tamanho_eixo_y    = 10,
+    cor_eixo_y        = "#000000",
+    tamanho_legenda   = 12,
+    cor_legenda       = "#000000",
+    tamanho_botoes    = 12,
+    hover_bg_cor      = "#FFFFFF",
+    hover_txt_cor     = "#000000",
+    hover_fonte_tam   = 9,
+    borda_balao_hover = "#000000",
+    alinhamento_balao  = "left"
+   )
+
 ```
 
 ## ARP - ATA
@@ -2573,9 +2754,30 @@ gerar_grafico_natureza_top(
 #| fig-height: 6
 
 gerar_grafico_natureza_top(
-  bd_principal    = bd_principal, 
-  modalidade_alvo = "ARP - ATA"
-)
+    bd_principal    = bd_principal,,
+    modalidade_alvo   =  "ARP - ATA",
+    # titulo_nome       = "",
+    # subtitulo_texto   = "",
+    titulo_cor        = "#03045e",
+    # titulo_tamanho    = 14.5,
+    # sub_cor           = "#000000",
+    # sub_tamanho       = 13,
+    cor_empenhado     = "#52b788",
+    cor_n_empenhado   = "#d80032",
+    tamanho_rotulos   = 8,
+    cor_rotulos       = "#000000",
+    tamanho_eixo_y    = 10,
+    cor_eixo_y        = "#000000",
+    tamanho_legenda   = 12,
+    cor_legenda       = "#000000",
+    tamanho_botoes    = 12,
+    hover_bg_cor      = "#FFFFFF",
+    hover_txt_cor     = "#000000",
+    hover_fonte_tam   = 9,
+    borda_balao_hover = "#000000",
+    alinhamento_balao  = "left"
+   )
+
 ```
 
 ## CAE
@@ -2588,9 +2790,30 @@ gerar_grafico_natureza_top(
 #| fig-height: 6
 
 gerar_grafico_natureza_top(
-  bd_principal    = bd_principal, 
-  modalidade_alvo = "CAE"
-)
+    bd_principal    = bd_principal,,
+    modalidade_alvo   =  "CAE",
+    # titulo_nome       = "",
+    # subtitulo_texto   = "",
+    titulo_cor        = "#03045e",
+    # titulo_tamanho    = 14.5,
+    # sub_cor           = "#000000",
+    # sub_tamanho       = 13,
+    cor_empenhado     = "#52b788",
+    cor_n_empenhado   = "#d80032",
+    tamanho_rotulos   = 8,
+    cor_rotulos       = "#000000",
+    tamanho_eixo_y    = 10,
+    cor_eixo_y        = "#000000",
+    tamanho_legenda   = 12,
+    cor_legenda       = "#000000",
+    tamanho_botoes    = 12,
+    hover_bg_cor      = "#FFFFFF",
+    hover_txt_cor     = "#000000",
+    hover_fonte_tam   = 9,
+    borda_balao_hover = "#000000",
+    alinhamento_balao  = "left"
+   )
+
 ```
 
 ## DLE
@@ -2603,9 +2826,30 @@ gerar_grafico_natureza_top(
 #| fig-height: 6
 
 gerar_grafico_natureza_top(
-  bd_principal    = bd_principal, 
-  modalidade_alvo = "DLE"
-)
+    bd_principal    = bd_principal,,
+    modalidade_alvo   =  "DLE",
+    # titulo_nome       = "",
+    # subtitulo_texto   = "",
+    titulo_cor        = "#03045e",
+    # titulo_tamanho    = 14.5,
+    # sub_cor           = "#000000",
+    # sub_tamanho       = 13,
+    cor_empenhado     = "#52b788",
+    cor_n_empenhado   = "#d80032",
+    tamanho_rotulos   = 8,
+    cor_rotulos       = "#000000",
+    tamanho_eixo_y    = 10,
+    cor_eixo_y        = "#000000",
+    tamanho_legenda   = 12,
+    cor_legenda       = "#000000",
+    tamanho_botoes    = 12,
+    hover_bg_cor      = "#FFFFFF",
+    hover_txt_cor     = "#000000",
+    hover_fonte_tam   = 9,
+    borda_balao_hover = "#000000",
+    alinhamento_balao  = "left"
+   )
+
 ```
 
 ## INEX
@@ -2618,9 +2862,30 @@ gerar_grafico_natureza_top(
 #| fig-height: 6
 
 gerar_grafico_natureza_top(
-  bd_principal    = bd_principal, 
-  modalidade_alvo = "INEX"
-)
+    bd_principal    = bd_principal,,
+    modalidade_alvo   =  "INEX",
+    # titulo_nome       = "",
+    # subtitulo_texto   = "",
+    titulo_cor        = "#03045e",
+    # titulo_tamanho    = 14.5,
+    # sub_cor           = "#000000",
+    # sub_tamanho       = 13,
+    cor_empenhado     = "#52b788",
+    cor_n_empenhado   = "#d80032",
+    tamanho_rotulos   = 8,
+    cor_rotulos       = "#000000",
+    tamanho_eixo_y    = 10,
+    cor_eixo_y        = "#000000",
+    tamanho_legenda   = 12,
+    cor_legenda       = "#000000",
+    tamanho_botoes    = 12,
+    hover_bg_cor      = "#FFFFFF",
+    hover_txt_cor     = "#000000",
+    hover_fonte_tam   = 9,
+    borda_balao_hover = "#000000",
+    alinhamento_balao  = "left"
+   )
+
 ```
 
 ## PE
@@ -2632,10 +2897,32 @@ gerar_grafico_natureza_top(
 #| out-width: "100%"
 #| fig-height: 6
 
+
 gerar_grafico_natureza_top(
-  bd_principal    = bd_principal, 
-  modalidade_alvo = "PE"
-)
+    bd_principal    = bd_principal,,
+    modalidade_alvo   =  "PE",
+    # titulo_nome       = "",
+    # subtitulo_texto   = "",
+    titulo_cor        = "#03045e",
+    # titulo_tamanho    = 14.5,
+    # sub_cor           = "#000000",
+    # sub_tamanho       = 13,
+    cor_empenhado     = "#52b788",
+    cor_n_empenhado   = "#d80032",
+    tamanho_rotulos   = 8,
+    cor_rotulos       = "#000000",
+    tamanho_eixo_y    = 10,
+    cor_eixo_y        = "#000000",
+    tamanho_legenda   = 12,
+    cor_legenda       = "#000000",
+    tamanho_botoes    = 12,
+    hover_bg_cor      = "#FFFFFF",
+    hover_txt_cor     = "#000000",
+    hover_fonte_tam   = 9,
+    borda_balao_hover = "#000000",
+    alinhamento_balao  = "left"
+   )
+
 ```
 
 ## RDL
@@ -2648,9 +2935,30 @@ gerar_grafico_natureza_top(
 #| fig-height: 6
 
 gerar_grafico_natureza_top(
-  bd_principal    = bd_principal, 
-  modalidade_alvo = "RDL"
-)
+    bd_principal    = bd_principal,,
+    modalidade_alvo   =  "DLE",
+    # titulo_nome       = "",
+    # subtitulo_texto   = "",
+    titulo_cor        = "#03045e",
+    # titulo_tamanho    = 14.5,
+    # sub_cor           = "#000000",
+    # sub_tamanho       = 13,
+    cor_empenhado     = "#52b788",
+    cor_n_empenhado   = "#d80032",
+    tamanho_rotulos   = 8,
+    cor_rotulos       = "#000000",
+    tamanho_eixo_y    = 10,
+    cor_eixo_y        = "#000000",
+    tamanho_legenda   = 12,
+    cor_legenda       = "#000000",
+    tamanho_botoes    = 12,
+    hover_bg_cor      = "#FFFFFF",
+    hover_txt_cor     = "#000000",
+    hover_fonte_tam   = 9,
+    borda_balao_hover = "#000000",
+    alinhamento_balao  = "left"
+   )
+
 ```
 
 :::
