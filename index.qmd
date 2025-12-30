@@ -142,108 +142,6 @@ if(!require("dplyr")) install.packages("dplyr", quiet = TRUE) ; library("dplyr")
 # ==============================================================================
 # E. FUNÇÕES DE APRESENTAÇÃO
 # ==============================================================================
-# 
-# tabela_interativa <- function(dados, 
-#                                titulo_tabela, 
-#                                tam_fonte_corpo = "13px",   
-#                                tam_fonte_titulo = "20px",  
-#                                tam_fonte_header = "14px",  
-#                                cor_titulo = "#03045e",     
-#                                cor_primaria = "#03045e",   
-#                                cor_texto_corpo = "#333333",
-#                                mostrar_filtro = TRUE,      
-#                                pesquisa_geral = FALSE,     
-#                                largura_cols_vetor = NULL,  
-#                                colunas_selecionadas = NULL,
-#                                n_pages = 10,               
-#                                mostrar_indice = TRUE) { 
-# 
-#   # Inicializa o contador global para numerar as tabelas automaticamente
-#   if (!base::exists("contador_tabelas_alex")) {
-#     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
-#   }
-# 
-#   # Processa a seleção de colunas se o usuário forneceu o vetor
-#   dados_processados <- dados
-#   if (!base::is.null(colunas_selecionadas)) {
-#     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
-#   }
-# 
-#   # Prevenção de Erro '7': Verifica o número de colunas antes de aplicar larguras
-#   n_colunas_dados <- base::ncol(dados_processados)
-#   lista_columnDefs <- base::list(base::list(width = '30px', targets = 0))
-#   
-#   if (!base::is.null(largura_cols_vetor)) {
-#     for (i in base::seq_along(largura_cols_vetor)) {
-#       if ((i - 1) < n_colunas_dados) {
-#           lista_columnDefs[[base::length(lista_columnDefs) + 1]] <- base::list(
-#             width = largura_cols_vetor[i], 
-#             targets = i - 1
-#           )
-#       }
-#     }
-#   }
-# 
-#   # Incrementa o contador para o título
-#   base::assign("contador_tabelas_alex", base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1, envir = .GlobalEnv)
-#   titulo_final <- base::paste0("Tabela ", base::get("contador_tabelas_alex", envir = .GlobalEnv), ": ", titulo_tabela)
-# 
-#   # Renderiza o título H2 com seu estilo original
-#   html_titulo <- htmltools::tags$h2(
-#     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
-#                           "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
-#     htmltools::tags$b(titulo_final)
-#   )
-# 
-#   # Criação da DT
-#   tabela <- DT::datatable(
-#     base::data.frame(dados_processados, check.names = FALSE),
-#     escape = FALSE, 
-#     rownames = mostrar_indice,
-#     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
-#     width = "100%", 
-#     class = "hover row-border", 
-#     options = base::list(
-#       # CORREÇÃO AQUI: Dinâmico conforme sua escolha
-#       dom = if(pesquisa_geral) 'ft p' else 't p',
-#       pageLength = n_pages,
-#       searching = TRUE, 
-#       lengthChange = FALSE,
-#       info = FALSE,
-#       ordering = FALSE,      
-#       autoWidth = FALSE,    
-#       scrollX = TRUE,       
-#       columnDefs = lista_columnDefs,
-#       initComplete = DT::JS(
-#         base::paste0("function(settings, json) {",
-#                       # Alinhamento à esquerda, Negrito e Margens da Barra de Pesquisa
-#                       "$(this.api().table().container()).find('.dataTables_filter').css({",
-#                       "  'float': 'left', 'text-align': 'left', 'font-weight': 'bold',",
-#                       "  'margin-top': '15px', 'margin-bottom': '15px'",
-#                       "});",
-#                       # Estilo do corpo e cabeçalho (Seu estilo original de 3px e fundo branco)
-#                       "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
-#                       "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
-#                       "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
-#                       "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
-#                       # Efeito Hover Alex: Negrito apenas na tabela principal
-#                       "$(this.api().table().body()).on('mouseenter', 'tr', function() {",
-#                       "  if (!$(this).closest('table').hasClass('subtable')) {",
-#                       "    $(this).css({'background-color': '#ffffff', 'color': '#000000', 'font-weight': 'bold'});",
-#                       "  }",
-#                       "}).on('mouseleave', 'tr', function() {",
-#                       "  if (!$(this).closest('table').hasClass('subtable')) {",
-#                       "    $(this).css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
-#                       "  }",
-#                       "});",
-#                       "}")
-#       ),
-#       language = base::list(paginate = base::list("previous" = "Anterior", "next" = "Próximo"),
-#                             emptyTable = "Sem dados", zeroRecords = "Nenhum registro encontrado", search = "Pesquisa Geral:")
-#     )
-#   )
-#   return(htmltools::tagList(html_titulo, tabela))
-# }
 
 tabela_interativa <- function(dados, 
                                titulo_tabela, 
@@ -381,332 +279,6 @@ tabela_interativa <- function(dados,
   return(htmltools::tagList(html_titulo, tabela))
 }
 
-# 
-# 
-# tabela_interativa_detalhes <- function(dados, 
-#                                         dados_detalhes, 
-#                                         coluna_chave, 
-#                                         titulo_tabela, 
-#                                         colunas_detalhes_nomes = NULL, 
-#                                         largura_detalhes_vetor = NULL, 
-#                                         tam_fonte_corpo = "13px",   
-#                                         tam_fonte_titulo = "20px",  
-#                                         tam_fonte_header = "14px",  
-#                                         cor_titulo = "#03045e",     
-#                                         cor_primaria = "#03045e",   
-#                                         cor_texto_corpo = "#333333",
-#                                         mostrar_filtro = TRUE,      
-#                                         pesquisa_geral = FALSE,     
-#                                         largura_cols_vetor = NULL,  
-#                                         colunas_selecionadas = NULL,
-#                                         n_pages = 10,               
-#                                         mostrar_indice = TRUE) {
-# 
-#   if (!base::exists("contador_tabelas_alex", envir = .GlobalEnv)) {
-#     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
-#   }
-# 
-#   dados_processados <- dados
-#   if (!base::is.null(colunas_selecionadas)) {
-#     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
-#   }
-# 
-#   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
-#   n_colunas_reais <- base::ncol(dados_processados)
-# 
-#   base::assign("contador_tabelas_alex", base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1, envir = .GlobalEnv)
-#   titulo_final <- base::paste0("Tabela ", base::get("contador_tabelas_alex", envir = .GlobalEnv), ": ", titulo_tabela)
-# 
-#   html_titulo <- htmltools::tags$h2(
-#     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
-#                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
-#     htmltools::tags$b(titulo_final)
-#   )
-# 
-#   
-#   
-#   json_detalhes_js <- jsonlite::toJSON(dados_detalhes, ArrayOrder = "row")
-#   nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
-#   larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
-#   # nomes_detalhes_js <- if(!base::is.na(colunas_detalhes_nomes) && !base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
-#   # larguras_detalhes_js <- if(!base::is.na(largura_detalhes_vetor) && !base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
-# 
-#   lista_column_defs <- base::list(
-#     base::list(targets = 0, className = 'details-control', width = '20px', orderable = FALSE)
-#   )
-#   
-#   if (!base::is.null(largura_cols_vetor)) {
-#     for (i in 1:base::length(largura_cols_vetor)) {
-#       if (i < n_colunas_reais) {
-#         lista_column_defs[[base::length(lista_column_defs) + 1]] <- base::list(targets = i, width = largura_cols_vetor[i])
-#       }
-#     }
-#   }
-# 
-#   tabela <- DT::datatable(
-#     base::data.frame(dados_processados, check.names = FALSE),
-#     escape = FALSE, 
-#     rownames = mostrar_indice,
-#     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
-#     width = "100%", 
-#     class = "row-border", 
-#     options = base::list(
-#       dom = if(pesquisa_geral) 'ft p' else 't p',
-#       pageLength = n_pages,
-#       searching = TRUE, 
-#       lengthChange = FALSE,
-#       info = FALSE,
-#       ordering = FALSE,      
-#       autoWidth = FALSE,    
-#       scrollX = TRUE,
-#       columnDefs = lista_column_defs,
-#       
-#       initComplete = DT::JS(
-#         base::paste0("function(settings, json) {",
-#                       "$(this.api().table().container()).find('.dataTables_filter').css({",
-#                       "  'float': 'left', 'text-align': 'left', 'font-weight': 'bold',",
-#                       "  'margin-top': '15px', 'margin-bottom': '15px'",
-#                       "});",
-#                       "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
-#                       "$(this.api().table().header()).css({'font-size': '", tam_fonte_header, "', 'background-color': '#ffffff', 'color': '", cor_primaria, "', 'white-space': 'nowrap'});",
-#                       "$(this.api().table().header()).find('tr:first-child th').css({'border-top': '3px solid #000000', 'border-bottom': '3px solid #000000', 'padding': '12px'});",
-#                       "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
-#                       
-#                       "var table = this.api(); var detalhes_data = ", json_detalhes_js, ";",
-#                       "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
-#                       
-#                       "$(this.api().table().body()).on('click', 'td.details-control', function() {",
-#                       "  var tr = $(this).closest('tr'); var row = table.row(tr);",
-#                       "  if (row.child.isShown()) {",
-#                       "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
-#                       "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal', 'border-left': ''});",
-#                       "  } else {",
-#                       "    tr.css({'background-color': '#f8f9fa', 'color': '", cor_primaria, "', 'font-weight': '600', 'border-left': '4px solid ", cor_primaria, "'});",
-#                       "    var rowData = row.data(); var indexChave = ", if(mostrar_indice) "2" else "1", "; var chave = rowData[indexChave];",
-#                       "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
-#                       
-#                       "    var html_sub = '<table class=\"subtable\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff !important; color:#03045e; font-weight:bold;\">';",
-#                       "    if(sub_dados.length > 0) {",
-#                       "       var colKeys = Object.keys(sub_dados[0]).filter(k => k !== '", coluna_chave, "');",
-#                       "       colKeys.forEach((key, index) => {",
-#                       "          var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
-#                       "          var width = (customLarguras && customLarguras[index]) ? 'width:'+customLarguras[index]+';' : '';",
-#                       "          html_sub += '<th style=\"padding:6px; border-bottom:1px solid #ddd; text-align:left; '+width+'\">' + label + '</th>';",
-#                       "       });",
-#                       "       html_sub += '</tr></thead><tbody>';",
-#                       "       sub_dados.forEach(r => {",
-#                       "          html_sub += '<tr class=\"subrow\" style=\"border-bottom:1px solid #f1f1f1; background-color: transparent !important;\">';",
-#                       "          colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; font-weight: normal !important;\">' + (r[k] || '') + '</td>'; });",
-#                       "          html_sub += '</tr>';",
-#                       "       });",
-#                       "    } else { html_sub += '<tr><td>Nenhum detalhe disponível</td></tr>'; }",
-#                       "    html_sub += '</tbody></table>';",
-#                       "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
-#                       "  }",
-#                       "});",
-#                       
-#                       "$(this.api().table().body()).on('mouseenter', 'tr', function(e) {",
-#                       "  var tr = $(this);",
-#                       "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable') && !tr.hasClass('subrow')) {",
-#                       "    tr.css({'background-color': '#ffffff', 'color': '#000000', 'font-weight': 'bold'});",
-#                       "  }",
-#                       "}).on('mouseleave', 'tr', function(e) {",
-#                       "  var tr = $(this);",
-#                       "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable') && !tr.hasClass('subrow')) {",
-#                       "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
-#                       "  }",
-#                       "});",
-#                       "}")
-#       ),
-#       language = base::list(paginate = base::list("previous" = "Anterior", "next" = "Próximo"), search = "Pesquisa Geral:")
-#     )
-#   )
-#   return(htmltools::tagList(html_titulo, tabela))
-# }
-# 
-# tabela_interativa_detalhes <- function(dados, 
-#                                        dados_detalhes, 
-#                                        coluna_chave, 
-#                                        titulo_tabela, 
-#                                        colunas_detalhes_nomes = NULL, 
-#                                        largura_detalhes_vetor = NULL, 
-#                                        tam_fonte_corpo = "13px",   
-#                                        tam_fonte_titulo = "20px",  
-#                                        tam_fonte_header = "14px",  
-#                                        cor_titulo = "#03045e",     
-#                                        cor_primaria = "#03045e",   
-#                                        cor_texto_corpo = "#333333",
-#                                        mostrar_filtro = TRUE,      
-#                                        pesquisa_geral = FALSE,     
-#                                        largura_cols_vetor = NULL,  
-#                                        colunas_selecionadas = NULL,
-#                                        alinhamento_header_vetor = NULL, # Novo parâmetro
-#                                        alinhamento_corpo_vetor = NULL,  # Novo parâmetro
-#                                        n_pages = 10,               
-#                                        mostrar_indice = TRUE) {
-# 
-#   if (!base::exists("contador_tabelas_alex", envir = .GlobalEnv)) {
-#     base::assign("contador_tabelas_alex", 0, envir = .GlobalEnv)
-#   }
-# 
-#   dados_processados <- dados
-#   if (!base::is.null(colunas_selecionadas)) {
-#     dados_processados <- dados %>% dplyr::select(tidyselect::all_of(colunas_selecionadas))
-#   }
-# 
-#   dados_processados <- base::cbind(' ' = '&oplus;', dados_processados)
-#   n_colunas_reais <- base::ncol(dados_processados)
-# 
-#   base::assign("contador_tabelas_alex", base::get("contador_tabelas_alex", envir = .GlobalEnv) + 1, envir = .GlobalEnv)
-#   titulo_final <- base::paste0("Tabela ", base::get("contador_tabelas_alex", envir = .GlobalEnv), ": ", titulo_tabela)
-# 
-#   html_titulo <- htmltools::tags$h2(
-#     style = base::paste0("color: ", cor_titulo, "; font-size: ", tam_fonte_titulo, 
-#                          "; font-weight: bold; text-align: left; margin-bottom: 10px;"),
-#     htmltools::tags$b(titulo_final)
-#   )
-# 
-#   json_detalhes_js <- jsonlite::toJSON(dados_detalhes, ArrayOrder = "row")
-#   nomes_detalhes_js <- if(!base::is.null(colunas_detalhes_nomes)) jsonlite::toJSON(colunas_detalhes_nomes) else "null"
-#   larguras_detalhes_js <- if(!base::is.null(largura_detalhes_vetor)) jsonlite::toJSON(largura_detalhes_vetor) else "null"
-# 
-#   # --- CONFIGURAÇÃO DE COLUMN DEFS (LARGURAS E ALINHAMENTO DO CORPO) ---
-#   lista_column_defs <- base::list(
-#     base::list(targets = 0, className = 'details-control', width = '20px', orderable = FALSE)
-#   )
-#   
-#   # Lógica de Alinhamento do Corpo
-#   for (i in 1:(n_colunas_reais - 1)) {
-#     # Se o usuário passou um vetor de alinhamento, usa ele (índice i pq a col 0 é o controle)
-#     alin_classe <- if(!base::is.null(alinhamento_corpo_vetor) && i <= base::length(alinhamento_corpo_vetor)) {
-#       base::paste0("dt-", alinhamento_corpo_vetor[i])
-#     } else {
-#       "dt-center" # Default
-#     }
-#     
-#     # Se o usuário passou largura
-#     largura <- if(!base::is.null(largura_cols_vetor) && i <= base::length(largura_cols_vetor)) largura_cols_vetor[i] else NULL
-#     
-#     lista_column_defs[[base::length(lista_column_defs) + 1]] <- base::list(
-#       targets = i, 
-#       className = alin_classe,
-#       width = largura
-#     )
-#   }
-# 
-#   # Lógica de Alinhamento do Header (JS)
-#   alin_header_js <- if(!base::is.null(alinhamento_header_vetor)) {
-#     jsonlite::toJSON(alinhamento_header_vetor)
-#   } else {
-#     "null"
-#   }
-# 
-#   tabela <- DT::datatable(
-#     base::data.frame(dados_processados, check.names = FALSE),
-#     escape = FALSE, 
-#     rownames = mostrar_indice,
-#     filter = if(mostrar_filtro) base::list(position = "top", clear = TRUE, plain = TRUE) else "none",
-#     width = "100%", 
-#     class = "row-border", 
-#     options = base::list(
-#       dom = if(pesquisa_geral) 'ft p' else 't p',
-#       pageLength = n_pages,
-#       searching = TRUE, 
-#       lengthChange = FALSE,
-#       info = FALSE,
-#       ordering = FALSE,      
-#       autoWidth = FALSE,    
-#       scrollX = TRUE,
-#       columnDefs = lista_column_defs,
-#       
-#       initComplete = DT::JS(
-#         base::paste0("function(settings, json) {",
-#                      "$(this.api().table().container()).find('.dataTables_filter').css({",
-#                      "  'float': 'left', 'text-align': 'left', 'font-weight': 'bold',",
-#                      "  'margin-top': '15px', 'margin-bottom': '15px'",
-#                      "});",
-#                      "$(this.api().table().container()).css({'font-size': '", tam_fonte_corpo, "', 'font-family': 'Arial, sans-serif', 'color': '", cor_texto_corpo, "'});",
-#                      
-#                      # Estilo Geral do Header
-#                      "$(this.api().table().header()).css({",
-#                      "  'font-size': '", tam_fonte_header, "', ",
-#                      "  'background-color': '#ffffff', ",
-#                      "  'color': '", cor_primaria, "', ",
-#                      "  'white-space': 'normal'", 
-#                      "});",
-#                      
-#                      "$(this.api().table().header()).find('tr:first-child th').css({",
-#                      "  'border-top': '3px solid #000000', ",
-#                      "  'border-bottom': '3px solid #000000', ",
-#                      "  'padding': '12px',",
-#                      "  'vertical-align': 'middle'",
-#                      "});",
-#                      
-#                      # Alinhamento individual do Header
-#                      "var alinHeaders = ", alin_header_js, ";",
-#                      "if(alinHeaders) {",
-#                      "  $(this.api().table().header()).find('tr:first-child th').each(function(index) {",
-#                      "    if(index > 0 && alinHeaders[index-1]) {",
-#                      "      $(this).css('text-align', alinHeaders[index-1]);",
-#                      "    } else { $(this).css('text-align', 'center'); }",
-#                      "  });",
-#                      "} else {",
-#                      "  $(this.api().table().header()).find('tr:first-child th').css('text-align', 'center');",
-#                      "}",
-#                      
-#                      "$(this.api().table().node()).css({'border-bottom': '3px solid #000000'});",
-#                       
-#                       "var table = this.api(); var detalhes_data = ", json_detalhes_js, ";",
-#                       "var customNomes = ", nomes_detalhes_js, "; var customLarguras = ", larguras_detalhes_js, ";",
-#                       
-#                       "$(this.api().table().body()).on('click', 'td.details-control', function() {",
-#                       "  var tr = $(this).closest('tr'); var row = table.row(tr);",
-#                       "  if (row.child.isShown()) {",
-#                       "    row.child.hide(); tr.removeClass('shown'); $(this).html('&oplus;');",
-#                       "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal', 'border-left': ''});",
-#                       "  } else {",
-#                       "    tr.css({'background-color': '#f8f9fa', 'color': '", cor_primaria, "', 'font-weight': '600', 'border-left': '4px solid ", cor_primaria, "'});",
-#                       "    var rowData = row.data(); var indexChave = ", if(mostrar_indice) "2" else "1", "; var chave = rowData[indexChave];",
-#                       "    var sub_dados = detalhes_data.filter(d => d['", coluna_chave, "'] == chave);",
-#                       
-#                       "    var html_sub = '<table class=\"subtable\" style=\"width:97%; margin-left:3%; border-collapse: collapse;\"><thead><tr style=\"background:#ffffff !important; color:#03045e; font-weight:bold;\">';",
-#                       "    if(sub_dados.length > 0) {",
-#                       "       var colKeys = Object.keys(sub_dados[0]).filter(k => k !== '", coluna_chave, "');",
-#                       "       colKeys.forEach((key, index) => {",
-#                       "          var label = (customNomes && customNomes[index]) ? customNomes[index] : key;",
-#                       "          var width = (customLarguras && customLarguras[index]) ? 'width:'+customLarguras[index]+';' : '';",
-#                       "          html_sub += '<th style=\"padding:6px; border-bottom:1px solid #ddd; text-align:center; vertical-align:middle; '+width+'\">' + label + '</th>';",
-#                       "       });",
-#                       "       html_sub += '</tr></thead><tbody>';",
-#                       "       sub_dados.forEach(r => {",
-#                       "          html_sub += '<tr class=\"subrow\" style=\"border-bottom:1px solid #f1f1f1; background-color: transparent !important;\">';",
-#                       "          colKeys.forEach(k => { html_sub += '<td style=\"padding:6px; color:#333 !important; font-weight: normal !important; text-align:center;\">' + (r[k] || '') + '</td>'; });",
-#                       "          html_sub += '</tr>';",
-#                       "       });",
-#                       "    } else { html_sub += '<tr><td>Nenhum detalhe disponível</td></tr>'; }",
-#                       "    html_sub += '</tbody></table>';",
-#                       "    row.child(html_sub).show(); tr.addClass('shown'); $(this).html('&ominus;');",
-#                       "  }",
-#                       "});",
-#                       
-#                       "$(this.api().table().body()).on('mouseenter', 'tr', function(e) {",
-#                       "  var tr = $(this);",
-#                       "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable') && !tr.hasClass('subrow')) {",
-#                       "    tr.css({'background-color': '#ffffff', 'color': '#000000', 'font-weight': 'bold'});",
-#                       "  }",
-#                       "}).on('mouseleave', 'tr', function(e) {",
-#                       "  var tr = $(this);",
-#                       "  if (!tr.hasClass('shown') && !tr.closest('table').hasClass('subtable') && !tr.hasClass('subrow')) {",
-#                       "    tr.css({'background-color': '', 'color': '", cor_texto_corpo, "', 'font-weight': 'normal'});",
-#                       "  }",
-#                       "});",
-#                       "}")
-#       ),
-#       language = base::list(paginate = base::list("previous" = "Anterior", "next" = "Próximo"), search = "Pesquisa Geral:")
-#     )
-#   )
-#   return(htmltools::tagList(html_titulo, tabela))
-# }
 tabela_interativa_detalhes <- function(dados, 
                                        dados_detalhes, 
                                        coluna_chave, 
@@ -2351,6 +1923,198 @@ tabela_interativa_detalhes(
   mostrar_indice           = FALSE
 )
 
+
+
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+
+# ==========================================================
+# 1. PRÉ-PROCESSAMENTO: STATUS POR PROCESSO
+# ==========================================================
+status_por_processo <- bd_principal %>%
+  dplyr::group_by(processo) %>%
+  dplyr::summarise(
+    proc_resolvido = base::all(status_item == "Empenhado" | !base::is.na(nota_de_empenho)),
+    valor_do_proc  = base::sum(valor_total, na.rm = TRUE),
+    qtd_itens_proc = dplyr::n(),
+    itens_res_proc = base::sum(status_item == "Empenhado" | !base::is.na(nota_de_empenho), na.rm = TRUE),
+    itens_pen_proc = base::sum(status_item != "Empenhado" & base::is.na(nota_de_empenho), na.rm = TRUE),
+    tempo_do_proc  = base::mean(dias_uteis, na.rm = TRUE),
+    agente_proc    = dplyr::first(agente),
+    mod_proc       = dplyr::first(modalidade_processo),
+    .groups = "drop"
+  ) %>%
+  dplyr::filter(!base::is.na(mod_proc), tempo_do_proc >= 0)
+
+# ==========================================================
+# 2. BANCO PAI: CONSOLIDADO POR MODALIDADE + LINHA TOTAL
+# ==========================================================
+# Agrupamento base por modalidade
+bd_pai_modalidade_base <- status_por_processo %>%
+  dplyr::group_by(mod_proc) %>%
+  dplyr::summarise(
+    n_processos      = dplyr::n(),
+    v_total_mod      = base::sum(valor_do_proc, na.rm = TRUE),
+    n_resolvidos     = base::sum(proc_resolvido == TRUE),
+    n_pendentes      = base::sum(proc_resolvido == FALSE),
+    v_resolvido      = base::sum(base::ifelse(proc_resolvido == TRUE, valor_do_proc, 0)),
+    v_pendente       = base::sum(base::ifelse(proc_resolvido == FALSE, valor_do_proc, 0)),
+    ciclo_medio_mod  = base::mean(tempo_do_proc, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Criando a linha de TOTAL GERAL (Consolidação de todas as modalidades)
+bd_total_geral <- bd_pai_modalidade_base %>%
+  dplyr::summarise(
+    mod_proc         = base::as.factor("TOTAL GERAL"),
+    n_processos      = base::sum(n_processos),
+    v_total_mod      = base::sum(v_total_mod),
+    n_resolvidos     = base::sum(n_resolvidos),
+    n_pendentes      = base::sum(n_pendentes),
+    v_resolvido      = base::sum(v_resolvido),
+    v_pendente       = base::sum(v_pendente),
+    ciclo_medio_mod  = base::mean(ciclo_medio_mod, na.rm = TRUE)
+  )
+
+# União final com cálculo de percentuais da Tabela Pai
+bd_pai_modalidade <- base::rbind(bd_total_geral, bd_pai_modalidade_base) %>%
+  dplyr::mutate(
+    p_represent_geral = (n_processos / base::max(n_processos[mod_proc == "TOTAL GERAL"])) * 100,
+    p_represent_txt   = base::paste0(base::round(p_represent_geral, 1), "%"),
+    p_resolvido       = (n_resolvidos / n_processos) * 100,
+    aporte_total      = base::paste0("R$ ", base::format(v_total_mod, big.mark = ".", decimal.mark = ",")),
+    aporte_resolvido  = base::paste0("R$ ", base::format(v_resolvido, big.mark = ".", decimal.mark = ",")),
+    aporte_pendente   = base::paste0("R$ ", base::format(v_pendente, big.mark = ".", decimal.mark = ",")),
+    p_resolvido_txt   = base::paste0(base::round(p_resolvido, 1), "%"),
+    ciclo_txt         = base::paste0(base::round(ciclo_medio_mod, 1), " dias")
+  ) %>%
+  dplyr::arrange(base::desc(mod_proc == "TOTAL GERAL"), base::desc(p_resolvido))
+
+# ==========================================================
+# 3. BANCO FILHO: PERFORMANCE E COMPARAÇÃO POR AGENTE
+# ==========================================================
+# Detalhes individuais por modalidade
+bd_filho_base <- status_por_processo %>%
+  dplyr::mutate(agente_proc = base::ifelse(base::is.na(agente_proc), "Não Identificado", base::as.character(agente_proc))) %>%
+  dplyr::group_by(mod_proc, agente_proc) %>%
+  dplyr::summarise(
+    total_proc_ag   = dplyr::n(),
+    res_ag          = base::sum(proc_resolvido == TRUE),
+    pen_ag          = base::sum(proc_resolvido == FALSE),
+    v_gestao_ag     = base::sum(valor_do_proc, na.rm = TRUE),
+    tempo_ag_num    = base::mean(tempo_do_proc, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  dplyr::left_join(bd_pai_modalidade %>% dplyr::select(mod_proc, n_processos, ciclo_medio_mod), by = "mod_proc") %>%
+  dplyr::group_by(mod_proc) %>%
+  dplyr::mutate(
+    p_particip_txt = base::paste0(base::round((total_proc_ag / n_processos) * 100, 1), "%"),
+    p_efic_ag      = (res_ag / total_proc_ag) * 100,
+    rank_prod      = base::rank(base::interaction(-p_efic_ag, -total_proc_ag, tempo_ag_num), ties.method = "min"),
+    razao_tempo    = tempo_ag_num / ciclo_medio_mod,
+    avaliacao_txt  = dplyr::case_when(
+      razao_tempo <= 0.7 ~ "Muito Acima do Esperado",
+      razao_tempo <= 0.9 ~ "Acima do Esperado",
+      razao_tempo <= 1.1 ~ "Dentro do Esperado",
+      razao_tempo <= 1.4 ~ "Abaixo do Esperado",
+      TRUE               ~ "Abaixo da Média"
+    ),
+    agente_rank   = base::paste0(rank_prod, "º - ", agente_proc),
+    aporte_gestao = base::paste0("R$ ", base::format(v_gestao_ag, big.mark = ".", decimal.mark = ",")),
+    eficiencia_ag = base::paste0(base::round(p_efic_ag, 1), "%"),
+    ciclo_ag_txt  = base::paste0(base::round(tempo_ag_num, 1), " dias"),
+    media_setor   = base::paste0(base::round(ciclo_medio_mod, 1), " dias")
+  )
+
+# Detalhes específicos para a linha "TOTAL GERAL"
+detalhes_total_geral <- status_por_processo %>%
+  dplyr::group_by(agente_proc) %>%
+  dplyr::summarise(
+    mod_proc = "TOTAL GERAL",
+    total_proc_ag = dplyr::n(),
+    res_ag = base::sum(proc_resolvido == TRUE),
+    pen_ag = base::sum(proc_resolvido == FALSE),
+    v_gestao_ag = base::sum(valor_do_proc, na.rm = TRUE),
+    tempo_ag_num = base::mean(tempo_do_proc, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  dplyr::mutate(
+    n_total_geral  = base::sum(total_proc_ag),
+    p_particip_txt = base::paste0(base::round((total_proc_ag / n_total_geral) * 100, 1), "%"),
+    agente_rank    = agente_proc,
+    aporte_gestao  = base::paste0("R$ ", base::format(v_gestao_ag, big.mark = ".", decimal.mark = ",")),
+    ciclo_ag_txt   = base::paste0(base::round(tempo_ag_num, 1), " dias"),
+    media_setor    = "-",
+    avaliacao_txt  = "-",
+    eficiencia_ag  = base::paste0(base::round((res_ag / total_proc_ag) * 100, 1), "%")
+  )
+
+# Unindo tudo no Banco Filho
+bd_filho_agentes <- dplyr::bind_rows(bd_filho_base, detalhes_total_geral) %>%
+  dplyr::select(mod_proc, agente_rank, p_particip_txt, total_proc_ag, res_ag, pen_ag, aporte_gestao, ciclo_ag_txt, media_setor, avaliacao_txt, eficiencia_ag)
+
+# ==========================================================
+# 4. CONFIGURAÇÃO DE COLUNAS E EXECUÇÃO
+# ==========================================================
+
+# Nomes Tabela Pai (10 colunas)
+nomes_col <- base::c(
+  "Modalidade"               = "mod_proc",
+  "Representatividade<br>(%)" = "p_represent_txt",
+  "Nº<br>Processos"          = "n_processos",
+  "Valor<br>Consolidado"     = "aporte_total",
+  "Processos<br>Finalizados" = "n_resolvidos",
+  "Valor<br>Empenhado"       = "aporte_resolvido",
+  "Eficiência<br>(%)"        = "p_resolvido_txt",
+  "Processos<br>Pendentes"   = "n_pendentes",
+  "Valor<br>Pendente"        = "aporte_pendente",
+  "Ciclo<br>Médio"           = "ciclo_txt"
+)
+
+largura_col <- base::c("160px", "100px", "80px", "350px", "90px", "350px", "80px", "90px", "350px", "160px")
+alinhamento_col <- base::rep("left", 10)
+
+# Nomes Tabela Filho (10 colunas)
+nomes_det <- base::c(
+  "Agente<br>(Rank)", 
+  "Participação<br>(%)",
+  "Qtd. Processos", 
+  "Processos<br>Empenhados", 
+  "Processos<br>Pendentes", 
+  "Valor", 
+  "Ciclo", 
+  "Média Setor", 
+  "Avaliação", 
+  "Eficiência<br>Individual"
+)
+
+largura_det <- base::c("250px", "100px", "80px", "80px", "80px", "320px", "120px", "90px", "130px", "80px")
+alinhamento_det_filho <- base::rep("left", 10)
+
+# --- EXECUÇÃO FINAL ---
+tabela_interativa_detalhes(
+  dados                      = bd_pai_modalidade,
+  dados_detalhes             = bd_filho_agentes,
+  coluna_chave               = "mod_proc",
+  titulo_tabela              = "Detalhamento das atividades",
+  tam_fonte_corpo            = tam_fonte_corpo,
+  tam_fonte_header           = tam_fonte_header,
+  tam_fonte_titulo           = tam_fonte_titulo,
+  cor_titulo                 = cor_titulo,
+  cor_primaria               = cor_primaria,
+  cor_texto_corpo            = cor_texto_corpo,
+  alinhamento_header_vetor   = alinhamento_col,
+  alinhamento_corpo_vetor    = alinhamento_col,
+  alinhamento_detalhes_vetor = alinhamento_det_filho,
+  colunas_selecionadas       = nomes_col,
+  largura_cols_vetor         = largura_col,  
+  colunas_detalhes_nomes     = nomes_det, 
+  largura_detalhes_vetor     = largura_det, 
+  pesquisa_geral             = TRUE,
+  mostrar_filtro             = FALSE,
+  mostrar_indice             = FALSE
+)
 ```
 
 
