@@ -1712,7 +1712,7 @@ gerar_dashboard(
   nome_alvo        = NULL,              # NULL = Banco Todo
   tam_fatias       = 12,                # Texto nas fatias do gráfico
   tam_centro_cab   = 12.5,                # Tamanho do título EFICIÊNCIA
-  tam_centro_corpo = 11,                # Tamanho das linhas TOTAL/OK/PEND
+  tam_centro_corpo = 10.5,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
   tam_hover_corpo  = 11,                # Texto dentro do balão (Hover)
   cor_eficiencia   = "#0b132b",         # Cor do título central
@@ -1739,7 +1739,7 @@ gerar_dashboard(
   nome_alvo        = "Rodrigo",              # NULL = Banco Todo
   tam_fatias       = 12,                # Texto nas fatias do gráfico
   tam_centro_cab   = 12.5,                # Tamanho do título EFICIÊNCIA
-  tam_centro_corpo = 11,                # Tamanho das linhas TOTAL/OK/PEND
+  tam_centro_corpo = 10.5,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
   tam_hover_corpo  = 11,                # Texto dentro do balão (Hover)
   cor_eficiencia   = "#0b132b",         # Cor do título central
@@ -1763,7 +1763,7 @@ gerar_dashboard(
   nome_alvo        = "Daniel",              # NULL = Banco Todo
   tam_fatias       = 12,                # Texto nas fatias do gráfico
   tam_centro_cab   = 12.5,                # Tamanho do título EFICIÊNCIA
-  tam_centro_corpo = 11,                # Tamanho das linhas TOTAL/OK/PEND
+  tam_centro_corpo = 10.5,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
   tam_hover_corpo  = 11,                # Texto dentro do balão (Hover)
   cor_eficiencia   = "#0b132b",         # Cor do título central
@@ -1789,7 +1789,7 @@ gerar_dashboard(
   nome_alvo        = "José Victor",              # NULL = Banco Todo
   tam_fatias       = 12,                # Texto nas fatias do gráfico
   tam_centro_cab   = 12.5,                # Tamanho do título EFICIÊNCIA
-  tam_centro_corpo = 11,                # Tamanho das linhas TOTAL/OK/PEND
+  tam_centro_corpo = 10.5,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
   tam_hover_corpo  = 11,                # Texto dentro do balão (Hover)
   cor_eficiencia   = "#0b132b",         # Cor do título central
@@ -1814,7 +1814,7 @@ gerar_dashboard(
   nome_alvo        = "Fernanda",              # NULL = Banco Todo
   tam_fatias       = 12,                # Texto nas fatias do gráfico
   tam_centro_cab   = 12.5,                # Tamanho do título EFICIÊNCIA
-  tam_centro_corpo = 11,                # Tamanho das linhas TOTAL/OK/PEND
+  tam_centro_corpo = 10.5,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
   tam_hover_corpo  = 11,                # Texto dentro do balão (Hover)
   cor_eficiencia   = "#0b132b",         # Cor do título central
