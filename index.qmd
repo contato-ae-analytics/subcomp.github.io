@@ -2066,28 +2066,28 @@ bd_filho_agentes <- dplyr::bind_rows(bd_filho_base, detalhes_total_geral) %>%
 # 4. CONFIGURAÇÃO DE COLUNAS
 # ==========================================================
 nomes_col <- base::c(
-  "Modalidade<br>Processos"       = "mod_proc",
+  "Modalidades<br>(Processos)"                    = "mod_proc",
   "Qtd."                          = "n_processos",
-  "(%)"                           = "p_represent_txt", 
-  "Valor<br>Total (R$)"                    = "aporte_total",
-  "Proc.<br>Finalizados"      = "n_resolvidos",
-  "Valor<br>Empenhado (R$)"       = "aporte_resolvido",
+  "Qtd.<br>(%)"                           = "p_represent_txt", 
+  "Valor Total<br>(R$)"                    = "aporte_total",
+  "Proc.<br>Empenhados"      = "n_resolvidos",
+  "Empenhado<br>(R$)"       = "aporte_resolvido",
   "Eficiência<br>(%)"             = "p_resolvido_txt",
   "Proc.<br>Pendentes"        = "n_pendentes",
-  "Valor<br>Pendente (R$)"        = "aporte_pendente",
+  "Pendente<br>(R$)"        = "aporte_pendente",
   "Ciclo<br>Médio"                = "ciclo_txt"
 )
 
-largura_col <- base::c("185px", "50px", "50px", "350px", "90px", "350px", "80px", "90px", "350px", "170px")
+largura_col <- base::c("200px", "60px", "60px", "350px", "80px", "350px", "80px", "80px", "350px", "185px")
 alinhamento_col <- base::rep("left", 10)
 
 nomes_det <- base::c(
   "Agente<br>(Rank)", 
-  "Qtd. Proc.",
-  "(%)", 
+  "Qtd.",
+  "Qtd.<br>(%)", 
   "Proc.<br>Empenhados", 
   "Proc.<br>Pendentes", 
-  "Valor", 
+  "Valor<br>(R$)", 
   "Ciclo", 
   "Média", 
   "Avaliação", 
