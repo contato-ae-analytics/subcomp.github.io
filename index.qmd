@@ -1710,7 +1710,7 @@ gerar_dashboard <- function(bd_principal,
 gerar_dashboard(
   bd_principal     = bd_principal,
   nome_alvo        = NULL,              # NULL = Banco Todo
-  tam_fatias       = 12,                # Texto nas fatias do gráfico
+  tam_fatias       = 11.5,                # Texto nas fatias do gráfico
   tam_centro_cab   = 12.5,                # Tamanho do título EFICIÊNCIA
   tam_centro_corpo = 10.5,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
@@ -1737,7 +1737,7 @@ gerar_dashboard(
 gerar_dashboard(
   bd_principal     = bd_principal,
   nome_alvo        = "Rodrigo",              # NULL = Banco Todo
-  tam_fatias       = 12,                # Texto nas fatias do gráfico
+  tam_fatias       = 11.5,                # Texto nas fatias do gráfico
   tam_centro_cab   = 12.5,                # Tamanho do título EFICIÊNCIA
   tam_centro_corpo = 10.5,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
@@ -1761,7 +1761,7 @@ gerar_dashboard(
 gerar_dashboard(
   bd_principal     = bd_principal,
   nome_alvo        = "Daniel",              # NULL = Banco Todo
-  tam_fatias       = 12,                # Texto nas fatias do gráfico
+  tam_fatias       = 11.5,                # Texto nas fatias do gráfico
   tam_centro_cab   = 12.5,                # Tamanho do título EFICIÊNCIA
   tam_centro_corpo = 10.5,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
@@ -1787,7 +1787,7 @@ gerar_dashboard(
 gerar_dashboard(
   bd_principal     = bd_principal,
   nome_alvo        = "José Victor",              # NULL = Banco Todo
-  tam_fatias       = 12,                # Texto nas fatias do gráfico
+  tam_fatias       = 11.5,                # Texto nas fatias do gráfico
   tam_centro_cab   = 12.5,                # Tamanho do título EFICIÊNCIA
   tam_centro_corpo = 10.5,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
@@ -1812,7 +1812,7 @@ gerar_dashboard(
 gerar_dashboard(
   bd_principal     = bd_principal,
   nome_alvo        = "Fernanda",              # NULL = Banco Todo
-  tam_fatias       = 12,                # Texto nas fatias do gráfico
+  tam_fatias       = 11.5,                # Texto nas fatias do gráfico
   tam_centro_cab   = 12.5,                # Tamanho do título EFICIÊNCIA
   tam_centro_corpo = 10.5,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
@@ -2542,6 +2542,7 @@ gerar_grafico_natureza_top <- function(bd_principal,
                      hoverlabel = base::list(bgcolor = "#FFFFFF", font = base::list(color = "black"))) %>%
     plotly::layout(
       font = base::list(family = fonte_padrao),
+      hovermode = "y unified",
       title = base::list(text = base::paste0("<b style='color:", titulo_cor, "; font-size:", titulo_tamanho, "px;'>", titulo_nome, "</b>",
                          "<br><span style='color:", sub_cor, "; font-size:", sub_tamanho, "px;'>", subtitulo_texto, "</span>"), x = 0, y = 0.98),
       yaxis = base::list(title = "", tickfont = base::list(size = tamanho_eixo_y, color = cor_eixo_y),
@@ -2681,7 +2682,6 @@ bd_pai_modalidade_base <- status_por_processo %>%
     .groups = "drop"
   )
 
-# Linha Total Geral do Pai
 bd_total_geral_pai <- bd_pai_modalidade_base %>%
   dplyr::summarise(
     mod_proc         = "TOTAL GERAL",
@@ -2710,14 +2710,19 @@ quebrar_texto_tab <- function(x, n = 40) {
   }) %>% base::unlist()
 }
 
+# Função de processamento corrigida para evitar erro de tamanho (p_impacto)
 processar_filho_natureza <- function(df_input, label_mod, v_referencia) {
+  # Garante que v_referencia seja um único número (primeira posição)
+  v_ref <- v_referencia[1]
+  if(base::is.na(v_ref) || v_ref == 0) v_ref <- 1
+  
   df_input %>%
     dplyr::mutate(status_resumo = base::ifelse(status_item == "EMPENHADO" | !base::is.na(nota_de_empenho), "RES", "PEN")) %>%
     dplyr::group_by(natureza_despesa) %>%
     dplyr::summarise(
       mod_proc        = label_mod,
       desc_nat        = dplyr::first(nd_especificacao),
-      frequencia      = dplyr::n(), # Quantas vezes foi pedida
+      frequencia      = dplyr::n(), 
       v_total_nat     = base::sum(valor_total, na.rm = TRUE),
       v_res_nat       = base::sum(base::ifelse(status_resumo == "RES", valor_total, 0), na.rm = TRUE),
       v_pen_nat       = base::sum(base::ifelse(status_resumo == "PEN", valor_total, 0), na.rm = TRUE),
@@ -2725,7 +2730,7 @@ processar_filho_natureza <- function(df_input, label_mod, v_referencia) {
     ) %>%
     dplyr::mutate(
       natureza_rank   = base::paste0("<b>", natureza_despesa, "</b> - ", quebrar_texto_tab(desc_nat)),
-      p_impacto       = base::paste0(base::round((v_total_nat / v_referencia) * 100, 1), "%"),
+      p_impacto       = base::paste0(base::round((v_total_nat / v_ref) * 100, 1), "%"),
       total_txt       = base::paste0("R$ ", base::format(v_total_nat, big.mark = ".", decimal.mark = ",")),
       empenhado_txt   = base::paste0("R$ ", base::format(v_res_nat, big.mark = ".", decimal.mark = ",")),
       pendente_txt    = base::paste0("R$ ", base::format(v_pen_nat, big.mark = ".", decimal.mark = ","))
@@ -2737,6 +2742,7 @@ bd_filho_naturezas <- bd_principal %>%
   dplyr::group_split(modalidade_processo) %>%
   base::lapply(function(sub) {
     mod_nome <- base::as.character(base::unique(sub$modalidade_processo))
+    # Busca o valor da modalidade no pai e garante que pegue apenas um valor
     v_mod <- bd_pai_modalidade$v_total_mod[bd_pai_modalidade$mod_proc == mod_nome]
     processar_filho_natureza(sub, mod_nome, v_mod)
   }) %>%
@@ -2750,7 +2756,7 @@ bd_filho_final <- dplyr::bind_rows(bd_filho_naturezas, detalhes_total_geral) %>%
   dplyr::select(mod_proc, natureza_rank, frequencia, p_impacto, total_txt, empenhado_txt, pendente_txt)
 
 # ==========================================================
-# 3. CONFIGURAÇÃO E CHAMADA DA TABELA
+# 3. CHAMADA DA TABELA
 # ==========================================================
 nomes_col <- base::c(
   "Modalidade"             = "mod_proc",
@@ -2765,26 +2771,26 @@ nomes_col <- base::c(
 
 nomes_det_alex <- base::c(
   "Natureza de Despesa", 
-  "Frequência (Pedidos)",
+  "Pedidos (Freq.)",
   "Impacto na Mod. (%)", 
   "Valor Total (R$)",
   "Empenhado (R$)",
-  "Não Empenhado (R$)"
+  "Pendente (R$)"
 )
 
 tabela_interativa_detalhes(
   dados                      = bd_pai_modalidade,
   dados_detalhes             = bd_filho_final,
   coluna_chave               = "mod_proc",
-  titulo_tabela              = "Detalhamento Modalidade x Natureza de Despesa",
-  tam_fonte_corpo            = tam_fonte_corpo,
-  tam_fonte_header           = tam_fonte_header,
-  cor_titulo                 = cor_titulo,
-  cor_primaria               = cor_primaria,
+  titulo_tabela              = "Detalhamento: Modalidade x Natureza de Despesa",
+  tam_fonte_corpo            = 12,
+  tam_fonte_header           = 13,
+  cor_titulo                 = "#03045e",
+  cor_primaria               = "#001d3d",
   colunas_selecionadas       = nomes_col,
   colunas_detalhes_nomes     = nomes_det_alex,
   largura_cols_vetor         = base::c("150px", "80px", "80px", "180px", "80px", "180px", "80px", "180px"),
-  largura_detalhes_vetor     = base::c("350px", "100px", "100px", "200px", "200px", "200px"),
+  largura_detalhes_vetor     = base::c("350px", "90px", "110px", "200px", "200px", "200px"),
   pesquisa_geral             = TRUE
 )
 ```
