@@ -1726,202 +1726,202 @@ gerar_dashboard(
 # ==========================================================
 # 1. PRÉ-PROCESSAMENTO: STATUS POR PROCESSO
 # ==========================================================
-status_por_processo <- bd_principal %>%
-  dplyr::group_by(processo) %>%
-  dplyr::summarise(
-    proc_resolvido = base::all(status_item == "Empenhado" | !base::is.na(nota_de_empenho)),
-    valor_do_proc  = base::sum(valor_total, na.rm = TRUE),
-    qtd_itens_proc = dplyr::n(),
-    itens_res_proc = base::sum(status_item == "Empenhado" | !base::is.na(nota_de_empenho), na.rm = TRUE),
-    itens_pen_proc = base::sum(status_item != "Empenhado" & base::is.na(nota_de_empenho), na.rm = TRUE),
-    tempo_do_proc  = base::mean(dias_uteis, na.rm = TRUE),
-    agente_proc    = dplyr::first(agente),
-    mod_proc       = dplyr::first(modalidade_processo),
-    .groups = "drop"
-  ) %>%
-  dplyr::filter(!base::is.na(mod_proc), tempo_do_proc >= 0)
-
-# ==========================================================
-# 2. BANCO PAI: CONSOLIDADO POR MODALIDADE (MÉDIAS DE REFERÊNCIA)
-# ==========================================================
-bd_pai_modalidade <- status_por_processo %>%
-  dplyr::group_by(mod_proc) %>%
-  dplyr::summarise(
-    n_processos      = dplyr::n(),
-    v_total_mod      = base::sum(valor_do_proc, na.rm = TRUE),
-    n_resolvidos     = base::sum(proc_resolvido == TRUE),
-    n_pendentes      = base::sum(proc_resolvido == FALSE),
-    # itens_res_total  = base::sum(itens_res_proc),
-    # itens_pen_total  = base::sum(itens_pen_proc),
-    v_resolvido      = base::sum(base::ifelse(proc_resolvido == TRUE, valor_do_proc, 0)),
-    v_pendente       = base::sum(base::ifelse(proc_resolvido == FALSE, valor_do_proc, 0)),
-    # Esta é a Média do Setor que será a base da comparação
-    ciclo_medio_mod  = base::mean(tempo_do_proc, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  dplyr::mutate(
-    p_resolvido      = (n_resolvidos / n_processos) * 100,
-    p_pendente       = (n_pendentes / n_processos) * 100,
-    aporte_total     = base::paste0("R$ ", base::format(v_total_mod, big.mark = ".", decimal.mark = ",")),
-    aporte_resolvido = base::paste0("R$ ", base::format(v_resolvido, big.mark = ".", decimal.mark = ",")),
-    aporte_pendente  = base::paste0("R$ ", base::format(v_pendente, big.mark = ".", decimal.mark = ",")),
-    p_resolvido_txt  = base::paste0(base::round(p_resolvido, 1), "%"),
-    p_pendente_txt   = base::paste0(base::round(p_pendente, 1), "%"),
-    ciclo_txt        = base::paste0(base::round(ciclo_medio_mod, 1), " dias")
-  ) %>%
-  dplyr::arrange(dplyr::desc(p_resolvido))
-
-# ==========================================================
-# 3. BANCO FILHO: PERFORMANCE E COMPARAÇÃO POR AGENTE
-# ==========================================================
-bd_filho_agentes <- status_por_processo %>%
-  dplyr::mutate(agente_proc = base::ifelse(base::is.na(agente_proc), "Não Identificado", base::as.character(agente_proc))) %>%
-  dplyr::group_by(mod_proc, agente_proc) %>%
-  dplyr::summarise(
-    total_proc_ag   = dplyr::n(),
-    res_ag          = base::sum(proc_resolvido == TRUE),
-    pen_ag          = base::sum(proc_resolvido == FALSE),
-    # itens_ag_res    = base::sum(itens_res_proc),
-    # itens_ag_pen    = base::sum(itens_pen_proc),
-    v_gestao_ag     = base::sum(valor_do_proc, na.rm = TRUE),
-    # Média Individual do Agente nesta modalidade
-    tempo_ag_num    = base::mean(tempo_do_proc, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  # Trazemos a média da modalidade para dentro do banco do agente para comparar
-  dplyr::left_join(bd_pai_modalidade %>% dplyr::select(mod_proc, ciclo_medio_mod), by = "mod_proc") %>%
-  dplyr::group_by(mod_proc) %>%
-  dplyr::mutate(
-    p_efic_ag     = (res_ag / total_proc_ag) * 100,
-    rank_prod     = base::rank(base::interaction(-p_efic_ag, -total_proc_ag, tempo_ag_num), ties.method = "min"),
-    
-    # --- CÁLCULO DA ESCALA LIKERT ---
-    # Razão entre o tempo do Daniel e a média da modalidade dele
-    razao_tempo   = tempo_ag_num / ciclo_medio_mod,
-    
-    avaliacao_txt = dplyr::case_when(
-      razao_tempo <= 0.7 ~ "Muito Acima do Esperado",
-      razao_tempo <= 0.9 ~ "Acima do Esperado",
-      razao_tempo <= 1.1 ~ "Dentro do Esperado",
-      razao_tempo <= 1.4 ~ "Abaixo do Esperado",
-      TRUE               ~ "" # Corrigido: TRUE sem prefixo
-    ),
-    agente_rank   = base::paste0(rank_prod, "º - ", agente_proc),
-    aporte_gestao = base::paste0("R$ ", base::format(v_gestao_ag, big.mark = ".", decimal.mark = ",")),
-    eficiencia_ag = base::paste0(base::round(p_efic_ag, 1), "%"),
-    ciclo_ag_txt  = base::paste0(base::round(tempo_ag_num, 1), " dias"),
-    media_setor   = base::paste0(base::round(ciclo_medio_mod, 1), " dias")
-  ) %>%
-  dplyr::ungroup() %>%
-  dplyr::select(mod_proc, 
-                agente_rank, 
-                total_proc_ag, 
-                res_ag, 
-                pen_ag, 
-                # itens_ag_res,
-                # itens_ag_pen,
-                aporte_gestao, 
-                ciclo_ag_txt, 
-                media_setor, 
-                avaliacao_txt, 
-                eficiencia_ag)
-
-# ==========================================================
-# 4. CONFIGURAÇÃO DE COLUNAS
-# ==========================================================
-
-
-# TABELA PAI: 11 colunas selecionadas
-nomes_col <- base::c(
-  "Modalidade"               = "mod_proc",
-  "Nº<br>Processos"          = "n_processos",
-  "Valor<br>Consolidado"     = "aporte_total",
-  "Processos<br>Finalizados" = "n_resolvidos",
-  "Valor<br>Empenhado"       = "aporte_resolvido",
-  "Eficiência<br>(%)"        = "p_resolvido_txt",
-  "Processos<br>Pendentes"   = "n_pendentes",
-  "Valor<br>Pendente"        = "aporte_pendente",
-  "Ciclo<br>Médio"           = "ciclo_txt"
-)
-
-# Larguras Pai (11 valores): Foco total em DINHEIRO e TEXTO
-largura_col <- base::c(
-  "160px", # Modalidade
-  "80px",  # Nº Processos
-  "350px", # Valor Consolidado (ESPAÇO GRANDE)
-  "90px", # Finalizados
-  "350px", # Valor Empenhado (ESPAÇO GRANDE)
-  "80px",  # Eficiência
-  "90px", # Pendentes
-  "350px", # Valor Pendente (ESPAÇO GRANDE)
-  "160px"   # Ciclo
-)
-
-# Alinhamento Pai (11 valores) - Tudo à esquerda
-alinhamento_col <- base::rep("left", 9)
-
-# --- DETALHES (FILHO): 11 colunas ---
-nomes_det <- base::c(
-  "Agente<br>(Rank)", 
-  "Qtd. Processos", 
-  "Processos<br>Empenhados", 
-  "Processos<br>Pendentes", 
-  # "Itens<br>Empenhados", # Nome alterado aqui também
-  # "Itens<br>Pendentes", 
-  "Valor", 
-  "Ciclo", 
-  "Média", 
-  "Avaliação", 
-  "Eficiência<br>Individual"
-)
-
-# Larguras Filho (11 valores): Destaque no Valor Financeiro
-largura_det <- base::c(
-  "250px", # Agente
-  "80px",  # Processos
-  "80px",  # Finalizados
-  "80px",  # Pendentes
-  # "65px", # Itens Empenhados
-  # "65px", # Itens Pendentes
-  "320px", # Valor (MUITO ESPAÇO)
-  "120px",  # Ciclo
-  "90px",  # Média
-  "130px", # Avaliação
-  "80px"  # Eficiência
-)
-
-# Alinhamento Filho (11 valores) - Tudo à esquerda
-alinhamento_det_filho <- base::rep("left", 9)
-# alinhamento_det_filho <- c("left","center","center","center","center","center","left","center","center","center","center")
-
-# ==========================================================
-# 5. EXECUÇÃO
-# ==========================================================
-tabela_interativa_detalhes(
-  dados                    = bd_pai_modalidade,
-  dados_detalhes           = bd_filho_agentes,
-  coluna_chave             = "mod_proc",
-  titulo_tabela            = "Detalhamento das atividades",
-  tam_fonte_corpo          = tam_fonte_corpo,
-  tam_fonte_header         = tam_fonte_header,
-  tam_fonte_titulo         = tam_fonte_titulo,
-  cor_titulo               = cor_titulo,
-  cor_primaria             = cor_primaria,
-  cor_texto_corpo          = cor_texto_corpo,
-  
-  alinhamento_header_vetor   = alinhamento_col,
-  alinhamento_corpo_vetor    = alinhamento_col,
-  alinhamento_detalhes_vetor = alinhamento_det_filho,
-  
-  colunas_selecionadas     = nomes_col,
-  largura_cols_vetor       = largura_col,  
-  colunas_detalhes_nomes   = nomes_det, 
-  largura_detalhes_vetor   = largura_det, 
-  
-  pesquisa_geral           = TRUE,
-  mostrar_filtro           = FALSE,
-  mostrar_indice           = FALSE
-)
+# status_por_processo <- bd_principal %>%
+#   dplyr::group_by(processo) %>%
+#   dplyr::summarise(
+#     proc_resolvido = base::all(status_item == "Empenhado" | !base::is.na(nota_de_empenho)),
+#     valor_do_proc  = base::sum(valor_total, na.rm = TRUE),
+#     qtd_itens_proc = dplyr::n(),
+#     itens_res_proc = base::sum(status_item == "Empenhado" | !base::is.na(nota_de_empenho), na.rm = TRUE),
+#     itens_pen_proc = base::sum(status_item != "Empenhado" & base::is.na(nota_de_empenho), na.rm = TRUE),
+#     tempo_do_proc  = base::mean(dias_uteis, na.rm = TRUE),
+#     agente_proc    = dplyr::first(agente),
+#     mod_proc       = dplyr::first(modalidade_processo),
+#     .groups = "drop"
+#   ) %>%
+#   dplyr::filter(!base::is.na(mod_proc), tempo_do_proc >= 0)
+# 
+# # ==========================================================
+# # 2. BANCO PAI: CONSOLIDADO POR MODALIDADE (MÉDIAS DE REFERÊNCIA)
+# # ==========================================================
+# bd_pai_modalidade <- status_por_processo %>%
+#   dplyr::group_by(mod_proc) %>%
+#   dplyr::summarise(
+#     n_processos      = dplyr::n(),
+#     v_total_mod      = base::sum(valor_do_proc, na.rm = TRUE),
+#     n_resolvidos     = base::sum(proc_resolvido == TRUE),
+#     n_pendentes      = base::sum(proc_resolvido == FALSE),
+#     # itens_res_total  = base::sum(itens_res_proc),
+#     # itens_pen_total  = base::sum(itens_pen_proc),
+#     v_resolvido      = base::sum(base::ifelse(proc_resolvido == TRUE, valor_do_proc, 0)),
+#     v_pendente       = base::sum(base::ifelse(proc_resolvido == FALSE, valor_do_proc, 0)),
+#     # Esta é a Média do Setor que será a base da comparação
+#     ciclo_medio_mod  = base::mean(tempo_do_proc, na.rm = TRUE),
+#     .groups = "drop"
+#   ) %>%
+#   dplyr::mutate(
+#     p_resolvido      = (n_resolvidos / n_processos) * 100,
+#     p_pendente       = (n_pendentes / n_processos) * 100,
+#     aporte_total     = base::paste0("R$ ", base::format(v_total_mod, big.mark = ".", decimal.mark = ",")),
+#     aporte_resolvido = base::paste0("R$ ", base::format(v_resolvido, big.mark = ".", decimal.mark = ",")),
+#     aporte_pendente  = base::paste0("R$ ", base::format(v_pendente, big.mark = ".", decimal.mark = ",")),
+#     p_resolvido_txt  = base::paste0(base::round(p_resolvido, 1), "%"),
+#     p_pendente_txt   = base::paste0(base::round(p_pendente, 1), "%"),
+#     ciclo_txt        = base::paste0(base::round(ciclo_medio_mod, 1), " dias")
+#   ) %>%
+#   dplyr::arrange(dplyr::desc(p_resolvido))
+# 
+# # ==========================================================
+# # 3. BANCO FILHO: PERFORMANCE E COMPARAÇÃO POR AGENTE
+# # ==========================================================
+# bd_filho_agentes <- status_por_processo %>%
+#   dplyr::mutate(agente_proc = base::ifelse(base::is.na(agente_proc), "Não Identificado", base::as.character(agente_proc))) %>%
+#   dplyr::group_by(mod_proc, agente_proc) %>%
+#   dplyr::summarise(
+#     total_proc_ag   = dplyr::n(),
+#     res_ag          = base::sum(proc_resolvido == TRUE),
+#     pen_ag          = base::sum(proc_resolvido == FALSE),
+#     # itens_ag_res    = base::sum(itens_res_proc),
+#     # itens_ag_pen    = base::sum(itens_pen_proc),
+#     v_gestao_ag     = base::sum(valor_do_proc, na.rm = TRUE),
+#     # Média Individual do Agente nesta modalidade
+#     tempo_ag_num    = base::mean(tempo_do_proc, na.rm = TRUE),
+#     .groups = "drop"
+#   ) %>%
+#   # Trazemos a média da modalidade para dentro do banco do agente para comparar
+#   dplyr::left_join(bd_pai_modalidade %>% dplyr::select(mod_proc, ciclo_medio_mod), by = "mod_proc") %>%
+#   dplyr::group_by(mod_proc) %>%
+#   dplyr::mutate(
+#     p_efic_ag     = (res_ag / total_proc_ag) * 100,
+#     rank_prod     = base::rank(base::interaction(-p_efic_ag, -total_proc_ag, tempo_ag_num), ties.method = "min"),
+#     
+#     # --- CÁLCULO DA ESCALA LIKERT ---
+#     # Razão entre o tempo do Daniel e a média da modalidade dele
+#     razao_tempo   = tempo_ag_num / ciclo_medio_mod,
+#     
+#     avaliacao_txt = dplyr::case_when(
+#       razao_tempo <= 0.7 ~ "Muito Acima do Esperado",
+#       razao_tempo <= 0.9 ~ "Acima do Esperado",
+#       razao_tempo <= 1.1 ~ "Dentro do Esperado",
+#       razao_tempo <= 1.4 ~ "Abaixo do Esperado",
+#       TRUE               ~ "" # Corrigido: TRUE sem prefixo
+#     ),
+#     agente_rank   = base::paste0(rank_prod, "º - ", agente_proc),
+#     aporte_gestao = base::paste0("R$ ", base::format(v_gestao_ag, big.mark = ".", decimal.mark = ",")),
+#     eficiencia_ag = base::paste0(base::round(p_efic_ag, 1), "%"),
+#     ciclo_ag_txt  = base::paste0(base::round(tempo_ag_num, 1), " dias"),
+#     media_setor   = base::paste0(base::round(ciclo_medio_mod, 1), " dias")
+#   ) %>%
+#   dplyr::ungroup() %>%
+#   dplyr::select(mod_proc, 
+#                 agente_rank, 
+#                 total_proc_ag, 
+#                 res_ag, 
+#                 pen_ag, 
+#                 # itens_ag_res,
+#                 # itens_ag_pen,
+#                 aporte_gestao, 
+#                 ciclo_ag_txt, 
+#                 media_setor, 
+#                 avaliacao_txt, 
+#                 eficiencia_ag)
+# 
+# # ==========================================================
+# # 4. CONFIGURAÇÃO DE COLUNAS
+# # ==========================================================
+# 
+# 
+# # TABELA PAI: 11 colunas selecionadas
+# nomes_col <- base::c(
+#   "Modalidade"               = "mod_proc",
+#   "Nº<br>Processos"          = "n_processos",
+#   "Valor<br>Consolidado"     = "aporte_total",
+#   "Processos<br>Finalizados" = "n_resolvidos",
+#   "Valor<br>Empenhado"       = "aporte_resolvido",
+#   "Eficiência<br>(%)"        = "p_resolvido_txt",
+#   "Processos<br>Pendentes"   = "n_pendentes",
+#   "Valor<br>Pendente"        = "aporte_pendente",
+#   "Ciclo<br>Médio"           = "ciclo_txt"
+# )
+# 
+# # Larguras Pai (11 valores): Foco total em DINHEIRO e TEXTO
+# largura_col <- base::c(
+#   "160px", # Modalidade
+#   "80px",  # Nº Processos
+#   "350px", # Valor Consolidado (ESPAÇO GRANDE)
+#   "90px", # Finalizados
+#   "350px", # Valor Empenhado (ESPAÇO GRANDE)
+#   "80px",  # Eficiência
+#   "90px", # Pendentes
+#   "350px", # Valor Pendente (ESPAÇO GRANDE)
+#   "160px"   # Ciclo
+# )
+# 
+# # Alinhamento Pai (11 valores) - Tudo à esquerda
+# alinhamento_col <- base::rep("left", 9)
+# 
+# # --- DETALHES (FILHO): 11 colunas ---
+# nomes_det <- base::c(
+#   "Agente<br>(Rank)", 
+#   "Qtd. Processos", 
+#   "Processos<br>Empenhados", 
+#   "Processos<br>Pendentes", 
+#   # "Itens<br>Empenhados", # Nome alterado aqui também
+#   # "Itens<br>Pendentes", 
+#   "Valor", 
+#   "Ciclo", 
+#   "Média", 
+#   "Avaliação", 
+#   "Eficiência<br>Individual"
+# )
+# 
+# # Larguras Filho (11 valores): Destaque no Valor Financeiro
+# largura_det <- base::c(
+#   "250px", # Agente
+#   "80px",  # Processos
+#   "80px",  # Finalizados
+#   "80px",  # Pendentes
+#   # "65px", # Itens Empenhados
+#   # "65px", # Itens Pendentes
+#   "320px", # Valor (MUITO ESPAÇO)
+#   "120px",  # Ciclo
+#   "90px",  # Média
+#   "130px", # Avaliação
+#   "80px"  # Eficiência
+# )
+# 
+# # Alinhamento Filho (11 valores) - Tudo à esquerda
+# alinhamento_det_filho <- base::rep("left", 9)
+# # alinhamento_det_filho <- c("left","center","center","center","center","center","left","center","center","center","center")
+# 
+# # ==========================================================
+# # 5. EXECUÇÃO
+# # ==========================================================
+# tabela_interativa_detalhes(
+#   dados                    = bd_pai_modalidade,
+#   dados_detalhes           = bd_filho_agentes,
+#   coluna_chave             = "mod_proc",
+#   titulo_tabela            = "Detalhamento das atividades",
+#   tam_fonte_corpo          = tam_fonte_corpo,
+#   tam_fonte_header         = tam_fonte_header,
+#   tam_fonte_titulo         = tam_fonte_titulo,
+#   cor_titulo               = cor_titulo,
+#   cor_primaria             = cor_primaria,
+#   cor_texto_corpo          = cor_texto_corpo,
+#   
+#   alinhamento_header_vetor   = alinhamento_col,
+#   alinhamento_corpo_vetor    = alinhamento_col,
+#   alinhamento_detalhes_vetor = alinhamento_det_filho,
+#   
+#   colunas_selecionadas     = nomes_col,
+#   largura_cols_vetor       = largura_col,  
+#   colunas_detalhes_nomes   = nomes_det, 
+#   largura_detalhes_vetor   = largura_det, 
+#   
+#   pesquisa_geral           = TRUE,
+#   mostrar_filtro           = FALSE,
+#   mostrar_indice           = FALSE
+# )
 
 
 
@@ -2154,7 +2154,7 @@ bd_filho_base <- status_por_processo %>%
     media_setor   = base::paste0(base::round(ciclo_medio_mod, 1), " dias")
   )
 
-# --- CORREÇÃO DO TOTAL GERAL NO FILHO ---
+# --- CORREÇÃO DO TOTAL GERAL NO FILHO (ADICIONADO RANKING GLOBAL) ---
 detalhes_total_geral <- status_por_processo %>%
   dplyr::group_by(agente_proc) %>%
   dplyr::summarise(
@@ -2169,11 +2169,13 @@ detalhes_total_geral <- status_por_processo %>%
   dplyr::mutate(
     n_total_banco  = base::sum(total_proc_ag),
     p_particip_txt = base::paste0(base::round((total_proc_ag / n_total_banco) * 100, 1), "%"),
-    agente_rank    = agente_proc, # Rank aqui pode ser ajustado se quiser rank global
+    p_efic_ag      = (res_ag / total_proc_ag) * 100,
+    # Cálculo do Ranking Global
+    rank_global    = base::rank(base::interaction(-p_efic_ag, -total_proc_ag, tempo_ag_num), ties.method = "min"),
+    agente_rank    = base::paste0(rank_global, "º - ", agente_proc), 
     aporte_gestao  = base::paste0("R$ ", base::format(v_gestao_ag, big.mark = ".", decimal.mark = ",")),
     ciclo_ag_txt   = base::paste0(base::round(tempo_ag_num, 1), " dias"),
     media_setor    = base::paste0(base::round(media_global_banco, 1), " dias"),
-    # Avaliação global baseada na média de todo o banco
     razao_global   = tempo_ag_num / media_global_banco,
     avaliacao_txt  = dplyr::case_when(
       razao_global <= 0.7 ~ "Muito Acima do Esperado",
@@ -2182,13 +2184,51 @@ detalhes_total_geral <- status_por_processo %>%
       razao_global <= 1.4 ~ "Abaixo do Esperado",
       TRUE                ~ "Abaixo da Média"
     ),
-    eficiencia_ag  = base::paste0(base::round((res_ag / total_proc_ag) * 100, 1), "%")
+    eficiencia_ag  = base::paste0(base::round(p_efic_ag, 1), "%")
   ) %>%
-  dplyr::select(-razao_global, -n_total_banco)
+  dplyr::select(-razao_global, -n_total_banco, -p_efic_ag, -rank_global)
 
+# União final dos bancos (Sem outras alterações)
 bd_filho_agentes <- dplyr::bind_rows(bd_filho_base, detalhes_total_geral) %>%
   dplyr::select(mod_proc, agente_rank, total_proc_ag, p_particip_txt, res_ag, pen_ag, 
                 aporte_gestao, ciclo_ag_txt, media_setor, avaliacao_txt, eficiencia_ag)
+
+
+# # --- CORREÇÃO DO TOTAL GERAL NO FILHO ---
+# detalhes_total_geral <- status_por_processo %>%
+#   dplyr::group_by(agente_proc) %>%
+#   dplyr::summarise(
+#     mod_proc = "TOTAL GERAL",
+#     total_proc_ag = dplyr::n(),
+#     res_ag = base::sum(proc_resolvido == TRUE),
+#     pen_ag = base::sum(proc_resolvido == FALSE),
+#     v_gestao_ag = base::sum(valor_do_proc, na.rm = TRUE),
+#     tempo_ag_num = base::mean(tempo_do_proc, na.rm = TRUE),
+#     .groups = "drop"
+#   ) %>%
+#   dplyr::mutate(
+#     n_total_banco  = base::sum(total_proc_ag),
+#     p_particip_txt = base::paste0(base::round((total_proc_ag / n_total_banco) * 100, 1), "%"),
+#     agente_rank    = agente_proc, # Rank aqui pode ser ajustado se quiser rank global
+#     aporte_gestao  = base::paste0("R$ ", base::format(v_gestao_ag, big.mark = ".", decimal.mark = ",")),
+#     ciclo_ag_txt   = base::paste0(base::round(tempo_ag_num, 1), " dias"),
+#     media_setor    = base::paste0(base::round(media_global_banco, 1), " dias"),
+#     # Avaliação global baseada na média de todo o banco
+#     razao_global   = tempo_ag_num / media_global_banco,
+#     avaliacao_txt  = dplyr::case_when(
+#       razao_global <= 0.7 ~ "Muito Acima do Esperado",
+#       razao_global <= 0.9 ~ "Acima do Esperado",
+#       razao_global <= 1.1 ~ "Dentro do Esperado",
+#       razao_global <= 1.4 ~ "Abaixo do Esperado",
+#       TRUE                ~ "Abaixo da Média"
+#     ),
+#     eficiencia_ag  = base::paste0(base::round((res_ag / total_proc_ag) * 100, 1), "%")
+#   ) %>%
+#   dplyr::select(-razao_global, -n_total_banco)
+# 
+# bd_filho_agentes <- dplyr::bind_rows(bd_filho_base, detalhes_total_geral) %>%
+#   dplyr::select(mod_proc, agente_rank, total_proc_ag, p_particip_txt, res_ag, pen_ag, 
+#                 aporte_gestao, ciclo_ag_txt, media_setor, avaliacao_txt, eficiencia_ag)
 # ==========================================================
 # 4. CONFIGURAÇÃO DE COLUNAS
 # ==========================================================
