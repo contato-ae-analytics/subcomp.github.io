@@ -2205,7 +2205,7 @@ nomes_col <- base::c(
   "Ciclo<br>Médio"                = "ciclo_txt"
 )
 
-largura_col <- base::c("200px", "60px", "60px", "350px", "70px", "350px", "70px", "80px", "350px", "210px")
+largura_col <- base::c("200px", "60px", "60px", "350px", "70px", "350px", "70px", "70px", "350px", "220px")
 alinhamento_col <- base::rep("left", 10)
 
 nomes_det <- base::c(
