@@ -86,7 +86,7 @@ format:
     # embed-resources: true
     
     # Configurações de Layout
-    toc: false # Table of Contents (Menu da Direita)
+    toc: true # Table of Contents (Menu da Direita)
     toc-title: "Nesta página"
     fontsize: 0.9em
     margin-left: 0em
