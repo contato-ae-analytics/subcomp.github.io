@@ -1511,29 +1511,132 @@ tabela_interativa_detalhes(
 #| message: false
 #| out-width: "100%"
 #| fig-height: 5
+
+
+# gerar_dashboard <- function(bd_principal, 
+#                                   nome_alvo        = NULL, # Se NULL, pega o banco todo
+#                                   tam_fatias       = 11,
+#                                   tam_centro_cab   = 13,
+#                                   tam_centro_corpo = 9,
+#                                   tam_hover_header = 14,
+#                                   tam_hover_corpo  = 12,
+#                                   cor_eficiencia   = "#0b132b",
+#                                   cor_ok           = "#008000",
+#                                   cor_pend         = "#B22222",
+#                                   largura_barra    = 3) {
+#   
+#   # --- CONFIGURAÇÃO DE FONTE ---
+#   fonte_padrao <- "Inter, sans-serif"
+#   cores_fatias <- base::c('#74c69d', '#40916c', '#6fffe9', '#5bc0be', '#3a506b', '#1c2541', '#0b132b', '#081c15', '#000000')
+#   
+#   # --- 1. LÓGICA DE FILTRAGEM E RÓTULO DO HOVER ---
+#   if (base::is.null(nome_alvo)) {
+#     df_base <- bd_principal
+#     txt_volume <- "Volume Setorial"
+#   } else {
+#     df_base <- bd_principal %>% dplyr::filter(agente == nome_alvo)
+#     txt_volume <- "Volume Individual"
+#   }
+#   
+#   # --- 2. PROCESSAMENTO ---
+#   df_proc_unico <- df_base %>%
+#     dplyr::filter(!base::is.na(modalidade_processo), modalidade_processo != "") %>% 
+#     dplyr::group_by(processo) %>%
+#     dplyr::summarise(
+#       modalidade       = dplyr::first(modalidade_processo),
+#       tempo_processo   = base::max(dias_uteis, na.rm = TRUE),
+#       valor_processo   = base::sum(valor_total, na.rm = TRUE),
+#       total_itens_proc = dplyr::n(),
+#       itens_empenhados = base::sum(status_item == "Empenhado" | !base::is.na(nota_de_empenho), na.rm = TRUE),
+#       valor_empenhado  = base::sum(base::ifelse(status_item == "Empenhado" | !base::is.na(nota_de_empenho), valor_total, 0), na.rm = TRUE),
+#       .groups = "drop"
+#     ) %>%
+#     dplyr::mutate(situacao_proc = base::ifelse(itens_empenhados >= total_itens_proc, "Resolvido", "Pendente"))
+#   
+#   if (base::nrow(df_proc_unico) == 0) return(NULL)
+#   
+#   # --- 3. AGRUPAMENTO POR MODALIDADE (HOVER RESTAURADO) ---
+#   df_modalidade <- df_proc_unico %>%
+#     dplyr::group_by(modalidade) %>%
+#     dplyr::summarise(
+#       n_processos = dplyr::n(), 
+#       n_resolvidos = base::sum(situacao_proc == "Resolvido"),
+#       n_pendentes = base::sum(situacao_proc == "Pendente"), 
+#       valor_total_mod = base::sum(valor_processo, na.rm = TRUE),
+#       valor_emp_mod = base::sum(valor_empenhado, na.rm = TRUE), 
+#       tempo_medio_mod = base::mean(tempo_processo, na.rm = TRUE), 
+#       .groups = "drop"
+#     ) %>%
+#     dplyr::mutate(
+#       p_res = base::sprintf("%.1f", (n_resolvidos / n_processos) * 100),
+#       p_pen = base::sprintf("%.1f", (n_pendentes / n_processos) * 100),
+#       v_total_txt = base::format(valor_total_mod, big.mark = ".", decimal.mark = ","),
+#       v_emp_txt   = base::format(valor_emp_mod, big.mark = ".", decimal.mark = ","),
+#       v_pen_txt   = base::format(valor_total_mod - valor_emp_mod, big.mark = ".", decimal.mark = ","),
+#       
+#       label_grafico = base::paste0("<b>", modalidade, "</b><br>", n_processos, "<br>", base::sprintf("%.1f", (n_processos / base::sum(n_processos)) * 100), "%"),
+#       
+#       hover_txt = base::paste0("<span style='color:black; font-family:", fonte_padrao, "; font-size:", tam_hover_corpo, "px;'>",
+#                                "<b style='font-size:", tam_hover_header, "px;'>MODALIDADE: ", modalidade, "</b><br>",
+#                                "<span style='color:#bdc3c7'>──────────────────────────</span><br>",
+#                                "📊 <b>Eficiência: ", p_res, "%</b> | ⏱ <b>Médio: ", base::round(tempo_medio_mod, 0), " dias</b><br>",
+#                                "📦 <b>", txt_volume, ": ", n_processos, " processos</b><br>",
+#                                "<span style='color:#bdc3c7'>──────────────────────────</span><br>",
+#                                "✅ <b>Resolvidos:</b> ", n_resolvidos, " | ❌ <b>Pendentes:</b> ", n_pendentes, "<br>",
+#                                "<span style='color:#bdc3c7'>──────────────────────────</span><br>",
+#                                "💰 <b>Valor Total:</b> R$ ", v_total_txt, "<br>",
+#                                "🟢 <b>Empenhado:</b> ", v_emp_txt, " | 🔴 <b>Pendente:</b> ", v_pen_txt, "</span>")
+#     )
+#   
+#   # --- 4. MÉTRICAS DO CENTRO (EFICIÊNCIA EM NEGRITO) ---
+#   total_p <- base::nrow(df_proc_unico); total_v <- base::sum(df_proc_unico$valor_processo, na.rm = TRUE)
+#   res_n <- base::sum(df_proc_unico$situacao_proc == "Resolvido"); res_v <- base::sum(df_proc_unico$valor_empenhado, na.rm = TRUE)
+#   res_p <- base::sprintf("%.1f", (res_n / total_p) * 100); pen_n <- total_p - res_n; pen_v <- total_v - res_v; pen_p <- base::sprintf("%.1f", (pen_n / total_p) * 100)
+#   eficiencia_final <- base::sprintf("%.1f", (res_n / total_p) * 100)
+#   
+#   texto_centro <- base::paste0(
+#     "<span style='font-family:", fonte_padrao, ";'>",
+#     "📊 <b><span style='color:", cor_eficiencia, "; font-size:", tam_centro_cab, "px;'><b>EFICIÊNCIA</b>: ", eficiencia_final, "%</span></b><br>",
+#     "<span style='color:#bdc3c7'>────────────────────────</span><br>",
+#     "<span style='font-size:10px;'><br></span>",
+#     "<b><span style='font-size:", tam_centro_corpo, "px;'>TOTAL: ", total_p, " | R$ ", base::format(total_v, big.mark = ".", decimal.mark = ","), " | 100%</span></b><br>",
+#     "<span style='font-size:4px;'><br></span>",
+#     "<b><span style='color:", cor_ok, "; font-size:", tam_centro_corpo, "px;'>OK: ", res_n, " | R$ ", base::format(res_v, big.mark = ".", decimal.mark = ","), " | ", res_p, "%</span></b><br>",
+#     "<span style='font-size:4px;'><br></span>",
+#     "<b><span style='color:", cor_pend, "; font-size:", tam_centro_corpo, "px;'>PEND: ", pen_n, " | R$ ", base::format(pen_v, big.mark = ".", decimal.mark = ","), " | ", pen_p, "%</span></b><br>",
+#     "</span>"
+#   )
+#   
+#   # --- 5. CONSTRUÇÃO DO PLOTLY ---
+#   plotly::plot_ly(df_modalidade, labels = ~label_grafico, values = ~n_processos, type = 'pie', hole = 0.75,
+#                   textinfo = 'text', text = ~label_grafico, hoverinfo = 'text', hovertext = ~hover_txt,
+#                   marker = base::list(colors = cores_fatias, line = base::list(color = '#FFFFFF', width = largura_barra))) %>%
+#     plotly::layout(margin = base::list(t = 100, b = 100, l = 100, r = 100), font = base::list(family = fonte_padrao, size = tam_fatias),
+#                    showlegend = FALSE, hoverlabel = base::list(bgcolor = "white", bordercolor = "black", align = "left", namelength = -1, font = base::list(family = fonte_padrao)),
+#                    annotations = base::list(text = texto_centro, showarrow = FALSE)) %>%
+#     plotly::config(displayModeBar = FALSE, responsive = TRUE)
+# }
+
 gerar_dashboard <- function(bd_principal, 
-                                  nome_alvo        = NULL, # Se NULL, pega o banco todo
-                                  tam_fatias       = 11,
-                                  tam_centro_cab   = 13,
-                                  tam_centro_corpo = 9,
-                                  tam_hover_header = 14,
-                                  tam_hover_corpo  = 12,
-                                  cor_eficiencia   = "#0b132b",
-                                  cor_ok           = "#008000",
-                                  cor_pend         = "#B22222",
-                                  largura_barra    = 3) {
+                            nome_alvo        = NULL, 
+                            tam_fatias       = 10,
+                            tam_centro_cab   = 12,
+                            tam_centro_corpo = 9,
+                            tam_hover_header = 12,
+                            tam_hover_corpo  = 10,
+                            cor_eficiencia   = "#0b132b",
+                            cor_ok           = "#008000",
+                            cor_pend         = "#B22222",
+                            largura_barra    = 1) {
   
-  # --- CONFIGURAÇÃO DE FONTE ---
   fonte_padrao <- "Inter, sans-serif"
   cores_fatias <- base::c('#74c69d', '#40916c', '#6fffe9', '#5bc0be', '#3a506b', '#1c2541', '#0b132b', '#081c15', '#000000')
   
-  # --- 1. LÓGICA DE FILTRAGEM E RÓTULO DO HOVER ---
+  # --- 1. FILTRAGEM ---
   if (base::is.null(nome_alvo)) {
     df_base <- bd_principal
-    txt_volume <- "Volume Setorial"
   } else {
     df_base <- bd_principal %>% dplyr::filter(agente == nome_alvo)
-    txt_volume <- "Volume Individual"
   }
   
   # --- 2. PROCESSAMENTO ---
@@ -1550,10 +1653,10 @@ gerar_dashboard <- function(bd_principal,
       .groups = "drop"
     ) %>%
     dplyr::mutate(situacao_proc = base::ifelse(itens_empenhados >= total_itens_proc, "Resolvido", "Pendente"))
-  
+
   if (base::nrow(df_proc_unico) == 0) return(NULL)
-  
-  # --- 3. AGRUPAMENTO POR MODALIDADE (HOVER RESTAURADO) ---
+
+  # --- 3. AGRUPAMENTO POR MODALIDADE ---
   df_modalidade <- df_proc_unico %>%
     dplyr::group_by(modalidade) %>%
     dplyr::summarise(
@@ -1567,60 +1670,58 @@ gerar_dashboard <- function(bd_principal,
     ) %>%
     dplyr::mutate(
       p_res = base::sprintf("%.1f", (n_resolvidos / n_processos) * 100),
-      p_pen = base::sprintf("%.1f", (n_pendentes / n_processos) * 100),
+      p_total_fatia = base::sprintf("%.1f", (n_processos / base::sum(n_processos)) * 100),
+      p_emp_fin = base::sprintf("%.1f", (valor_emp_mod / valor_total_mod) * 100),
+      p_pen_fin = base::sprintf("%.1f", (1 - (valor_emp_mod / valor_total_mod)) * 100),
       v_total_txt = base::format(valor_total_mod, big.mark = ".", decimal.mark = ","),
       v_emp_txt   = base::format(valor_emp_mod, big.mark = ".", decimal.mark = ","),
       v_pen_txt   = base::format(valor_total_mod - valor_emp_mod, big.mark = ".", decimal.mark = ","),
       
-      label_grafico = base::paste0("<b>", modalidade, "</b><br>", n_processos, "<br>", base::sprintf("%.1f", (n_processos / base::sum(n_processos)) * 100), "%"),
+      label_grafico = base::paste0("<b>", modalidade, "</b><br>", n_processos, " | ", p_total_fatia, "%"),
       
       hover_txt = base::paste0("<span style='color:black; font-family:", fonte_padrao, "; font-size:", tam_hover_corpo, "px;'>",
-                               "<b style='font-size:", tam_hover_header, "px;'>MODALIDADE: ", modalidade, "</b><br>",
+                               "<b style='font-size:", tam_hover_header, "px;'>", modalidade, " | Eficiência: ", p_res, "% | Média: ", base::round(tempo_medio_mod, 0), " dias</b><br>",
                                "<span style='color:#bdc3c7'>──────────────────────────</span><br>",
-                               "📊 <b>Eficiência: ", p_res, "%</b> | ⏱ <b>Médio: ", base::round(tempo_medio_mod, 0), " dias</b><br>",
-                               "📦 <b>", txt_volume, ": ", n_processos, " processos</b><br>",
+                               "• Empenhados: ", n_resolvidos, " processos | R$ ", v_emp_txt, " (", p_emp_fin, "%)<br>",
+                               "• Pendentes: ", n_pendentes, " processos | R$ ", v_pen_txt, " (", p_pen_fin, "%)<br>",
                                "<span style='color:#bdc3c7'>──────────────────────────</span><br>",
-                               "✅ <b>Resolvidos:</b> ", n_resolvidos, " | ❌ <b>Pendentes:</b> ", n_pendentes, "<br>",
-                               "<span style='color:#bdc3c7'>──────────────────────────</span><br>",
-                               "💰 <b>Valor Total:</b> R$ ", v_total_txt, "<br>",
-                               "🟢 <b>Empenhado:</b> ", v_emp_txt, " | 🔴 <b>Pendente:</b> ", v_pen_txt, "</span>")
+                               "<b>", n_processos, " processos | R$ ", v_total_txt, "</b></span>")
     )
-  
-  # --- 4. MÉTRICAS DO CENTRO (EFICIÊNCIA EM NEGRITO) ---
+
+  # --- 4. MÉTRICAS DO CENTRO (NOMES EM NEGRITO) ---
   total_p <- base::nrow(df_proc_unico); total_v <- base::sum(df_proc_unico$valor_processo, na.rm = TRUE)
   res_n <- base::sum(df_proc_unico$situacao_proc == "Resolvido"); res_v <- base::sum(df_proc_unico$valor_empenhado, na.rm = TRUE)
   res_p <- base::sprintf("%.1f", (res_n / total_p) * 100); pen_n <- total_p - res_n; pen_v <- total_v - res_v; pen_p <- base::sprintf("%.1f", (pen_n / total_p) * 100)
-  eficiencia_final <- base::sprintf("%.1f", (res_n / total_p) * 100)
   
   texto_centro <- base::paste0(
     "<span style='font-family:", fonte_padrao, ";'>",
-    "📊 <b><span style='color:", cor_eficiencia, "; font-size:", tam_centro_cab, "px;'><b>EFICIÊNCIA</b>: ", eficiencia_final, "%</span></b><br>",
+    "<span style='font-size:26px; color:black; font-weight:normal;'>\u2197</span><br>",
+    "<b><span style='color:", cor_eficiencia, "; font-size:", tam_centro_cab, "px;'>EFICIÊNCIA: ", res_p, "%</span></b><br>",
     "<span style='color:#bdc3c7'>────────────────────────</span><br>",
-    "<span style='font-size:10px;'><br></span>",
-    "<b><span style='font-size:", tam_centro_corpo, "px;'>TOTAL: ", total_p, " | R$ ", base::format(total_v, big.mark = ".", decimal.mark = ","), " | 100%</span></b><br>",
     "<span style='font-size:4px;'><br></span>",
-    "<b><span style='color:", cor_ok, "; font-size:", tam_centro_corpo, "px;'>OK: ", res_n, " | R$ ", base::format(res_v, big.mark = ".", decimal.mark = ","), " | ", res_p, "%</span></b><br>",
+    "<span style='font-size:", tam_centro_corpo, "px;'><b>TOTAL: ", total_p, " | R$ ", base::format(total_v, big.mark = ".", decimal.mark = ","), "</b></span><br>",
     "<span style='font-size:4px;'><br></span>",
-    "<b><span style='color:", cor_pend, "; font-size:", tam_centro_corpo, "px;'>PEND: ", pen_n, " | R$ ", base::format(pen_v, big.mark = ".", decimal.mark = ","), " | ", pen_p, "%</span></b><br>",
+    "<span style='color:", cor_ok, "; font-size:", tam_centro_corpo, "px;'><b>EMPENHADOS:</b> ", res_n, " | ", res_p, "% | R$ ", base::format(res_v, big.mark = ".", decimal.mark = ","), "</span><br>",
+    "<span style='font-size:4px;'><br></span>",
+    "<span style='color:", cor_pend, "; font-size:", tam_centro_corpo, "px;'><b>PENDENTES:</b> ", pen_n, " | ", pen_p, "% | R$ ", base::format(pen_v, big.mark = ".", decimal.mark = ","), "</span>",
     "</span>"
   )
-  
-  # --- 5. CONSTRUÇÃO DO PLOTLY ---
-  plotly::plot_ly(df_modalidade, labels = ~label_grafico, values = ~n_processos, type = 'pie', hole = 0.75,
+
+  # --- 5. CONSTRUÇÃO ---
+  plotly::plot_ly(df_modalidade, labels = ~label_grafico, values = ~n_processos, type = 'pie', hole = 0.68,
                   textinfo = 'text', text = ~label_grafico, hoverinfo = 'text', hovertext = ~hover_txt,
                   marker = base::list(colors = cores_fatias, line = base::list(color = '#FFFFFF', width = largura_barra))) %>%
-    plotly::layout(margin = base::list(t = 100, b = 100, l = 100, r = 100), font = base::list(family = fonte_padrao, size = tam_fatias),
-                   showlegend = FALSE, hoverlabel = base::list(bgcolor = "white", bordercolor = "black", align = "left", namelength = -1, font = base::list(family = fonte_padrao)),
+    plotly::layout(margin = base::list(t = 40, b = 40, l = 20, r = 20), font = base::list(family = fonte_padrao, size = tam_fatias),
+                   showlegend = FALSE, hoverlabel = base::list(bgcolor = "white", bordercolor = "#ecf0f1", align = "left", namelength = -1, font = base::list(family = fonte_padrao)),
                    annotations = base::list(text = texto_centro, showarrow = FALSE)) %>%
     plotly::config(displayModeBar = FALSE, responsive = TRUE)
 }
 
-
-# --- DASHBOARD CONSOLIDADO AMIFO (GERAL) ---
+# # --- DASHBOARD CONSOLIDADO AMIFO (GERAL) ---
 gerar_dashboard(
-  bd_principal     = bd_principal, 
+  bd_principal     = bd_principal,
   nome_alvo        = NULL,              # NULL = Banco Todo
-  tam_fatias       = 15,                # Texto nas fatias do gráfico
+  tam_fatias       = 12,                # Texto nas fatias do gráfico
   tam_centro_cab   = 11,                # Tamanho do título EFICIÊNCIA
   tam_centro_corpo = 10,                # Tamanho das linhas TOTAL/OK/PEND
   tam_hover_header = 11,                # Título dentro do balão (Hover)
@@ -1628,7 +1729,7 @@ gerar_dashboard(
   cor_eficiencia   = "#0b132b",         # Cor do título central
   cor_ok           = "#008000",         # Cor da linha de resolvidos
   cor_pend         = "#B22222",         # Cor da linha de pendentes
-  largura_barra    = 3                  # Grossura da linha branca entre fatias
+  largura_barra    = 2                  # Grossura da linha branca entre fatias
 )
 
 ```
