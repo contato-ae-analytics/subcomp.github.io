@@ -1931,6 +1931,9 @@ tabela_interativa_detalhes(
 # ==========================================================
 # 1. PRÉ-PROCESSAMENTO: STATUS POR PROCESSO
 # ==========================================================
+# ==========================================================
+# 1. PRÉ-PROCESSAMENTO: STATUS POR PROCESSO
+# ==========================================================
 status_por_processo <- bd_principal %>%
   dplyr::group_by(processo) %>%
   dplyr::summarise(
@@ -1976,10 +1979,8 @@ bd_total_geral <- bd_pai_modalidade_base %>%
 
 bd_pai_modalidade <- base::rbind(bd_total_geral, bd_pai_modalidade_base) %>%
   dplyr::mutate(
-    # Percentual Geral
     p_represent_txt   = base::paste0(base::round((n_processos / base::max(n_processos[mod_proc == "TOTAL GERAL"])) * 100, 1), "%"),
     p_resolvido       = (n_resolvidos / n_processos) * 100,
-    # RESTAURANDO OS R$ NOS VALORES DA TABELA PAI
     aporte_total      = base::paste0("R$ ", base::format(v_total_mod, big.mark = ".", decimal.mark = ",")),
     aporte_resolvido  = base::paste0("R$ ", base::format(v_resolvido, big.mark = ".", decimal.mark = ",")),
     aporte_pendente   = base::paste0("R$ ", base::format(v_pendente, big.mark = ".", decimal.mark = ",")),
@@ -1989,7 +1990,7 @@ bd_pai_modalidade <- base::rbind(bd_total_geral, bd_pai_modalidade_base) %>%
   dplyr::arrange(dplyr::desc(mod_proc == "TOTAL GERAL"), dplyr::desc(p_resolvido))
 
 # ==========================================================
-# 3. BANCO FILHO: PERFORMANCE E COMPARAÇÃO POR AGENTE
+# 3. BANCO FILHO: PERFORMANCE POR AGENTE (AJUSTADO)
 # ==========================================================
 bd_filho_base <- status_por_processo %>%
   dplyr::mutate(agente_proc = base::ifelse(base::is.na(agente_proc), "Não Identificado", base::as.character(agente_proc))) %>%
@@ -2017,7 +2018,6 @@ bd_filho_base <- status_por_processo %>%
       TRUE               ~ "" 
     ),
     agente_rank   = base::paste0(rank_prod, "º - ", agente_proc),
-    # RESTAURANDO R$ NA TABELA FILHO
     aporte_gestao = base::paste0("R$ ", base::format(v_gestao_ag, big.mark = ".", decimal.mark = ",")),
     eficiencia_ag = base::paste0(base::round(p_efic_ag, 1), "%"),
     ciclo_ag_txt  = base::paste0(base::round(tempo_ag_num, 1), " dias"),
@@ -2046,26 +2046,39 @@ detalhes_total_geral <- status_por_processo %>%
     eficiencia_ag  = base::paste0(base::round((res_ag / total_proc_ag) * 100, 1), "%")
   )
 
-bd_filho_agentes <- dplyr::bind_rows(bd_filho_base, detalhes_total_geral)
+# --- SELECT FINAL PARA ALINHAR DADOS COM OS HEADERS ---
+bd_filho_agentes <- dplyr::bind_rows(bd_filho_base, detalhes_total_geral) %>%
+  dplyr::select(
+    mod_proc,
+    agente_rank,     # Coluna 1
+    total_proc_ag,   # Coluna 2
+    p_particip_txt,  # Coluna 3
+    res_ag,          # Coluna 4
+    pen_ag,          # Coluna 5
+    aporte_gestao,   # Coluna 6 (R$)
+    ciclo_ag_txt,    # Coluna 7
+    media_setor,     # Coluna 8
+    avaliacao_txt,   # Coluna 9
+    eficiencia_ag    # Coluna 10
+  )
 
 # ==========================================================
-# 4. CONFIGURAÇÃO DE COLUNAS (ORIGINAL RESTAURADA)
+# 4. CONFIGURAÇÃO DE COLUNAS
 # ==========================================================
-
 nomes_col <- base::c(
-  "Modalidade"               = "mod_proc",
-  "Qtd.Proc."                = "n_processos",
-  "(%)"                      = "p_represent_txt", 
-  "Valor<br>Total"           = "aporte_total",
-  "Processos<br>Finalizados" = "n_resolvidos",
-  "Valor<br>Empenhado"       = "aporte_resolvido",
-  "Eficiência<br>(%)"        = "p_resolvido_txt",
-  "Processos<br>Pendentes"   = "n_pendentes",
-  "Valor<br>Pendente"        = "aporte_pendente",
-  "Ciclo<br>Médio"           = "ciclo_txt"
+  "Modalidade<br>Processos"       = "mod_proc",
+  "Qtd."                          = "n_processos",
+  "(%)"                           = "p_represent_txt", 
+  "Valor<br>Total (R$)"                    = "aporte_total",
+  "Proc.<br>Finalizados"      = "n_resolvidos",
+  "Valor<br>Empenhado (R$)"       = "aporte_resolvido",
+  "Eficiência<br>(%)"             = "p_resolvido_txt",
+  "Proc.<br>Pendentes"        = "n_pendentes",
+  "Valor<br>Pendente (R$)"        = "aporte_pendente",
+  "Ciclo<br>Médio"                = "ciclo_txt"
 )
 
-largura_col <- base::c("180px", "100px", "80px", "350px", "90px", "350px", "80px", "90px", "350px", "160px")
+largura_col <- base::c("185px", "50px", "50px", "350px", "90px", "350px", "80px", "90px", "350px", "170px")
 alinhamento_col <- base::rep("left", 10)
 
 nomes_det <- base::c(
