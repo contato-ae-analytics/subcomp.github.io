@@ -839,7 +839,10 @@ bd_catalogo <- gsheet::gsheet2tbl(
 # CENTRAL DE DOWNLOADS E ACESSO - VERSÃO ATUALIZADA ALEX
 # ==========================================================
 
-# 1. Criação do DataFrame (Mantido conforme original)
+# 1. Configurações Iniciais e Senha
+senha_acesso <- "1234" # Alex, altere para a senha que desejar
+
+# 2. Criação do DataFrame
 bd_central_downloads <- base::data.frame(
   "id_planilha" = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
   "descricao"   = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", "Detalhamento Financeiro vinculado aos processos", "Dicionário para tradução de códigos contábeis", "Identificação da origem do capital", "Classificação detalhada do objeto de gasto", "Tabela mestra de padronização de itens do Estado"),
@@ -854,51 +857,123 @@ bd_central_downloads <- base::data.frame(
   stringsAsFactors = FALSE
 )
 
-# 2. Geração dos Botões HTML (Acessar e Download)
+# 3. Injeção do JavaScript de Segurança (Aparece no HTML final)
+js_auth <- base::paste0("
+  <script>
+    function validarAcesso(url) {
+      var password = prompt('Por favor, insira a senha para acessar ou baixar:');
+      if (password === '", senha_acesso, "') {
+        window.open(url, '_blank');
+      } else {
+        alert('Senha incorreta! Acesso negado.');
+      }
+    }
+  </script>
+")
+htmltools::HTML(js_auth)
+
+# 4. Geração dos Botões com a chamada da função JS
 bd_central_downloads$acessar <- base::apply(bd_central_downloads, 1, function(x) {
-  base::paste0("<a href='", x['url'], "' target='_blank' style='background-color:#03045e; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>ACESSAR</a>")
+  base::paste0("<a href=\"javascript:void(0)\" onclick=\"validarAcesso('", x['url'], "')\" style='background-color:#03045e; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>ACESSAR</a>")
 })
 
 bd_central_downloads$download <- base::apply(bd_central_downloads, 1, function(x) {
   url_download <- base::gsub("/edit.*", "/export?format=xlsx", x['url'])
-  base::paste0("<a href='", url_download, "' target='_blank' style='background-color:#333333; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>DOWNLOAD</a>")
+  base::paste0("<a href=\"javascript:void(0)\" onclick=\"validarAcesso('", url_download, "')\" style='background-color:#333333; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>DOWNLOAD</a>")
 })
 
-# 3. Configurações de Exibição (VETORES)
+# 5. Configurações de Exibição (Vetores)
 minhas_colunas_down <- base::c(
-  "Banco de Dados"  = "id_planilha",
-  "Descrição"       = "descricao",
-  "Acesso<br>Online" = "acessar",   # Usando <br> para testar a nova função
-  "Baixar<br>Arquivo" = "download"  # Usando <br> para testar a nova função
+  "Banco de Dados"   = "id_planilha",
+  "Descrição"        = "descricao",
+  "Acesso<br>Online" = "acessar",
+  "Baixar<br>Arquivo" = "download"
 )
 
-# Larguras: Banco de dados com maior espaço (dominante)
 minhas_larguras_down <- base::c("600px", "350px", "90px", "90px")
-
-# Alinhamentos: Banco e Descrição Justificados | Botões Centralizados
 meu_alin_header_down <- base::c("left", "left", "center", "center")
 meu_alin_corpo_down  <- base::c("justify", "justify", "center", "center")
 
-# 4. Execução da Renderização
+# 6. Execução da Renderização
 tabela_interativa(
-  dados                = bd_central_downloads,
-  titulo_tabela        = "Central de Downloads e Repositório de Dados",
-  tam_fonte_corpo      = "11.3px",
-  tam_fonte_header     = "12.2px",
-  tam_fonte_titulo     = "14.3px",
-  cor_titulo           = "#03045e",
-  cor_primaria         = "#000000",
-  cor_texto_corpo      = "#000000",
-  mostrar_filtro       = FALSE,
-  pesquisa_geral       = FALSE,
-  largura_cols_vetor   = minhas_larguras_down,
-  colunas_selecionadas = minhas_colunas_down,
-  # Novos parâmetros de alinhamento:
+  dados                    = bd_central_downloads,
+  titulo_tabela            = "Central de Downloads e Repositório de Dados",
+  tam_fonte_corpo          = "11.3px",
+  tam_fonte_header         = "12.2px",
+  tam_fonte_titulo         = "14.3px",
+  cor_titulo               = "#03045e",
+  cor_primaria             = "#000000",
+  cor_texto_corpo          = "#000000",
+  mostrar_filtro           = FALSE,
+  pesquisa_geral           = FALSE,
+  largura_cols_vetor       = minhas_larguras_down,
+  colunas_selecionadas     = minhas_colunas_down,
   alinhamento_header_vetor = meu_alin_header_down,
   alinhamento_corpo_vetor  = meu_alin_corpo_down,
   n_pages = 6,
   mostrar_indice = FALSE
 )
+
+# # 1. Criação do DataFrame (Mantido conforme original)
+# bd_central_downloads <- base::data.frame(
+#   "id_planilha" = base::c("Processos", "Itens", "Natureza da Despesa", "Fonte de Recurso", "Elemento de Despesa", "Catálogo e-Compras"),
+#   "descricao"   = base::c("Cabeçalho da Operação (Datas, Setores, Agentes)", "Detalhamento Financeiro vinculado aos processos", "Dicionário para tradução de códigos contábeis", "Identificação da origem do capital", "Classificação detalhada do objeto de gasto", "Tabela mestra de padronização de itens do Estado"),
+#   "url"         = base::c(
+#     "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826",
+#     "https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695",
+#     "https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687",
+#     "https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696",
+#     "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856",
+#     "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131"
+#   ),
+#   stringsAsFactors = FALSE
+# )
+# 
+# # 2. Geração dos Botões HTML (Acessar e Download)
+# bd_central_downloads$acessar <- base::apply(bd_central_downloads, 1, function(x) {
+#   base::paste0("<a href='", x['url'], "' target='_blank' style='background-color:#03045e; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>ACESSAR</a>")
+# })
+# 
+# bd_central_downloads$download <- base::apply(bd_central_downloads, 1, function(x) {
+#   url_download <- base::gsub("/edit.*", "/export?format=xlsx", x['url'])
+#   base::paste0("<a href='", url_download, "' target='_blank' style='background-color:#333333; color:white; padding:5px 12px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:10px; display:inline-block;'>DOWNLOAD</a>")
+# })
+# 
+# # 3. Configurações de Exibição (VETORES)
+# minhas_colunas_down <- base::c(
+#   "Banco de Dados"  = "id_planilha",
+#   "Descrição"       = "descricao",
+#   "Acesso<br>Online" = "acessar",   # Usando <br> para testar a nova função
+#   "Baixar<br>Arquivo" = "download"  # Usando <br> para testar a nova função
+# )
+# 
+# # Larguras: Banco de dados com maior espaço (dominante)
+# minhas_larguras_down <- base::c("600px", "350px", "90px", "90px")
+# 
+# # Alinhamentos: Banco e Descrição Justificados | Botões Centralizados
+# meu_alin_header_down <- base::c("left", "left", "center", "center")
+# meu_alin_corpo_down  <- base::c("justify", "justify", "center", "center")
+# 
+# # 4. Execução da Renderização
+# tabela_interativa(
+#   dados                = bd_central_downloads,
+#   titulo_tabela        = "Central de Downloads e Repositório de Dados",
+#   tam_fonte_corpo      = "11.3px",
+#   tam_fonte_header     = "12.2px",
+#   tam_fonte_titulo     = "14.3px",
+#   cor_titulo           = "#03045e",
+#   cor_primaria         = "#000000",
+#   cor_texto_corpo      = "#000000",
+#   mostrar_filtro       = FALSE,
+#   pesquisa_geral       = FALSE,
+#   largura_cols_vetor   = minhas_larguras_down,
+#   colunas_selecionadas = minhas_colunas_down,
+#   # Novos parâmetros de alinhamento:
+#   alinhamento_header_vetor = meu_alin_header_down,
+#   alinhamento_corpo_vetor  = meu_alin_corpo_down,
+#   n_pages = 6,
+#   mostrar_indice = FALSE
+# )
 
 # ==========================================================
 # CENTRAL DE DOWNLOADS E ACESSO - VERSÃO INTEGRAL COMENTADA
