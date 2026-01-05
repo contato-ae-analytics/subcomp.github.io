@@ -566,7 +566,7 @@ O setor atua de forma estratégica na coordenação e execução de compras e co
 # --- 2. IMPORTAÇÃO E FILTRAGEM INICIAL ---
 
 # 2.1. Base de Processos: Cabeçalho da Operação (Datas, Setores, Agentes)
-bd_processos <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1061612826") |> 
+bd_processos <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1hxojTxCUAM2YzV2wLpdiTh5bdxy-Jah4fJ0u6_kdapg/edit?gid=619231048#gid=619231048") |> 
   janitor::clean_names() |> 
   dplyr::filter(!base::is.na(processo),processo != "-",stringr::str_detect(processo, "\\d")) |> 
   dplyr::mutate(
@@ -588,7 +588,7 @@ bd_processos <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1UAgV
   )
 
 # 2.2. Base de Itens: Detalhamento Financeiro vinculado aos processos
-bd_itens <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1UAgVUdYJmIwt0DHRX7mNhkZKpR4nPGyeiUqHirggZ2I/edit?gid=1088782695#gid=1088782695") |> 
+bd_itens <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1hxojTxCUAM2YzV2wLpdiTh5bdxy-Jah4fJ0u6_kdapg/edit?gid=1386980374#gid=1386980374") |> 
   janitor::clean_names() |> dplyr::filter(!base::is.na(processo),processo != "-",stringr::str_detect(processo, "\\d")) |> 
   dplyr::mutate(
     # Processo é código administrativo
@@ -622,7 +622,8 @@ bd_itens <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1UAgVUdYJ
 
 
 # 2.3. Natureza da Despesa: Dicionário para tradução de códigos contábeis
-bd_natureza <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1dLUIAM6rL0B5VIftJr3g75L3nOr00KUIJzJzMOON6dg/edit?gid=1685660687") |> 
+bd_natureza <- gsheet::gsheet2tbl(
+  "https://docs.google.com/spreadsheets/d/1JftaBAebfK8-Wz0cRtBDrMxbK8ZY8vTvS3GOCBRpMxE/edit?gid=1449855031#gid=1449855031") |> 
   janitor::clean_names() |> 
   dplyr::filter(!base::is.na(cod),stringr::str_detect(cod, "\\d")) |> 
   dplyr::mutate(
@@ -641,7 +642,8 @@ bd_natureza <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1dLUIA
 
 
 # 2.4. Fonte de Recurso: Identificação da origem do capital
-bd_fonte <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1hsBIixCr7wpQqCdl9f43vIAO-dj2G4f6c_wTbuntJMQ/edit?gid=1283626696") |> 
+bd_fonte <- gsheet::gsheet2tbl(
+  "https://docs.google.com/spreadsheets/d/10MQQ1-RTMWfc0HDZ-P_kBIzuzSbBYAnDhs8Rde5kf1o/edit?gid=50215833#gid=50215833") |> 
   janitor::clean_names() |> 
   dplyr::filter(!base::is.na(fonte),fonte != "-") |> 
   dplyr::mutate(
@@ -659,7 +661,7 @@ bd_fonte <- gsheet::gsheet2tbl("https://docs.google.com/spreadsheets/d/1hsBIixCr
 
 # 2.5. Elemento de Despesa: Classificação detalhada do objeto de gasto
 bd_elemento <- gsheet::gsheet2tbl(
-  "https://docs.google.com/spreadsheets/d/17OYfesFjT0emcNoZOEyzXuKHm1Ltfv7DMCZdkuX6yOI/edit?gid=323608856") |> 
+  "https://docs.google.com/spreadsheets/d/1M7TgmUwCdwX3Zs535-WZ204e-nonClycFhmH7LC-rd0/edit?gid=2021676438#gid=2021676438") |> 
   janitor::clean_names() |> 
   dplyr::filter(!base::is.na(codigo),stringr::str_detect(codigo, "\\d")) |> 
   dplyr::mutate(
@@ -675,7 +677,7 @@ bd_elemento <- gsheet::gsheet2tbl(
 
 # 2.6. Catálogo e-Compras: Tabela mestra de padronização de itens do Estado
 bd_catalogo <- gsheet::gsheet2tbl(
-  "https://docs.google.com/spreadsheets/d/1Ywc-hhVPs5lRvmRMe0xKbSQyuca7WmecfRzzScUr7mk/edit?gid=1899552131") |> 
+  "https://docs.google.com/spreadsheets/d/1YRGTKFrDPysxzIWYIPWRwgN-hwJovZsdR1DjKa-xSsU/edit?gid=993460626#gid=993460626") |> 
   janitor::clean_names() |> 
   dplyr::filter(!base::is.na(id), id != "-") |> 
   dplyr::mutate(
