@@ -372,7 +372,7 @@ on:
   push:
     branches: main          # Corre sempre que envias código para a branch 'main'
   schedule:
-  - cron: '0 12,21 * * *' # Roda às 08:00 e às 17:00 (Horário de Manaus)
+    - cron: '0 12,21 * * *' # Roda às 08:00 e às 17:00 (Horário de Manaus)
   # schedule:
   #   - cron: '*/5 * * * *'   # AGENDAMENTO DE TESTE: Executa automaticamente a cada 5 minutos
   workflow_dispatch:        # Ativa o botão "Run workflow" para execução manual no painel do GitHub
