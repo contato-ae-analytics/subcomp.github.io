@@ -241,51 +241,183 @@
 #         env:
 #           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #           
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# on:
+#   push:
+#     branches: main
+# 
+# name: Quarto Publish
+# 
+# jobs:
+#   build-deploy:
+#     runs-on: ubuntu-latest
+#     permissions:
+#       contents: write
+#       pages: write
+#       id-token: write
+# 
+#     steps:
+#       - name: Check out repository
+#         uses: actions/checkout@v4
+# 
+#       # --- 1. CONFIGURAÇÃO DO PYTHON ---
+#       - name: Install Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: '3.10'
+# 
+#       - name: Install Jupyter and Pandas
+#         run: pip install jupyter pandas matplotlib
+# 
+#       # --- 2. CONFIGURAÇÃO DO QUARTO ---
+#       - name: Set up Quarto
+#         uses: quarto-dev/quarto-actions/setup@v2
+# 
+#       # --- 3. CONFIGURAÇÃO DO R ---
+#       - name: Install R
+#         uses: r-lib/actions/setup-r@v2
+#         with:
+#           r-version: '4.3.3'
+# 
+#       # --- 4. DEPENDÊNCIAS DO SISTEMA (ESSENCIAL PARA GDTOOLS / LINUX) ---
+#       # Mesmo que seu PC seja Windows, o GitHub usa Linux para processar o site.
+#       - name: Install System Dependencies (Linux)
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install -y libfontconfig1-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev libharfbuzz-dev libfribidi-dev
+# 
+#       # --- 5. PACOTES DO R ---
+#       - name: Install R Packages
+#         uses: r-lib/actions/setup-r-dependencies@v2
+#         with:
+#           extra-packages: |
+#             any::readxl
+#             any::plotly
+#             any::gdtools
+#             any::systemfonts
+#             any::flextable
+#             any::janitor
+#             any::patchwork
+#             any::showtext
+#             any::ggtext
+#             any::kableExtra
+#             any::forecast
+#             any::bizdays
+#             any::survminer
+#             any::psych
+#             any::skimr
+#             any::Hmisc
+#             any::sjPlot
+#             any::fdth
+#           packages: |
+#             any::knitr
+#             any::rmarkdown
+#             any::gsheet
+#             any::corrplot
+#             any::tidyverse
+#             any::nlme
+#             any::reactable
+#             any::DT
+#             any::htmltools
+#             any::geomtextpath
+#             any::viridis
+#             any::ggrepel
+#             any::reticulate
+#             any::crosstalk
+# 
+#       # --- 6. RENDERIZAR E PUBLICAR ---
+#       - name: Render and Publish
+#         uses: quarto-dev/quarto-actions/publish@v2
+#         with:
+#           target: gh-pages
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#           
+#           
+#           
+#           
+#           
+#           
+#           
+#           
+#           
+#           
+#           
+#           
+#           
+#           
+#           
+#           
+#           
+#           
+#           
+# Define os eventos que disparam a execução deste script
 on:
   push:
-    branches: main
+    branches: main          # Corre sempre que envias código para a branch 'main'
+  schedule:
+    - cron: '*/5 * * * *'   # AGENDAMENTO DE TESTE: Executa automaticamente a cada 5 minutos
+  workflow_dispatch:        # Ativa o botão "Run workflow" para execução manual no painel do GitHub
 
 name: Quarto Publish
 
 jobs:
   build-deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Usa um servidor Linux (Ubuntu) para processar o site
+    # Permissões necessárias para o robô do GitHub escrever no repositório e publicar páginas
     permissions:
       contents: write
       pages: write
       id-token: write
 
     steps:
+      # Passo 1: Descarrega o código do teu repositório para o servidor do GitHub
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # --- 1. CONFIGURAÇÃO DO PYTHON ---
+      # Passo 2: Configuração do Ambiente Python (necessário para scripts ou Jupyter)
       - name: Install Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
+      # Passo 3: Instala as bibliotecas de Python que o teu projeto utiliza
       - name: Install Jupyter and Pandas
         run: pip install jupyter pandas matplotlib
 
-      # --- 2. CONFIGURAÇÃO DO QUARTO ---
+      # Passo 4: Instala o motor do Quarto para renderizar o documento .qmd
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 
-      # --- 3. CONFIGURAÇÃO DO R ---
+      # Passo 5: Instala o R (Versão específica 4.3.3 conforme solicitado)
       - name: Install R
         uses: r-lib/actions/setup-r@v2
         with:
           r-version: '4.3.3'
 
-      # --- 4. DEPENDÊNCIAS DO SISTEMA (ESSENCIAL PARA GDTOOLS / LINUX) ---
-      # Mesmo que seu PC seja Windows, o GitHub usa Linux para processar o site.
+      # Passo 6: Instala dependências do Linux necessárias para gerar gráficos e fontes (Essencial para o R no Linux)
       - name: Install System Dependencies (Linux)
         run: |
           sudo apt-get update
           sudo apt-get install -y libfontconfig1-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev libharfbuzz-dev libfribidi-dev
 
-      # --- 5. PACOTES DO R ---
+      # Passo 7: Instalação automática de todos os pacotes de R listados
       - name: Install R Packages
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -324,7 +456,18 @@ jobs:
             any::reticulate
             any::crosstalk
 
-      # --- 6. RENDERIZAR E PUBLICAR ---
+      # Passo 8: Sincronização e Commit Automático
+      # Este passo deteta se houve mudanças (novos dados das planilhas) e salva no teu GitHub
+      - name: Git Auto-Commit
+        run: |
+          git config --local user.name "Alexssandro Silva"
+          git config --local user.email "alexssandrosg@gmail.com"
+          git add .
+          # Tenta fazer commit com data/hora. Se não houver mudanças, apenas avisa e continua.
+          git commit -m "Atualização automática de dados: $(date +'%d/%m/%Y %H:%M')" || echo "Sem alterações para salvar"
+          git push origin main
+
+      # Passo 9: Renderização final e publicação no GitHub Pages (branch gh-pages)
       - name: Render and Publish
         uses: quarto-dev/quarto-actions/publish@v2
         with:
