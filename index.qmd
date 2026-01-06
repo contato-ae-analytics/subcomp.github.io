@@ -1443,6 +1443,250 @@ plotly::plot_ly() %>%
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+# ==========================================================
+# --- CONFIGURAÇÕES VISUAIS (PADRÃO ALEX) ---
+# ==========================================================
+
+titulo_nome         <- "Gráfico 1: Fluxo Operacional de Processos"
+subtitulo_texto     <- ""
+
+titulo_cor          <- "#03045e"
+titulo_tamanho      <- 14.5
+sub_cor             <- "#000000"
+sub_tamanho         <- 13         
+
+cor_entradas        <- "#001d3d"  # Azul Marinho Profundo
+cor_saidas          <- "#48cae4"  # Azul Celeste Claro
+
+tamanho_rotulos     <- 10         
+cor_rotulos         <- "#000000"
+tamanho_eixo_x      <- 11         
+cor_eixo_x          <- "#000000"
+
+tamanho_legenda     <- 12         
+cor_legenda         <- "#000000"
+tamanho_botoes      <- 12         
+
+hover_bg_cor        <- "#FFFFFF"  
+hover_txt_cor       <- "#000000"  
+hover_fonte_tam     <- 12         
+borda_balao_hover   <- "#000000"  
+alinhamento_balao_hover <- "left"
+
+# ==========================================================
+# --- 1. PREPARAÇÃO DOS DADOS ---
+# ==========================================================
+
+meses_ordem_limpo <- base::c("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+                             "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro")
+
+tradutor_meses <- base::c(
+  "January" = "Janeiro", "February" = "Fevereiro", "March" = "Março", 
+  "April" = "Abril", "May" = "Maio", "June" = "Junho", 
+  "July" = "Julho", "August" = "Agosto", "September" = "Setembro", 
+  "October" = "Outubro", "November" = "Novembro", "December" = "Dezembro"
+)
+
+dados_base_limpa <- bd_principal %>%
+  dplyr::distinct(processo, .keep_all = TRUE) %>%
+  dplyr::select(processo, mes_entrada, mes_saida, modalidade_processo, status_item, agente) %>%
+  tidyr::pivot_longer(cols = dplyr::all_of(base::c("mes_entrada", "mes_saida")), 
+                      names_to = "Origem", 
+                      values_to = "Mes_Nome") %>%
+  dplyr::mutate(Tipo = dplyr::if_else(Origem == "mes_entrada", "Entradas", "Saídas")) %>%
+  dplyr::filter(!base::is.na(Mes_Nome)) %>%
+  dplyr::mutate(
+    Mes_Nome_Limpo = dplyr::recode(Mes_Nome, !!!tradutor_meses),
+    Mes_Bold = base::factor(base::paste0("<b>", Mes_Nome_Limpo, "</b>"), 
+                            levels = base::paste0("<b>", meses_ordem_limpo, "</b>"))
+  )
+
+esqueleto <- base::expand.grid(
+  Mes_Bold = base::factor(base::paste0("<b>", meses_ordem_limpo, "</b>"), 
+                          levels = base::paste0("<b>", meses_ordem_limpo, "</b>")), 
+  Tipo = base::c("Entradas", "Saídas"), 
+  stringsAsFactors = FALSE
+)
+
+# ==========================================================
+# --- 2. FUNÇÕES DE SUPORTE ---
+# ==========================================================
+
+gerar_dados_seguros <- function(df, mod = NULL) {
+  df_f <- df
+  if (!base::is.null(mod) && mod != "Todas as Modalidades") { 
+    df_f <- df_f %>% dplyr::filter(modalidade_processo == mod) 
+  }
+  
+  df_res <- df_f %>%
+    dplyr::group_by(Mes_Bold, Tipo) %>%
+    dplyr::summarise(
+      Quantidade = dplyr::n(),
+      Hover = dplyr::if_else(
+        base::is.null(mod) || mod == "Todas as Modalidades",
+        "Resumo Geral", 
+        base::paste0("<b>Processos:</b><br>", base::paste(base::unique(base::paste0("• ", processo)), collapse = "<br>"))
+      ),
+      .groups = "drop"
+    ) %>%
+    dplyr::right_join(esqueleto, by = base::c("Mes_Bold", "Tipo")) %>%
+    dplyr::mutate(
+      Quantidade = base::ifelse(base::is.na(Quantidade), 0, Quantidade), 
+      Hover = base::ifelse(base::is.na(Hover), "Sem processos registrados", Hover)
+    ) %>%
+    dplyr::arrange(Tipo, Mes_Bold)
+  
+  if (base::is.null(mod) || mod == "Todas as Modalidades") {
+    hover_todas <- df_f %>%
+      dplyr::group_by(Mes_Bold, Tipo, modalidade_processo) %>%
+      dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
+      dplyr::group_by(Mes_Bold, Tipo) %>%
+      dplyr::mutate(total = base::sum(n)) %>%
+      dplyr::summarise(
+        Hover_Full = base::paste(base::paste0("• ", modalidade_processo, ": ", n, " (", base::round((n/total)*100,1), "%)"), collapse = "<br>"),
+        .groups = "drop"
+      )
+    df_res <- df_res %>%
+      dplyr::left_join(hover_todas, by = base::c("Mes_Bold", "Tipo")) %>%
+      dplyr::mutate(Hover = base::ifelse(!base::is.na(Hover_Full), Hover_Full, Hover)) %>%
+      dplyr::select(-Hover_Full)
+  }
+  return(df_res)
+}
+
+montar_botoes <- function(lista) {
+  base::lapply(lista, function(v) {
+    d <- gerar_dados_seguros(dados_base_limpa, mod = v)
+    de <- d %>% dplyr::filter(Tipo == "Entradas"); ds <- d %>% dplyr::filter(Tipo == "Saídas")
+    t_e <- base::sum(de$Quantidade); t_s <- base::sum(ds$Quantidade)
+    base::list(method = "update", label = v,
+               args = base::list(base::list(y = base::list(de$Quantidade, ds$Quantidade),
+                                            text = base::list(base::paste0("<b>", de$Quantidade, "</b>"), base::paste0("<b>", ds$Quantidade, "</b>")),
+                                            hovertext = base::list(de$Hover, ds$Hover),
+                                            name = base::list(base::paste0("<b>Entradas (Total: ", t_e, ")</b>"), 
+                                                              base::paste0("<b>Saídas (Total: ", t_s, ")</b>")))))
+  })
+}
+
+montar_botoes_agente <- function(lista) {
+  base::lapply(lista, function(v) {
+    df_agente <- if(v == "Todos os Agentes") {
+      dados_base_limpa 
+    } else {
+      dados_base_limpa %>% dplyr::filter(agente == v)
+    }
+    d <- gerar_dados_seguros(df_agente, mod = "Todas as Modalidades")
+    de <- d %>% dplyr::filter(Tipo == "Entradas"); ds <- d %>% dplyr::filter(Tipo == "Saídas")
+    t_e <- base::sum(de$Quantidade); t_s <- base::sum(ds$Quantidade)
+    base::list(method = "update", label = v,
+               args = base::list(base::list(y = base::list(de$Quantidade, ds$Quantidade),
+                                            text = base::list(base::paste0("<b>", de$Quantidade, "</b>"), base::paste0("<b>", ds$Quantidade, "</b>")),
+                                            hovertext = base::list(de$Hover, ds$Hover),
+                                            name = base::list(base::paste0("<b>Entradas (Total: ", t_e, ")</b>"), 
+                                                              base::paste0("<b>Saídas (Total: ", t_s, ")</b>")))))
+  })
+}
+
+# ==========================================================
+# --- 3. DEFINIÇÃO DE LISTAS E ESTADO INICIAL ---
+# ==========================================================
+
+lista_m <- base::c("Todas as Modalidades", base::sort(base::as.character(base::unique(dados_base_limpa$modalidade_processo))))
+lista_a <- base::c("Todos os Agentes", base::sort(base::as.character(base::unique(dados_base_limpa$agente))))
+
+df_i <- gerar_dados_seguros(dados_base_limpa)
+df_e_ini <- df_i %>% dplyr::filter(Tipo == "Entradas") 
+df_s_ini <- df_i %>% dplyr::filter(Tipo == "Saídas") 
+
+# ==========================================================
+# --- 4. GRÁFICO FINAL (PLOTLY) ---
+# ==========================================================
+
+plotly::plot_ly() %>%
+  plotly::add_bars(x = df_e_ini$Mes_Bold, y = df_e_ini$Quantidade, 
+                   name = base::paste0("<b>Entradas (Total: ", base::sum(df_e_ini$Quantidade), ")</b>"),
+                   marker = base::list(color = cor_entradas),
+                   text = base::paste0("<b>", df_e_ini$Quantidade, "</b>"),
+                   textposition = 'outside', cliponaxis = FALSE,
+                   textfont = base::list(family = "Inter, sans-serif", size = tamanho_rotulos, color = cor_rotulos),
+                   hoverinfo = "text", hovertext = df_e_ini$Hover) %>%
+  plotly::add_bars(x = df_s_ini$Mes_Bold, y = df_s_ini$Quantidade, 
+                   name = base::paste0("<b>Saídas (Total: ", base::sum(df_s_ini$Quantidade), ")</b>"),
+                   marker = base::list(color = cor_saidas),
+                   text = base::paste0("<b>", df_s_ini$Quantidade, "</b>"),
+                   textposition = 'outside', cliponaxis = FALSE,
+                   textfont = base::list(family = "Inter, sans-serif", size = tamanho_rotulos, color = cor_rotulos),
+                   hoverinfo = "text", hovertext = df_s_ini$Hover) %>%
+  plotly::layout(
+    font = base::list(family = "Inter, sans-serif"),
+    title = base::list(
+      text = base::paste0("<b style='color:", titulo_cor, "; font-size:", titulo_tamanho, "px'>", titulo_nome, "</b>",
+                          "<br><span style='color:", sub_cor, "; font-size:", sub_tamanho, "px'>", subtitulo_texto, "</span>"),
+      x = 0, y = 0.98, xanchor = "left", xref = "paper"
+    ),
+    hoverlabel = base::list(
+      bgcolor = hover_bg_cor,
+      font = base::list(family = "Inter, sans-serif", size = hover_fonte_tam, color = hover_txt_cor),
+      bordercolor = borda_balao_hover,
+      align = alinhamento_balao_hover
+    ),
+    xaxis = base::list(title = "", showgrid = FALSE, 
+                       tickfont = base::list(family = "Inter, sans-serif", size = tamanho_eixo_x, color = cor_eixo_x),
+                       fixedrange = TRUE),
+    yaxis = base::list(title = "", showticklabels = FALSE, showgrid = TRUE, gridcolor = "#F0F0F0", 
+                       range = base::list(0, base::max(df_i$Quantidade) * 1.5)),
+    barmode = 'group', bargap = 0.2, bargroupgap = 0.1,
+    updatemenus = base::list(
+      base::list(active = 0, x = 0, y = 1.13, xanchor = "left", 
+                 buttons = montar_botoes(lista_m),
+                 font = base::list(family = "Inter, sans-serif", size = tamanho_botoes)),
+      base::list(active = 0, x = 0.20, y = 1.13, xanchor = "left",
+                 buttons = base::list(
+                   base::list(method = "update", label = "Gráfico: Barras", 
+                              args = base::list(base::list(type = "bar", textposition = "outside"), 
+                                                base::list(margin = base::list(t = 130, b = 120, l = 0, r = 0)))),
+                   base::list(method = "update", label = "Gráfico: Linhas", 
+                              args = base::list(base::list(type = "scatter", mode = "lines+markers+text", textposition = "top center"),
+                                                base::list(margin = base::list(t = 130, b = 120, l = 0, r = 0))))
+                 ), font = base::list(family = "Inter, sans-serif", size = tamanho_botoes)),
+      base::list(active = 0, x = 0.40, y = 1.13, xanchor = "left",
+                 buttons = montar_botoes_agente(lista_a),
+                 font = base::list(family = "Inter, sans-serif", size = tamanho_botoes))
+    ),
+    legend = base::list(orientation = 'h', x = 0, xanchor = "left", y = 1.25,
+                        font = base::list(family = "Inter, sans-serif", size = tamanho_legenda, color = cor_legenda)),
+    margin = base::list(t = 130, b = 120, l = 0, r = 0),
+    plot_bgcolor = "white", paper_bgcolor = "white"
+  ) %>%
+  plotly::config(displayModeBar = FALSE, responsive = TRUE)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ==========================================================
 # CONFIGURAÇÃO DE FONTES E CORES (VISUAL COMPACTO ALEX)
 # ==========================================================
